@@ -1,4 +1,4 @@
-package com.groom.TablePick_BackEnd;
+package com.groom.tablepick;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
