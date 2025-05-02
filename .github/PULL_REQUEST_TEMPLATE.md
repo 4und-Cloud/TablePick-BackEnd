@@ -9,3 +9,7 @@
 # 💌 To Reviewers
 
 - 주의사항
+
+# 📎 관련 이슈
+
+Closes #12
