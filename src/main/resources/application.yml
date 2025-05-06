@@ -17,5 +17,6 @@ spring:
     init:
       mode: never
 
+
 server:
   port: 8080
