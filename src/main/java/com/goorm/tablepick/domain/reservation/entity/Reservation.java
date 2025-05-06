@@ -72,4 +72,7 @@ public class Reservation {
         this.restaurant = restaurant;
     }
 
+    public void setReservationStatus(ReservationStatus reservationStatus) {
+        this.reservationStatus = reservationStatus;
+    }
 }

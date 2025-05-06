@@ -80,7 +80,43 @@ public class ReservationImpl implements ReservationService {
     @Override
     @Transactional
     public void cancelReservation(Long reservationId) {
+        // 예약 조회
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new ReservationException(ReservationErrorCode.NOT_FOUND));
 
+        // 멤버 검증 (임시 로그인용)
+        Member member = memberRepository.findById(1L)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+
+        if (!reservation.getMember().equals(member)) {
+            throw new ReservationException(ReservationErrorCode.UNAUTHORIZED_CANCEL);
+        }
+
+        // 이미 취소된 예약인지 확인
+        if (reservation.getReservationStatus() == ReservationStatus.CANCELLED) {
+            throw new ReservationException(ReservationErrorCode.ALREADY_CANCELLED);
+        }
+
+        // 예약 상태 변경
+        reservation.setReservationStatus(ReservationStatus.CANCELLED);
+        reservationRepository.save(reservation);
+
+        // 해당 운영 시간 조회
+        RestaurantOperatingHour operatingHour = restaurantOperatingHourRepository.findByRestaurantIdAndDate(
+                reservation.getRestaurant().getId(),
+                reservation.getReservationDate()
+        ).orElseThrow(() -> new ReservationException(ReservationErrorCode.NO_OPERATING_HOUR));
+
+        // 예약 시간 조회
+        ReservationTime reservationTime = reservationTimeRepository.findByRestaurantOperatingHourIdAndTime(
+                operatingHour.getId(),
+                reservation.getReservationTime()
+        ).orElseThrow(() -> new ReservationException(ReservationErrorCode.NO_RESERVATION_TIME));
+
+        // count 감소 (최소 0)
+        long currentCount = reservationTime.getCount();
+        reservationTime.setCount(Math.max(0, currentCount - 1));
+        reservationTimeRepository.save(reservationTime);
     }
 
     @Override
