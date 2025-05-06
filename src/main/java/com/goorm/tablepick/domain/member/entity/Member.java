@@ -1,18 +1,30 @@
 package com.goorm.tablepick.domain.member.entity;
 
+import com.goorm.tablepick.domain.member.enums.AccountRole;
 import com.goorm.tablepick.domain.member.enums.Gender;
-import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@AllArgsConstructor
 public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +41,9 @@ public class Member {
 
     private LocalDate birthdate;
 
-    private Long memberPhoneNumber;
+    private String phoneNumber;
+
+    private String profileImage;
 
     private Boolean isMemberDeleted;
 
@@ -38,4 +52,12 @@ public class Member {
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberTag> memberTags = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    private AccountRole roles;
+
+    private String provider;
+
+    private String providerId;
+
 }
