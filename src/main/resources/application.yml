@@ -17,6 +17,10 @@ spring:
     init:
       mode: never
 
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
 
 server:
   port: 8080

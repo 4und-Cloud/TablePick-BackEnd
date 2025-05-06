@@ -3,6 +3,10 @@ package com.goorm.tablepick.domain.reservation.controller;
 import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
 import com.goorm.tablepick.domain.reservation.service.ReservationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -40,6 +44,21 @@ public class ReservationController {
     }
 
     @GetMapping("/available-times")
+    @Operation(
+            summary = "예약 가능 시간 조회",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "예약 가능한 시간 목록",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    array = @ArraySchema(
+                                            schema = @Schema(type = "string", format = "time", example = "21:00:00")
+                                    )
+                            )
+                    )
+            }
+    )
     public ResponseEntity<List<LocalTime>> getAvailableReservationTimes(
             @RequestParam Long restaurantId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
