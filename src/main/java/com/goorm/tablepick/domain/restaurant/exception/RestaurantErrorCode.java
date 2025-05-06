@@ -8,7 +8,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum RestaurantErrorCode implements ErrorCode {
 
-    NOT_FOUND("식당 정보를 찾을 수 없습니다.");
+    NOT_FOUND("식당 정보를 찾을 수 없습니다."),
+    NO_OPERATING_HOUR("해당하는 운영 시간을 찾을 수 없습니다");
 
     private final String message;
 }
