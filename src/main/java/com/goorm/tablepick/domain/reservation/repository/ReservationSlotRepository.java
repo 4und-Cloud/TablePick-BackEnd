@@ -14,7 +14,7 @@ public interface ReservationSlotRepository extends JpaRepository<ReservationSlot
                 SELECT rs FROM ReservationSlot rs
                     WHERE rs.restaurant.id = :restaurantId
                     AND rs.date = :date
-                    AND rs.count < 3
+                    AND rs.count < rs.restaurant.maxCapacity
             """)
     List<ReservationSlot> findAvailableTimes(@Param("restaurantId") Long restaurantId,
                                              @Param("date") LocalDate date);

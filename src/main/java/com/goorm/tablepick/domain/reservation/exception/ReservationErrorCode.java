@@ -14,7 +14,8 @@ public enum ReservationErrorCode implements ErrorCode {
     ALL_SLOTS_BOOKED("모든 예약 시간이 이미 마감되었습니다."),
     EXCEED_RESERVATION_LIMIT("해당 예약 시간이 이미 마감되었습니다."),
     ALREADY_CANCELLED("이미 취소된 예약입니다."),
-    UNAUTHORIZED_CANCEL("예약 취소 권한이 없습니다.");
+    UNAUTHORIZED_CANCEL("예약 취소 권한이 없습니다."),
+    DUPLICATE_RESERVATION("중복된 예약입니다.");
 
     private final String message;
 }

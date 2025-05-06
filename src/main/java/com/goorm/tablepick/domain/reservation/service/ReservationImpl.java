@@ -43,14 +43,26 @@ public class ReservationImpl implements ReservationService {
         Member member = memberRepository.findById(1L)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
-        // 예약 가능 시간 조회 및 검증 (예약 총 횟수가 3 미만인지)
+        // 예약 가능 시간 조회
         ReservationSlot reservationSlot = reservationSlotRepository.findByRestaurantIdAndDateAndTime(
                         request.getRestaurantId(), request.getReservationDate(), request.getReservationTime())
                 .orElseThrow(() -> new ReservationException(ReservationErrorCode.NO_RESERVATION_SLOT));
 
-        Long count = reservationSlot.getCount();
+        // 중복 예약 검증
+        List<Reservation> reservations = reservationRepository.findByReservationSlot(reservationSlot);
 
-        if (count >= 3) {
+        boolean hasDuplicate = reservations.stream()
+                .anyMatch(r -> r.getMember().equals(member));
+
+        if (hasDuplicate) {
+            throw new ReservationException(ReservationErrorCode.DUPLICATE_RESERVATION);
+        }
+
+        // 예약 총 횟수가 max_capacity 미만인지 검증
+        Long count = reservationSlot.getCount();
+        Long maxCapacity = restaurant.getMaxCapacity();
+
+        if (count >= maxCapacity) {
             throw new ReservationException(ReservationErrorCode.EXCEED_RESERVATION_LIMIT);
         }
 
