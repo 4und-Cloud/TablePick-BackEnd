@@ -25,9 +25,11 @@ public class ReservationTime {
 
     private Long count;
 
-    private boolean isOpen;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_operating_hour")
     private RestaurantOperatingHour restaurantOperatingHour;
+
+    public void setCount(long l) {
+        this.count = l;
+    }
 }
