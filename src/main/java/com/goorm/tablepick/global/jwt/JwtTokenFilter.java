@@ -1,8 +1,6 @@
 package com.goorm.tablepick.global.jwt;
 
-import com.goorm.tablepick.domain.member.entity.RefreshToken;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
-import com.goorm.tablepick.domain.member.repository.RefreshTokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,10 +18,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 @RequiredArgsConstructor
 public class JwtTokenFilter extends OncePerRequestFilter {
-
     private final JwtProvider jwtProvider;
     private final MemberRepository memberRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final JwtTokenService jwtTokenService; // 서비스 추가
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -42,33 +39,32 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     }
 
     // accessToken 만료 시
-    private void handleExpiredAccessToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void handleExpiredAccessToken(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
         String refreshToken = request.getHeader("Refresh-Token");
-
-        if (refreshToken != null && jwtProvider.validateToken(refreshToken)) {
+        if (refreshToken != null && !jwtProvider.validateToken(refreshToken)) {
             Long userId = jwtProvider.getUserIdFromToken(refreshToken);
-            RefreshToken storedToken = refreshTokenRepository.findByMemberId(userId).orElse(null);
-            if (storedToken != null && storedToken.getToken().equals(refreshToken)) {
+            String newRefreshToken = jwtTokenService.handleExpiredRefreshToken(userId, refreshToken);
+            if (newRefreshToken != null) {
                 // AccessToken 재발급
                 String newAccessToken = jwtProvider.createAccessToken(userId);
                 response.setHeader("Access-Token", newAccessToken);
                 setAuthentication(newAccessToken, request);
 
-                // RefreshToken 만료 시 갱신
-                //if (jwtProvider.isTokenExpiringSoon(refreshToken)) {
-                //}
+                // 새 RefreshToken을 헤더에 담아 전송
+                response.setHeader("Refresh-Token", newRefreshToken);
             }
         }
     }
 
-    //security context에 인증 객체 저장
+    // security context에 인증 객체 저장
     private void setAuthentication(String token, HttpServletRequest request) {
         Long userId = jwtProvider.getUserIdFromToken(token);
         var member = memberRepository.findById(userId).orElse(null);
         if (member != null) {
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     member, null, Collections.singleton(new SimpleGrantedAuthority("ROLE_" + member.getRoles())));
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request)); // 수정됨
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
     }

@@ -10,7 +10,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,8 +49,9 @@ public class Member {
 
     private Boolean isMemberDeleted;
 
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<RefreshToken> refreshTokens = new ArrayList<>();
+    @OneToOne
+    @JoinColumn(name = "refresh_token_id")
+    private RefreshToken refreshToken;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberTag> memberTags = new ArrayList<>();
@@ -60,4 +63,8 @@ public class Member {
 
     private String providerId;
 
+    public void updateRefreshToken(RefreshToken refreshToken) {
+        this.refreshToken = refreshToken;
+        refreshToken.setMember(this);
+    }
 }

@@ -41,11 +41,11 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
         authenticateUser(member);
 
-        String accessToken = jwtProvider.createAccessToken(member.getId());
-        String refreshToken = jwtProvider.createRefreshToken(member.getId());
+        String accessToken = jwtProvider.createShortLivedRefreshToken(member.getId());
+        String refreshToken = jwtProvider.createShortLivedRefreshToken(member.getId());
 
         issueAndSaveRefreshToken(member, refreshToken);
-        System.out.println(accessToken);
+
         // 토큰을 헤더에 설정
         response.setHeader("Access-Token", accessToken);
         response.setHeader("Refresh-Token", refreshToken);

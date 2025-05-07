@@ -1,12 +1,14 @@
 package com.goorm.tablepick.global.jwt;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import java.security.Key;
+import java.time.Instant;
 import java.util.Date;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -53,20 +55,40 @@ public class JwtProvider {
         return Long.parseLong(parseClaims(token).getSubject());
     }
 
+
     public boolean validateToken(String token) {
         try {
-            parseClaims(token);
-            return true;
+            Claims claims = parseClaims(token);
+            Date expiration = claims.getExpiration();
+            return !Instant.now().isAfter(expiration.toInstant());
+        } catch (ExpiredJwtException e) {
+            // 토큰이 만료된 경우도 false 반환
+            return false;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }
 
     private Claims parseClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (ExpiredJwtException e) {
+            // 이미 만료된 경우라도 Claims는 얻을 수 있음
+            return e.getClaims();
+        }
     }
+
+    // 예시: 짧은 만료 시간으로 RefreshToken 생성
+    public String createShortLivedRefreshToken(Long userId) {
+        return Jwts.builder()
+                .setSubject(String.valueOf(userId))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000)) // 1초
+                .signWith(key, SignatureAlgorithm.HS512)
+                .compact();
+    }
+
 }

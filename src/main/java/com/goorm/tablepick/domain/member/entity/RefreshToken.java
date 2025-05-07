@@ -14,7 +14,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Getter
@@ -35,20 +35,23 @@ public class RefreshToken {
     @Column(length = 255)
     private String deviceInfo;
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
     private LocalDateTime expiredAt;
     private LocalDateTime deletedAt;
 
     @Builder
-    public RefreshToken(Member member, String token, String deviceInfo, LocalDateTime createdAt,
+    public RefreshToken(Member member, String token, String deviceInfo, LocalDateTime updatedAt,
                         LocalDateTime expiredAt, LocalDateTime deletedAt) {
         this.member = member;
         this.token = token;
         this.deviceInfo = deviceInfo;
-        this.createdAt = createdAt;
         this.expiredAt = expiredAt;
         this.deletedAt = deletedAt;
     }
 
+    public void updateToken(String newRefreshToken) {
+        this.token = newRefreshToken;
+        this.expiredAt = LocalDateTime.now().plusDays(7);
+    }
 }
