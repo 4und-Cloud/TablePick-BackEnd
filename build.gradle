@@ -33,7 +33,8 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0' //swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0' //swagger
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 }
 
 tasks.named('test') {

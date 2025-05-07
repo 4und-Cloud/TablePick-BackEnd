@@ -1,18 +1,21 @@
 package com.goorm.tablepick.domain.restaurant.entity;
 
 import com.goorm.tablepick.domain.board.entity.Board;
-import com.goorm.tablepick.domain.reservation.entity.Reservation;
+import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
-import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
@@ -25,8 +28,6 @@ public class Restaurant {
 
     private String name;
 
-    private String operatingHour;
-
     private String restaurantPhoneNumber;
 
     private String address;
@@ -35,8 +36,10 @@ public class Restaurant {
 
     private BigDecimal ycoordinate;
 
+    private Long maxCapacity;
+
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
-    private List<Reservation> reservations = new ArrayList<>();
+    private List<ReservationSlot> reservationSlots = new ArrayList<>();
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     private List<Board> boards = new ArrayList<>();
