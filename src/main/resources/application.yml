@@ -17,10 +17,34 @@ spring:
     init:
       mode: never
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: email, profile
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            authorization-grant-type: authorization_code
+            client-authentication-method: client_secret_post
+            scope: profile_nickname, account_email, phone_number, birthyear, birthday, gender, profile_image
+        provider: # kakao는 OAuth 기본 제공 provider가 이니므로 설정해주어야 함
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
   jackson:
     serialization:
       write-dates-as-timestamps: false
-
-
+jwt:
+  secret: ${JWT_SECRET:defaultSecretIfMissing}
+  
 server:
   port: 8080
