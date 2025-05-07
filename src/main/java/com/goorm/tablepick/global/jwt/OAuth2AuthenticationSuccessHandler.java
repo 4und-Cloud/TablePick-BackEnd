@@ -41,8 +41,8 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
         authenticateUser(member);
 
-        String accessToken = jwtProvider.createShortLivedRefreshToken(member.getId());
-        String refreshToken = jwtProvider.createShortLivedRefreshToken(member.getId());
+        String accessToken = jwtProvider.createAccessToken(member.getId());
+        String refreshToken = jwtProvider.createRefreshToken(member.getId());
 
         issueAndSaveRefreshToken(member, refreshToken);
 
