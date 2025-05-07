@@ -82,13 +82,4 @@ public class JwtProvider {
         }
     }
 
-    // 예시: 짧은 만료 시간으로 RefreshToken 생성
-    public String createShortLivedRefreshToken(Long userId) {
-        return Jwts.builder()
-                .setSubject(String.valueOf(userId))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000)) // 1초
-                .signWith(key, SignatureAlgorithm.HS512)
-                .compact();
-    }
-
 }
