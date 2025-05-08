@@ -62,4 +62,5 @@ public class BoardController {
     public List<BoardListResponseDto> getBoards() {
         return boardService.getBoardList();
     }
+
 }
