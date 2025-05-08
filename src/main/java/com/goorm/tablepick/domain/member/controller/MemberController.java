@@ -1,5 +1,6 @@
 package com.goorm.tablepick.domain.member.controller;
 
+import com.goorm.tablepick.domain.board.dto.MyBoardListResponseDto;
 import com.goorm.tablepick.domain.member.dto.MemberResponseDto;
 import com.goorm.tablepick.domain.member.dto.MemberUpdateRequestDto;
 import com.goorm.tablepick.domain.member.service.MemberService;
@@ -43,9 +44,16 @@ public class MemberController {
     @Operation(summary = "사용자 예약 리스트 조회", description = "사용자 ID를 기준으로 예약 리스트를 반환합니다.")
     public ResponseEntity<List<ReservationResponseDto>> getMemberReservations(
             @AuthenticationPrincipal UserDetails userDetails) {
-        List<ReservationResponseDto> reservationList = memberService.getMemberReservationLis(
+        List<ReservationResponseDto> reservationList = memberService.getMemberReservationList(
                 "test@example.com");
         return ResponseEntity.ok(reservationList);
     }
 
+    @GetMapping("/boards")
+    @Operation(summary = "사용자 게시글 리스트 조회", description = "사용자 ID를 기준으로 게시글 리스트를 반환합니다.")
+    public ResponseEntity<List<MyBoardListResponseDto>> getMemberBoards(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        List<MyBoardListResponseDto> boardList = memberService.getMemberBoardList("test@example.com");
+        return ResponseEntity.ok(boardList);
+    }
 }
