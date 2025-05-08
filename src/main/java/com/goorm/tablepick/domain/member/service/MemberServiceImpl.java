@@ -1,5 +1,7 @@
 package com.goorm.tablepick.domain.member.service;
 
+import com.goorm.tablepick.domain.board.dto.MyBoardListResponseDto;
+import com.goorm.tablepick.domain.board.entity.Board;
 import com.goorm.tablepick.domain.board.repository.BoardRepository;
 import com.goorm.tablepick.domain.member.dto.MemberResponseDto;
 import com.goorm.tablepick.domain.member.dto.MemberUpdateRequestDto;
@@ -43,6 +45,16 @@ public class MemberServiceImpl implements MemberService {
 
         List<ReservationResponseDto> list = reservationList.stream()
                 .map(ReservationResponseDto::new)
+                .toList();
+        return list;
+    }
+
+    @Override
+    public List<MyBoardListResponseDto> getMemberBoardList(String username) {
+        List<Board> boardList = boardRepository.findAllByMember_Email(username);
+
+        List<MyBoardListResponseDto> list = boardList.stream()
+                .map(MyBoardListResponseDto::new)
                 .toList();
         return list;
     }
