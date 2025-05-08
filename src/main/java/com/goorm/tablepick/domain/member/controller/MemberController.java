@@ -3,8 +3,10 @@ package com.goorm.tablepick.domain.member.controller;
 import com.goorm.tablepick.domain.member.dto.MemberResponseDto;
 import com.goorm.tablepick.domain.member.dto.MemberUpdateRequestDto;
 import com.goorm.tablepick.domain.member.service.MemberService;
+import com.goorm.tablepick.domain.reservation.dto.response.ReservationResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,6 +37,15 @@ public class MemberController {
                                              @RequestBody @Valid MemberUpdateRequestDto memberUpdateRequestDto) {
         memberService.updateMemberInfo(userDetails.getUsername(), memberUpdateRequestDto);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/reservations")
+    @Operation(summary = "사용자 예약 리스트 조회", description = "사용자 ID를 기준으로 예약 리스트를 반환합니다.")
+    public ResponseEntity<List<ReservationResponseDto>> getMemberReservations(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        List<ReservationResponseDto> reservationList = memberService.getMemberReservationLis(
+                "test@example.com");
+        return ResponseEntity.ok(reservationList);
     }
 
 }

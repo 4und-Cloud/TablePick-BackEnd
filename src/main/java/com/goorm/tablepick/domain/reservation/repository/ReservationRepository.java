@@ -11,4 +11,6 @@ import org.springframework.stereotype.Repository;
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
     List<Reservation> findByReservationSlot(ReservationSlot reservationSlot);
+
+    List<Reservation> findAllByMember_Email(String username);
 }
