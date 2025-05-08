@@ -45,6 +45,10 @@ spring:
       write-dates-as-timestamps: false
 jwt:
   secret: ${JWT_SECRET:defaultSecretIfMissing}
-  
+
+springdoc:
+  swagger-ui:
+    url: http://localhost:8080/v3/api-docs
+
 server:
   port: 8080
