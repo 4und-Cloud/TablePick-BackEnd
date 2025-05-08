@@ -5,7 +5,10 @@ import com.goorm.tablepick.domain.member.dto.MemberResponseDto;
 import com.goorm.tablepick.domain.member.dto.MemberUpdateRequestDto;
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
+import com.goorm.tablepick.domain.reservation.dto.response.ReservationResponseDto;
+import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.repository.ReservationRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,4 +37,13 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(updatedMember);
     }
 
+    @Override
+    public List<ReservationResponseDto> getMemberReservationList(String username) {
+        List<Reservation> reservationList = reservationRepository.findAllByMember_Email(username);
+
+        List<ReservationResponseDto> list = reservationList.stream()
+                .map(ReservationResponseDto::new)
+                .toList();
+        return list;
+    }
 }
