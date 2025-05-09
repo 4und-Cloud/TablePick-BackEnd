@@ -5,11 +5,11 @@ import com.goorm.tablepick.domain.member.entity.RefreshToken;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
 import com.goorm.tablepick.domain.member.repository.RefreshTokenRepository;
 import com.goorm.tablepick.global.security.CustomUserDetailsService;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,22 +34,32 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
                                         Authentication authentication) throws IOException {
         DefaultOAuth2User oAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
         Map<String, Object> attributes = oAuth2User.getAttributes();
+        String accessToken = request.getHeader("Access-Token");
+        String refreshToken = getRefreshTokenFromCookie(request);
         String email = extractEmail(attributes);
 
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("인증 후 사용자 정보가 없습니다."));
 
         authenticateUser(member);
-
-        String accessToken = jwtProvider.createAccessToken(member.getId());
-        String refreshToken = jwtProvider.createRefreshToken(member.getId());
-
-        issueAndSaveRefreshToken(member, refreshToken);
+        //로그인할 사용자가 이미 액세스 토큰을 가지고 있지 않거나(처음 로그인) or 토큰이 있지만 유효하지 않다면 재발급
+        if (accessToken == null || !jwtProvider.validateToken(accessToken)) {
+            accessToken = jwtProvider.createAccessToken(member.getId(), email);
+            if (refreshToken == null || !jwtProvider.validateToken(refreshToken)) { //리프레쉬 토큰도 없거나 유효하지 않다면
+                refreshToken = jwtProvider.createRefreshToken(member.getId(), email);
+                issueAndSaveRefreshToken(member, refreshToken);
+            }
+        }
 
         // 토큰을 헤더에 설정
         response.setHeader("Access-Token", accessToken);
-        response.setHeader("Refresh-Token", refreshToken);
-        response.setHeader("Access-Control-Expose-Headers", "Access-Token, Refresh-Token");
+        Cookie refreshCookie = new Cookie("refresh_token", refreshToken);
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(true); // https 일 때만
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
+        response.addCookie(refreshCookie);
+        response.setHeader("Access-Control-Expose-Headers", "Access-Token");
 
         // 상태 코드만 전달 (200 OK)
         response.setStatus(HttpServletResponse.SC_OK);
@@ -73,16 +83,28 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
     //refresh 토큰 발급 및 db 저장
     private void issueAndSaveRefreshToken(Member member, String refreshTokenString) {
-        LocalDateTime expiredAt = jwtProvider.getExpiration(refreshTokenString)
-                .toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        LocalDateTime expiredAt = LocalDateTime.now().plusDays(7);
+        refreshTokenRepository.deleteByToken(refreshTokenString);
 
         RefreshToken refreshToken = RefreshToken.builder()
                 .token(refreshTokenString)
-                .deviceInfo("web")
                 .expiredAt(expiredAt)
+                .member(member)
                 .build();
 
-        refreshToken.setMember(member);
         refreshTokenRepository.save(refreshToken);
+    }
+
+    // 쿠키에서 리프레쉬 토큰 가져오기
+    private String getRefreshTokenFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("refresh_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
     }
 }

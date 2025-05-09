@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
@@ -17,8 +18,8 @@ import org.springframework.stereotype.Component;
 public class JwtProvider {
     @Value("${jwt.secret}")
     private String SECRET_KEY;
-    private static final long ACCESS_TOKEN_EXPIRATION_MS = 1000 * 60 * 60;         // 1시간
-    private static final long REFRESH_TOKEN_EXPIRATION_MS = 1000 * 60 * 60 * 24 * 7; // 1주일
+    private static final long ACCESS_TOKEN_EXPIRATION_MS = 1000 * 60 * 60;         // access - 1시간
+    private static final long REFRESH_TOKEN_EXPIRATION_MS = 1000 * 60 * 60 * 24 * 7; // refesh - 1주일
 
     private Key key;
 
@@ -27,20 +28,21 @@ public class JwtProvider {
         this.key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     }
 
-    public String createAccessToken(Long userId) {
-        return createToken(userId, ACCESS_TOKEN_EXPIRATION_MS);
+    public String createAccessToken(Long userId, String email) {
+        return createToken(userId, email, ACCESS_TOKEN_EXPIRATION_MS);
     }
 
-    public String createRefreshToken(Long userId) {
-        return createToken(userId, REFRESH_TOKEN_EXPIRATION_MS);
+    public String createRefreshToken(Long userId, String email) {
+        return createToken(userId, email, REFRESH_TOKEN_EXPIRATION_MS);
     }
 
-    private String createToken(Long userId, long expirationMillis) {
+    private String createToken(Long userId, String email, long expirationMillis) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMillis);
 
         return Jwts.builder()
                 .setSubject(userId.toString())
+                .claim("email", email)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(key, SignatureAlgorithm.HS512)
@@ -80,6 +82,25 @@ public class JwtProvider {
             // 이미 만료된 경우라도 Claims는 얻을 수 있음
             return e.getClaims();
         }
+    }
+
+    //HTTP 요청에서 Authorization 헤더에서 Bearer 토큰 추출
+    public String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+
+    // JWT에서 이메일 클레임 추출
+    public String getEmailFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.get("email", String.class);
     }
 
 }

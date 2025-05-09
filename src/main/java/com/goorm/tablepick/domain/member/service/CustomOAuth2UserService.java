@@ -5,6 +5,7 @@ import com.goorm.tablepick.domain.member.dto.KakaoInfo;
 import com.goorm.tablepick.domain.member.dto.OAuthInfo;
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Map;
@@ -52,7 +53,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                     (String) attributes.get("email"),
                     (String) attributes.get("sub"));
             case "kakao" -> {
-                Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakaoAccount");
+                Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
                 Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
                 String phoneNumber = (String) kakaoAccount.get("phone_number");
@@ -60,7 +61,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                 yield new KakaoInfo((String) profile.get("nickname"),
                         String.valueOf(attributes.get("id")),
                         (String) profile.get("profile_image_url"),
-                        (String) kakaoAccount.get("birthyear") + (String) kakaoAccount.get("birthday"),
+                        LocalDate.parse((String) kakaoAccount.get("birthyear") + (String) kakaoAccount.get("birthday"),
+                                formatter),
                         phoneNumber.replace("-", "").replace("+82 ", "0"),
                         (String) kakaoAccount.get("gender"),
                         (String) kakaoAccount.get("email")
