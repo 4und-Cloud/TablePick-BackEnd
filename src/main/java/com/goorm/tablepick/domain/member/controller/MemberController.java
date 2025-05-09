@@ -40,8 +40,6 @@ public class MemberController {
     @PatchMapping
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "사용자 정보 수정", description = "닉네임, 전화번호, 성별, 프로필 사진, 프로필 이미지, 사용자 태그 수정 가능합니다.")
-//    @PreAuthorize() //시큐리티 설정하신것들을 어노테이션으로 효율적으로
-//    @PostAuthorize()
     public ResponseEntity<Void> updateMember(@AuthenticationPrincipal UserDetails userDetails,
                                              @RequestBody @Valid MemberUpdateRequestDto memberUpdateRequestDto) {
         memberService.updateMemberInfo(userDetails.getUsername(), memberUpdateRequestDto);
