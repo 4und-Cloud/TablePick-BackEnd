@@ -3,9 +3,10 @@ package com.goorm.tablepick.domain.board.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Getter
 @Entity
+@Getter
 @NoArgsConstructor
 public class BoardImage {
     @Id
@@ -18,7 +19,14 @@ public class BoardImage {
     @Column(length = 255, nullable = false)
     private String storeFileName;
 
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)
     private Board board;
+
+    public BoardImage(String originalFileName, String storeFileName) {
+        this.originalFileName = originalFileName;
+        this.storeFileName = storeFileName;
+    }
+
 }
