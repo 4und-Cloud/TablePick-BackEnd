@@ -32,7 +32,6 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 20, nullable = false)
     private String nickname;
 
     @Column(length = 30, nullable = false, unique = true)
