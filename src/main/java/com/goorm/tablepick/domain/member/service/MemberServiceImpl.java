@@ -51,7 +51,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public List<MyBoardListResponseDto> getMemberBoardList(String username) {
-        List<Board> boardList = boardRepository.findAllByMember_Email(username);
+        List<Board> boardList = boardRepository.findAllByMemberEmail(username);
 
         List<MyBoardListResponseDto> list = boardList.stream()
                 .map(MyBoardListResponseDto::new)

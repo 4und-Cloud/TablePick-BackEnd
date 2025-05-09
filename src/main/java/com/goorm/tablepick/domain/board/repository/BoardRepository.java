@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface BoardRepository extends JpaRepository<Board, Long> {
-    List<Board> findAllByMember_Email(String memberEmail);
+    List<Board> findAllByMemberEmail(String memberEmail);
 }

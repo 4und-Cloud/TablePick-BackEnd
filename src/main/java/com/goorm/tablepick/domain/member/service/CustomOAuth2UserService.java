@@ -3,7 +3,10 @@ package com.goorm.tablepick.domain.member.service;
 import com.goorm.tablepick.domain.member.dto.GoogleInfo;
 import com.goorm.tablepick.domain.member.dto.KakaoInfo;
 import com.goorm.tablepick.domain.member.dto.OAuthInfo;
+import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -29,14 +32,15 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         Map<String, Object> attributes = delegateUser.getAttributes();
 
         OAuthInfo oAuthInfo = createOAuthInfo(registrationId, attributes); // provider에서 받아온 사용자 정보
-        memberRepository.findByEmail(oAuthInfo.getEmail())
-                .orElseGet(() -> memberRepository.save(oAuthInfo.toEntity()));
+        Member member = oAuthInfo.toEntity();
+        memberRepository.findByEmail(member.getEmail())
+                .orElseGet(() -> memberRepository.save(member));
 
         return new DefaultOAuth2User(
                 Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
                 Map.of(
-                        "email", oAuthInfo.getEmail(),
-                        "id", oAuthInfo.getProviderId()
+                        "email", member.getEmail(),
+                        "id", member.getProviderId()
                 ),
                 "email"
         );
@@ -44,9 +48,28 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
     private OAuthInfo createOAuthInfo(String registrationId, Map<String, Object> attributes) {
         return switch (registrationId.toLowerCase()) {
-            case "google" -> new GoogleInfo(attributes);
-            case "kakao" -> new KakaoInfo(attributes, (Map<String, Object>) attributes.get("kakao_account"));
+            case "google" -> new GoogleInfo((String) attributes.get("name"),
+                    (String) attributes.get("picture"),
+                    (String) attributes.get("email"),
+                    (String) attributes.get("sub"));
+            case "kakao" -> {
+                Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
+                Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+                String phoneNumber = (String) kakaoAccount.get("phone_number");
+
+                yield new KakaoInfo((String) profile.get("nickname"),
+                        String.valueOf(attributes.get("id")),
+                        (String) profile.get("profile_image_url"),
+                        LocalDate.parse((String) kakaoAccount.get("birthyear") + (String) kakaoAccount.get("birthday"),
+                                formatter),
+                        phoneNumber.replace("-", "").replace("+82 ", "0"),
+                        (String) kakaoAccount.get("gender"),
+                        (String) kakaoAccount.get("email")
+                );
+            }
             default -> throw new OAuth2AuthenticationException("지원하지 않는 소셜 로그인입니다: " + registrationId);
         };
     }
 }
+
