@@ -2,38 +2,35 @@ package com.goorm.tablepick.domain.member.dto;
 
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.enums.AccountRole;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class GoogleInfo implements OAuthInfo {
-    private final Map<String, Object> attributes;
+    private String nickname;
+    private String email;
+    private String profileImage;
+    private String provider;
+    private String providerId; //다른분들이 봣을때 잘모를수잇다 그러니 공통적인 필드값은 관리한느게 저ㅗㅎ다
 
-    @Override
-    public String getEmail() {
-        return (String) attributes.get("email");
-    }
+    public GoogleInfo(String name, String picture, String email, String sub) {
+        this.nickname = name;
+        this.email = email;
+        this.profileImage = picture;
+        this.provider = "google";
+        this.providerId = sub;
 
-    @Override
-    public String getProviderId() {
-        return (String) attributes.get("sub");
-    }
-
-    @Override
-    public String getProvider() {
-        return "google";
     }
 
     @Override
     public Member toEntity() {
         return Member.builder()
-                .email(getEmail())
-                .nickname((String) attributes.get("name"))
-                .profileImage((String) attributes.get("picture"))
+                .email(this.email)
+                .nickname(this.nickname)
+                .profileImage(this.profileImage)
                 .roles(AccountRole.USER)
                 .isMemberDeleted(false)
-                .provider(getProvider())
-                .providerId(getProviderId())
+                .provider(this.provider)
+                .providerId(this.providerId)
                 .build();
     }
 
