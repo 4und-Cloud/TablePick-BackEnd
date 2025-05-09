@@ -25,7 +25,12 @@ public class SecurityConfig {
         http
                 .csrf(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/**", "/auth/**", "/oauth2/**").permitAll()
+                        .requestMatchers("/auth/**",
+                                "/oauth2/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html/**",
+                                "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/**").hasRole("ROLE_USER")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)

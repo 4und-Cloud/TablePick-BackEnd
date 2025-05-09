@@ -45,6 +45,6 @@ spring:
       write-dates-as-timestamps: false
 jwt:
   secret: ${JWT_SECRET:defaultSecretIfMissing}
-  
+
 server:
   port: 8080
