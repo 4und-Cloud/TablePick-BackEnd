@@ -3,6 +3,7 @@ package com.goorm.tablepick.global.jwt;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -44,15 +45,21 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         String refreshToken = request.getHeader("Refresh-Token");
         if (refreshToken != null && !jwtProvider.validateToken(refreshToken)) {
             Long userId = jwtProvider.getUserIdFromToken(refreshToken);
-            String newRefreshToken = jwtTokenService.handleExpiredRefreshToken(userId, refreshToken);
+            String email = jwtProvider.getEmailFromToken(refreshToken);
+            String newRefreshToken = jwtTokenService.handleExpiredRefreshToken(userId, email, refreshToken);
             if (newRefreshToken != null) {
                 // AccessToken 재발급
-                String newAccessToken = jwtProvider.createAccessToken(userId);
+                String newAccessToken = jwtProvider.createAccessToken(userId, email);
                 response.setHeader("Access-Token", newAccessToken);
                 setAuthentication(newAccessToken, request);
 
-                // 새 RefreshToken을 헤더에 담아 전송
-                response.setHeader("Refresh-Token", newRefreshToken);
+                // 새 RefreshToken을 쿠키에 담아 전송
+                Cookie refreshCookie = new Cookie("refresh_token", newRefreshToken);
+                refreshCookie.setHttpOnly(true);
+                refreshCookie.setSecure(true); // https 일 때만
+                refreshCookie.setPath("/");
+                refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
+                response.addCookie(refreshCookie);
             }
         }
     }
@@ -73,6 +80,19 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
+        }
+        return null;
+    }
+
+    // 쿠키에서 리프레쉬 토큰 가져오기
+    private String getRefreshTokenFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("refresh_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
         }
         return null;
     }
