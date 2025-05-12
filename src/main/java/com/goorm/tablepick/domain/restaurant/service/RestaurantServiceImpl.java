@@ -33,7 +33,8 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
-    public PagedRestaurantResponseDto searchAllByCategory(RestaurantCategorySearchRequestDto categorySearchRequestDto) {
+    public PagedRestaurantResponseDto searchAllByCategory(
+            @Valid RestaurantCategorySearchRequestDto categorySearchRequestDto) {
         Pageable pageable = PageRequest.of(categorySearchRequestDto.getPage(), 8, Sort.by("name").ascending());
         Long categoryId = categorySearchRequestDto.getCategoryId();
         if (!restaurantCategoryRepository.existsById(categoryId)) {
