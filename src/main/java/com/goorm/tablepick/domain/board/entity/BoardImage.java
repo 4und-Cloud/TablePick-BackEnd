@@ -21,6 +21,9 @@ public class BoardImage {
 
     private String imageUrl;
 
+    private String originalFileName;
+    private String storeFileName;
+
     @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)
@@ -29,6 +32,7 @@ public class BoardImage {
     public BoardImage(String originalFileName, String storeFileName) {
         this.originalFileName = originalFileName;
         this.storeFileName = storeFileName;
+        this.imageUrl = storeFileName; // 또는 필요한 경우 URL 전체 경로로 설정
     }
 
 }

@@ -14,9 +14,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -34,16 +34,10 @@ public class BoardController {
     })
     public ResponseEntity<?> createBoard(
             @ModelAttribute @Parameter(description = "게시글 생성 정보") BoardRequestDto dto,
-            Principal principal
+            @AuthenticationPrincipal Member member  // 여기 수정됨
     ) {
-        // 실제 로그인된 사용자 정보 가져와야 함
-        Member member = getMemberFromPrincipal(principal); // 이 부분 실제 구현 필요
         Long boardId = boardService.createBoard(dto, member);
         return ResponseEntity.ok(boardId);
-    }
-
-    private Member getMemberFromPrincipal(Principal principal) {
-        throw new UnsupportedOperationException("Spring Security 또는 사용자 서비스 구현 필요");
     }
 
     @GetMapping("/{boardId}")
