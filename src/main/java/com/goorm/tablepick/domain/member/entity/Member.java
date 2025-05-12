@@ -1,5 +1,6 @@
 package com.goorm.tablepick.domain.member.entity;
 
+import com.goorm.tablepick.domain.member.dto.MemberUpdateRequestDto;
 import com.goorm.tablepick.domain.member.enums.AccountRole;
 import com.goorm.tablepick.domain.member.enums.Gender;
 import jakarta.persistence.CascadeType;
@@ -32,7 +33,6 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 20, nullable = false)
     private String nickname;
 
     @Column(length = 30, nullable = false, unique = true)
@@ -66,5 +66,15 @@ public class Member {
     public void updateRefreshToken(RefreshToken refreshToken) {
         this.refreshToken = refreshToken;
         refreshToken.setMember(this);
+    }
+
+    public Member updateMember(MemberUpdateRequestDto dto) {
+        this.nickname = dto.getNickname();
+        this.phoneNumber = dto.getPhoneNumber();
+        this.gender = dto.getGender();
+        this.birthdate = dto.getBirthdate();
+        this.profileImage = dto.getProfileImage();
+        this.memberTags = dto.getMemberTags();
+        return this;
     }
 }

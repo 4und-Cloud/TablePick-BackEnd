@@ -1,4 +1,4 @@
-package com.goorm.tablepick.domain.board.entity;
+package com.goorm.tablepick.domain.restaurant.entity;
 
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import jakarta.persistence.Entity;
@@ -11,31 +11,22 @@ import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BoardTag {
+public class RestaurantTag {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Setter
+    private Long count;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "board_id", nullable = false)
-    private Board board;
+    @JoinColumn(name = "restaurant_id", nullable = false)
+    private Restaurant restaurant;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tag_id", nullable = false)
     private Tag tag;
-
-    public BoardTag(Tag tag) {
-        this.tag = tag;
-    }
-
-    public BoardTag(Board board, Tag tag) {
-        this.board = board;
-        this.tag = tag;
-    }
 }
