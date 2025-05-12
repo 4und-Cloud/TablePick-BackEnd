@@ -9,9 +9,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Getter
 @Entity
+@Getter
 @NoArgsConstructor
 public class BoardImage {
     @Id
@@ -20,7 +21,14 @@ public class BoardImage {
 
     private String imageUrl;
 
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)
     private Board board;
+
+    public BoardImage(String originalFileName, String storeFileName) {
+        this.originalFileName = originalFileName;
+        this.storeFileName = storeFileName;
+    }
+
 }
