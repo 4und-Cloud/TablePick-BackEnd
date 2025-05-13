@@ -9,7 +9,6 @@ import com.goorm.tablepick.domain.board.service.BoardService;
 import com.goorm.tablepick.domain.member.entity.Member;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -42,7 +41,7 @@ public class BoardController {
     })
     public ResponseEntity<?> createBoard(
             @ModelAttribute @Parameter(description = "게시글 생성 정보") BoardRequestDto dto,
-            @AuthenticationPrincipal Member member  // 여기 수정됨
+            @AuthenticationPrincipal Member member
     ) {
         Long boardId = boardService.createBoard(dto, member);
         return ResponseEntity.ok(boardId);
@@ -60,10 +59,12 @@ public class BoardController {
     }
 
     @GetMapping
-    @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 조회합니다.")
-    @ApiResponse(responseCode = "200", description = "게시글 목록 반환", content = @Content(array = @ArraySchema(schema = @Schema(implementation = BoardListResponseDto.class))))
-    public List<BoardListResponseDto> getBoards() {
-        return boardService.getBoardList();
+    public ResponseEntity<?> getBoards() {
+        List<BoardListResponseDto> boards = boardService.getBoardList();
+        if (boards.isEmpty()) {
+            return ResponseEntity.noContent().build();  // 204 No Content
+        }
+        return ResponseEntity.ok(boards); // 200 OK
     }
 
 
@@ -75,5 +76,6 @@ public class BoardController {
 
         return ResponseEntity.ok(pagedBoardsResponseDto);
     }
+
 
 }

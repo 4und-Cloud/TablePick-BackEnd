@@ -9,6 +9,7 @@ import com.goorm.tablepick.domain.board.dto.response.PagedBoardsResponseDto;
 import com.goorm.tablepick.domain.member.entity.Member;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public interface BoardService {
     Long createBoard(BoardRequestDto dto, Member member);
@@ -18,4 +19,5 @@ public interface BoardService {
     List<BoardListResponseDto> getBoardList();
 
     PagedBoardsResponseDto searchAllByCategory(@Valid BoardCategorySearchRequestDto boardSearchRequestDto);
+      
 }
