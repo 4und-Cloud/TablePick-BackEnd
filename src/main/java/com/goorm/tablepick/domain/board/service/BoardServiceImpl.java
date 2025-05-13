@@ -127,7 +127,8 @@ public class BoardServiceImpl implements BoardService {
 
     @Override
     public PagedBoardsResponseDto searchAllByCategory(@Valid BoardCategorySearchRequestDto boardSearchRequestDto) {
-        Pageable pageable = PageRequest.of(boardSearchRequestDto.getPage(), 8, Sort.by("createdAt").ascending());
+        Pageable pageable = PageRequest.of(boardSearchRequestDto.getPage() - 1, 8,
+                Sort.by("createdAt").ascending()); //페이지는 0부터 시작
         Page<Board> boardList = boardRepository.findAllByCategory(boardSearchRequestDto.getCategoryId(), pageable);
 
         return new PagedBoardsResponseDto(boardList);

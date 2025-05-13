@@ -25,7 +25,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     public PagedRestaurantResponseDto searchAllByKeyword(
             @Valid RestaurantKeywordSearchRequestDto keywordSearchRequestDto) {
-        Pageable pageable = PageRequest.of(keywordSearchRequestDto.getPage(), 8, Sort.by("name").ascending());
+        Pageable pageable = PageRequest.of(keywordSearchRequestDto.getPage() - 1, 8, Sort.by("name").ascending());
         Page<Restaurant> restaurantListByKeyword = restaurantRepository.findAllByKeyword(
                 keywordSearchRequestDto.getKeyword(), pageable);
 
@@ -35,7 +35,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     public PagedRestaurantResponseDto searchAllByCategory(
             @Valid RestaurantCategorySearchRequestDto categorySearchRequestDto) {
-        Pageable pageable = PageRequest.of(categorySearchRequestDto.getPage(), 8, Sort.by("name").ascending());
+        Pageable pageable = PageRequest.of(categorySearchRequestDto.getPage() - 1, 8, Sort.by("name").ascending());
         Long categoryId = categorySearchRequestDto.getCategoryId();
         if (!restaurantCategoryRepository.existsById(categoryId)) {
             throw new RestaurantException(RestaurantErrorCode.NO_RESTAURANT_CATEGORY);

@@ -13,6 +13,6 @@ public class BoardKeywordSearchRequestDto {
     @NotBlank(message = "검색어를 입력해주세요")
     private String keyword;
 
-    @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다")
-    private int page = 0;
+    @Min(value = 1, message = "페이지 번호는 1 이상이어야 합니다")
+    private int page = 1;
 }

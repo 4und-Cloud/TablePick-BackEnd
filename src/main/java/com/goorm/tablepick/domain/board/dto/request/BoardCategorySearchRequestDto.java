@@ -13,8 +13,8 @@ public class BoardCategorySearchRequestDto {
     @NotNull(message = "카테고리를 선택하여야 합니다.")
     Long categoryId;
 
-    @Schema(description = "페이지 번호", example = "0")
-    @Min(value = 0, message = "페이지는 0 이상이어야 합니다.")
+    @Schema(description = "페이지 번호", example = "1")
+    @Min(value = 1, message = "페이지는 1 이상이어야 합니다.")
     int page;
 
 }
