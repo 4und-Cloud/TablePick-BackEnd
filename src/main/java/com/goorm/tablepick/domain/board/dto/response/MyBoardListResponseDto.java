@@ -1,4 +1,4 @@
-package com.goorm.tablepick.domain.board.dto;
+package com.goorm.tablepick.domain.board.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.goorm.tablepick.domain.board.entity.Board;

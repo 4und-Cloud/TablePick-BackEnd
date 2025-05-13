@@ -1,6 +1,6 @@
 package com.goorm.tablepick.domain.member.service;
 
-import com.goorm.tablepick.domain.board.dto.MyBoardListResponseDto;
+import com.goorm.tablepick.domain.board.dto.response.MyBoardListResponseDto;
 import com.goorm.tablepick.domain.board.entity.Board;
 import com.goorm.tablepick.domain.board.repository.BoardRepository;
 import com.goorm.tablepick.domain.member.dto.MemberResponseDto;
