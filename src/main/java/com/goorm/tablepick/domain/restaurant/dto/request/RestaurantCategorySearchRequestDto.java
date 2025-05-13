@@ -12,7 +12,7 @@ public class RestaurantCategorySearchRequestDto {
     @NotNull(message = "카테고리 ID를 입력해주세요")
     private Long categoryId;
 
-    @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다")
-    private int page = 0;
+    @Min(value = 1, message = "페이지 번호는 1 이상이어야 합니다")
+    private int page = 1;
 
 }
