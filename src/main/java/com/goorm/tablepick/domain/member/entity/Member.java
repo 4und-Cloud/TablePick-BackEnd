@@ -63,6 +63,10 @@ public class Member {
 
     private String providerId;
 
+    // FCM 토큰 필드 추가
+    @Column(length = 255)
+    private String fcmToken;
+
     public void updateRefreshToken(RefreshToken refreshToken) {
         this.refreshToken = refreshToken;
         refreshToken.setMember(this);
@@ -76,5 +80,15 @@ public class Member {
         this.profileImage = dto.getProfileImage();
         this.memberTags = dto.getMemberTags();
         return this;
+    }
+
+    // FCM 토큰 업데이트 메서드
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
+
+    // FCM 토큰 삭제 메서드
+    public void removeFcmToken() {
+        this.fcmToken = null;
     }
 }

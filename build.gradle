@@ -44,7 +44,8 @@ dependencies {
     // Gson for JSON parsing
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.json:json:20240303'
-
+    // Firebase Admin SDK
+    implementation 'com.google.firebase:firebase-admin:9.4.3'
 }
 
 tasks.named('test') {
