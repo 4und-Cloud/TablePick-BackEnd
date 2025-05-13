@@ -34,7 +34,7 @@ public class BoardController {
     })
     public ResponseEntity<?> createBoard(
             @ModelAttribute @Parameter(description = "게시글 생성 정보") BoardRequestDto dto,
-            @AuthenticationPrincipal Member member  // 여기 수정됨
+            @AuthenticationPrincipal Member member
     ) {
         Long boardId = boardService.createBoard(dto, member);
         return ResponseEntity.ok(boardId);
@@ -51,7 +51,7 @@ public class BoardController {
     }
 
     @GetMapping
-    @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 조회합니다.")
+    @Operation(summary = "게시글 목록 조회", description = "게시글 목록을 최신순으로 조회합니다.")
     @ApiResponse(responseCode = "200", description = "게시글 목록 반환", content = @Content(array = @ArraySchema(schema = @Schema(implementation = BoardListResponseDto.class))))
     public List<BoardListResponseDto> getBoards() {
         return boardService.getBoardList();

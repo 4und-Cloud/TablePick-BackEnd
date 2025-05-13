@@ -95,7 +95,8 @@ public class BoardService {
 
 
     public List<BoardListResponseDto> getBoardList() {
-        List<Board> boards = boardRepository.findAll();
+        // 변경된 부분: 최신순 정렬 메서드로 교체
+        List<Board> boards = boardRepository.findAllByOrderByCreatedAtDesc();
 
         return boards.stream().map(board -> {
             String imageUrl = board.getBoardImages().isEmpty()
