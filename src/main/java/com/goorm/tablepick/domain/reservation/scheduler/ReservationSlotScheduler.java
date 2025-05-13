@@ -6,10 +6,12 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ReservationSlotScheduler {
@@ -18,7 +20,7 @@ public class ReservationSlotScheduler {
 
     // 매일 자정 실행
     @Scheduled(cron = "0 0 0 * * *")
-    //@Scheduled(cron = "0 22 11 * * *")
+    //@Scheduled(cron = "0 31 11 * * *")
     public void createReservationSlots() {
         LocalDate today = LocalDate.now();
         String dayOfWeek = today.getDayOfWeek().toString(); // 예: "MONDAY"
@@ -73,7 +75,8 @@ public class ReservationSlotScheduler {
             slotTime = slotTime.plusHours(1);
         }
 
-        System.out.println("✅ 슬롯 생성 완료: restaurant_id = " + restaurantId + ", date = " + date);
+        log.info("✅ 슬롯 생성 완료: restaurant_id = " + restaurantId + ", date = " + date);
+        //System.out.println("✅ 슬롯 생성 완료: restaurant_id = " + restaurantId + ", date = " + date);
     }
 
 }
