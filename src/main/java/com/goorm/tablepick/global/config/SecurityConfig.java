@@ -1,7 +1,7 @@
 package com.goorm.tablepick.global.config;
 
 import com.goorm.tablepick.domain.member.service.CustomOAuth2UserService;
-import com.goorm.tablepick.global.jwt.JwtTokenFilter;
+import com.goorm.tablepick.global.filter.JwtTokenFilter;
 import com.goorm.tablepick.global.jwt.OAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

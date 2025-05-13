@@ -1,6 +1,8 @@
-package com.goorm.tablepick.global.jwt;
+package com.goorm.tablepick.global.filter;
 
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
+import com.goorm.tablepick.global.jwt.JwtProvider;
+import com.goorm.tablepick.global.jwt.JwtTokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
