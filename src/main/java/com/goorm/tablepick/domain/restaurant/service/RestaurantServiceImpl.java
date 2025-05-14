@@ -3,6 +3,7 @@ package com.goorm.tablepick.domain.restaurant.service;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantCategorySearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantKeywordSearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantResponseDto;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantErrorCode;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
@@ -43,5 +44,20 @@ public class RestaurantServiceImpl implements RestaurantService {
         Page<Restaurant> restaurantListByCategory = restaurantRepository.findAllByCategory(categoryId,
                 pageable);
         return new PagedRestaurantResponseDto(restaurantListByCategory);
+    }
+
+    @Override
+    public Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable) {
+        Page<Restaurant> restaurantPage = restaurantRepository.findPopularRestaurants(pageable);
+        Page<RestaurantResponseDto> dtoPage = restaurantPage.map(restaurant ->
+                new RestaurantResponseDto(
+                        restaurant.getId(),
+                        restaurant.getName(),
+                        restaurant.getRestaurantCategory().getName(),
+                        restaurant.getRestaurantImages().isEmpty() ? null
+                                : restaurant.getRestaurantImages().get(0).getImageUrl()
+                )
+        );
+        return dtoPage;
     }
 }
