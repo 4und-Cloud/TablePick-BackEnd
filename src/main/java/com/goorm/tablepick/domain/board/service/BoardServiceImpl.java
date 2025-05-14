@@ -17,6 +17,8 @@ import com.goorm.tablepick.domain.tag.entity.Tag;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,9 +26,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -128,7 +127,7 @@ public class BoardServiceImpl implements BoardService {
 
     @Override
     public PagedBoardsResponseDto searchAllByCategory(@Valid BoardCategorySearchRequestDto boardSearchRequestDto) {
-        Pageable pageable = PageRequest.of(boardSearchRequestDto.getPage() - 1, 8,
+        Pageable pageable = PageRequest.of(boardSearchRequestDto.getPage() - 1, 6,
                 Sort.by("createdAt").ascending()); //페이지는 0부터 시작
         Page<Board> boardList = boardRepository.findAllByCategory(boardSearchRequestDto.getCategoryId(), pageable);
 

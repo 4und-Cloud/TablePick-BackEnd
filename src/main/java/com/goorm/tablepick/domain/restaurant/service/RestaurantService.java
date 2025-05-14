@@ -14,4 +14,7 @@ public interface RestaurantService {
     PagedRestaurantResponseDto searchAllByCategory(@Valid RestaurantCategorySearchRequestDto categorySearchRequestDto);
 
     Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable);
+
+    PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page);
+
 }
