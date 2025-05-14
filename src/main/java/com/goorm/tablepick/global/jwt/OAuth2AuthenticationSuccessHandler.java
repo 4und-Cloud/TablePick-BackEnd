@@ -76,7 +76,6 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
         // JSON 응답 데이터 구성
         Map<String, Object> responseData = new HashMap<>();
-        responseData.put("accessToken", accessToken);
         responseData.put("phoneNumber", phoneNumber);
         responseData.put("gender", gender);
         responseData.put("birthDate", birthDate);
