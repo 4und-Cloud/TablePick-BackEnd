@@ -1,6 +1,7 @@
 package com.goorm.tablepick.domain.member.controller;
 
 import com.goorm.tablepick.domain.board.dto.response.MyBoardListResponseDto;
+import com.goorm.tablepick.domain.member.dto.MemberAddtionalInfoRequestDto;
 import com.goorm.tablepick.domain.member.dto.MemberResponseDto;
 import com.goorm.tablepick.domain.member.dto.MemberUpdateRequestDto;
 import com.goorm.tablepick.domain.member.service.MemberService;
@@ -8,7 +9,6 @@ import com.goorm.tablepick.domain.reservation.dto.response.ReservationResponseDt
 import com.goorm.tablepick.global.jwt.JwtProvider;
 import com.goorm.tablepick.global.jwt.JwtTokenService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -42,8 +42,7 @@ public class MemberController {
     }
 
     @PatchMapping
-    @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "사용자 정보 수정", description = "닉네임, 전화번호, 성별, 프로필 사진, 프로필 이미지, 사용자 태그 수정 가능합니다.")
+    @Operation(summary = "사용자 정보 수정", description = "닉네임, 전화번호, 성별, 프로필 사진, 사용자 태그 수정 가능합니다.")
     public ResponseEntity<Void> updateMember(@AuthenticationPrincipal UserDetails userDetails,
                                              @RequestBody @Valid MemberUpdateRequestDto memberUpdateRequestDto) {
         memberService.updateMemberInfo(userDetails.getUsername(), memberUpdateRequestDto);
@@ -80,6 +79,14 @@ public class MemberController {
         response.addCookie(refreshCookie);
 
         return ResponseEntity.ok("로그아웃 완료");
+    }
+
+    @PostMapping
+    @Operation(summary = "로그인 후 사용자 정보 추가", description = "전화번호, 성별, 사용자 태그 수정 가능합니다.")
+    public ResponseEntity<Void> addMemberInfoAfterLogin(@AuthenticationPrincipal UserDetails userDetails,
+                                                        @RequestBody @Valid MemberAddtionalInfoRequestDto memberAddtionalInfoRequestDto) {
+        memberService.addMemberInfo(userDetails.getUsername(), memberAddtionalInfoRequestDto);
+        return ResponseEntity.ok().build();
     }
 
 }

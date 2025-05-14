@@ -1,5 +1,6 @@
 package com.goorm.tablepick.domain.member.entity;
 
+import com.goorm.tablepick.domain.member.dto.MemberAddtionalInfoRequestDto;
 import com.goorm.tablepick.domain.member.dto.MemberUpdateRequestDto;
 import com.goorm.tablepick.domain.member.enums.AccountRole;
 import com.goorm.tablepick.domain.member.enums.Gender;
@@ -75,6 +76,14 @@ public class Member {
         this.birthdate = dto.getBirthdate();
         this.profileImage = dto.getProfileImage();
         this.memberTags = dto.getMemberTags();
+        return this;
+    }
+
+    public Member addMemberInfo(MemberAddtionalInfoRequestDto dto, List<MemberTag> memberTags) {
+        this.phoneNumber = dto.getPhoneNumber();
+        this.gender = dto.getGender();
+        this.birthdate = dto.getBirthdate();
+        this.memberTags = memberTags;
         return this;
     }
 }
