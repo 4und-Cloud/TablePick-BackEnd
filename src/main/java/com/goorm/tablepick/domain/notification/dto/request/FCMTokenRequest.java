@@ -1,13 +1,14 @@
 package com.goorm.tablepick.domain.notification.dto.request;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Data
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class FCMTokenRequest {
-    private Long memberId;
+@Builder
+public class FcmTokenRequest {
     private String token;
 }

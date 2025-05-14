@@ -1,13 +1,15 @@
 package com.goorm.tablepick.global.exception;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import java.time.format.DateTimeParseException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import java.time.format.DateTimeParseException;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(CustomException.class)
@@ -16,6 +18,12 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(e.getErrorCode().name(), e.getMessage()));
     }
 
+    @ExceptionHandler(NotificationException.class)
+    public ResponseEntity<ErrorResponse> handleNotificationException(NotificationException e) {
+        log.error("Notification error: {}", e.getMessage());
+        return ResponseEntity.badRequest()
+                .body(new ErrorResponse(e.getErrorCode(), e.getMessage()));
+    }
 
     @ExceptionHandler(InvalidFormatException.class)
     public ResponseEntity<String> handleInvalidFormat(InvalidFormatException e) {

@@ -1,62 +1,61 @@
 package com.goorm.tablepick.domain.notification.controller;
 
+import com.goorm.tablepick.domain.notification.dto.request.FcmTokenRequest;
 import com.goorm.tablepick.domain.notification.dto.request.NotificationRequest;
 import com.goorm.tablepick.domain.notification.dto.response.NotificationResponse;
-import com.goorm.tablepick.domain.notification.entity.Notification;
+import com.goorm.tablepick.domain.notification.service.FCMTokenService;
 import com.goorm.tablepick.domain.notification.service.NotificationService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-// 알림 관련 API 컨트롤러
 @RestController
 @RequestMapping("/api/notifications")
-@Tag(name = "Notification API", description = "FCM 알림 관련 API")
+@RequiredArgsConstructor
 public class NotificationController {
-
     private final NotificationService notificationService;
+    private final FCMTokenService fcmTokenService;
 
-    @Autowired
-    public NotificationController(NotificationService notificationService) {
-        this.notificationService = notificationService;
-    }
-
-    @PostMapping("/send")
-    @Operation(summary = "알림 전송", description = "FCM을 통해 알림을 전송합니다.")
-    public ResponseEntity<NotificationResponse> sendNotification(@RequestBody NotificationRequest request) {
-        NotificationResponse response = notificationService.sendNotification(request);
+    @PostMapping("/schedule")
+    public ResponseEntity<NotificationResponse> scheduleNotification(@RequestBody NotificationRequest request) {
+        NotificationResponse response = notificationService.scheduleNotification(request);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping
-    @Operation(summary = "알림 목록 조회", description = "전송된 모든 알림 목록을 조회합니다.")
-    public ResponseEntity<List<Notification>> getAllNotifications() {
-        List<Notification> notifications = notificationService.getAllNotifications();
-        return ResponseEntity.ok(notifications);
+    @GetMapping("/{id}")
+    public ResponseEntity<NotificationResponse> getNotificationStatus(@PathVariable Long id) {
+        NotificationResponse response = notificationService.getNotificationStatus(id);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/member/{memberId}")
-    @Operation(summary = "회원별 알림 목록 조회", description = "특정 회원에게 전송된 알림 목록을 조회합니다.")
-    public ResponseEntity<List<Notification>> getNotificationsByMemberId(@PathVariable Long memberId) {
-        List<Notification> notifications = notificationService.getNotificationsByMemberId(memberId);
+    public ResponseEntity<List<NotificationResponse>> getMemberNotifications(
+            @PathVariable Long memberId,
+            @RequestParam(required = false) String status) {
+        List<NotificationResponse> notifications = notificationService.getMemberNotifications(memberId, status);
         return ResponseEntity.ok(notifications);
     }
 
-    @GetMapping("/reservation/{reservationId}")
-    @Operation(summary = "예약별 알림 목록 조회", description = "특정 예약과 관련된 알림 목록을 조회합니다.")
-    public ResponseEntity<List<Notification>> getNotificationsByReservationId(@PathVariable Long reservationId) {
-        List<Notification> notifications = notificationService.getNotificationsByReservationId(reservationId);
-        return ResponseEntity.ok(notifications);
+    @PutMapping("/fcm-token")
+    public ResponseEntity<Void> updateFcmToken(
+            @RequestParam Long memberId,
+            @RequestBody FcmTokenRequest request) {
+        fcmTokenService.updateFcmToken(memberId, request.getToken());
+        return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/type/{type}")
-    @Operation(summary = "유형별 알림 목록 조회", description = "특정 유형의 알림 목록을 조회합니다.")
-    public ResponseEntity<List<Notification>> getNotificationsByType(@PathVariable String type) {
-        List<Notification> notifications = notificationService.getNotificationsByType(type);
-        return ResponseEntity.ok(notifications);
+    @DeleteMapping("/fcm-token")
+    public ResponseEntity<Void> deleteFcmToken(@RequestParam Long memberId) {
+        fcmTokenService.deleteFcmToken(memberId);
+        return ResponseEntity.ok().build();
     }
 }
