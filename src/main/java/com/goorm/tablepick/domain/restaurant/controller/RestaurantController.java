@@ -37,4 +37,10 @@ public class RestaurantController {
         return restaurantService.searchAllByCategory(requestDto);
     }
 
+    @GetMapping("/list")
+    @Operation(summary = "식당 목록", description = "식당 목록을 리뷰 많은 순으로 반환합니다.")
+    public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page) {
+        return restaurantService.getAllRestaurantsOrderedByBoardNum(page);
+    }
+
 }
