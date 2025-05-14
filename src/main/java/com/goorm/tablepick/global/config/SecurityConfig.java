@@ -29,6 +29,7 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html/**",
+                                "/api/restaurants/all",
                                 "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/**").hasRole("USER")
                         .anyRequest().authenticated()
