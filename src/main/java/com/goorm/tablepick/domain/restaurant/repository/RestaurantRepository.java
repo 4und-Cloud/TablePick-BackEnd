@@ -1,7 +1,6 @@
 package com.goorm.tablepick.domain.restaurant.repository;
 
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
-import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,5 +20,5 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     Page<Restaurant> findAllByCategory(@Param("categoryId") Long categoryId, Pageable pageable);
 
     @Query("SELECT r FROM Restaurant r ORDER BY SIZE(r.boards) DESC")
-    List<Restaurant> findAllOrderedByCreatedAt();
+    Page<Restaurant> findAllOrderedByCreatedAt(Pageable pageable);
 }
