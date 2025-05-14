@@ -44,4 +44,11 @@ public class RestaurantServiceImpl implements RestaurantService {
                 pageable);
         return new PagedRestaurantResponseDto(restaurantListByCategory);
     }
+
+    @Override
+    public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page) {
+        Pageable pageable = PageRequest.of(page - 1, 8);
+        Page<Restaurant> restaurantList = restaurantRepository.findAllOrderedByCreatedAt(pageable);
+        return new PagedRestaurantResponseDto(restaurantList);
+    }
 }

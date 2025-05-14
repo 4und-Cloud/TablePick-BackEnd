@@ -9,4 +9,6 @@ public interface RestaurantService {
     PagedRestaurantResponseDto searchAllByKeyword(@Valid RestaurantKeywordSearchRequestDto keywordSearchRequestDto);
 
     PagedRestaurantResponseDto searchAllByCategory(@Valid RestaurantCategorySearchRequestDto categorySearchRequestDto);
+
+    PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page);
 }
