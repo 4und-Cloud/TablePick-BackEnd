@@ -2,6 +2,7 @@ package com.goorm.tablepick.domain.member.service;
 
 
 import com.goorm.tablepick.domain.board.dto.response.MyBoardListResponseDto;
+import com.goorm.tablepick.domain.member.dto.MemberAddtionalInfoRequestDto;
 import com.goorm.tablepick.domain.member.dto.MemberResponseDto;
 import com.goorm.tablepick.domain.member.dto.MemberUpdateRequestDto;
 import com.goorm.tablepick.domain.reservation.dto.response.ReservationResponseDto;
@@ -16,4 +17,6 @@ public interface MemberService {
     List<ReservationResponseDto> getMemberReservationList(String username);
 
     List<MyBoardListResponseDto> getMemberBoardList(String username);
+
+    void addMemberInfo(String username, @Valid MemberAddtionalInfoRequestDto memberAddtionalInfoRequestDto);
 }
