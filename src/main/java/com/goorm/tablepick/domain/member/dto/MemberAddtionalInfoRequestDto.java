@@ -24,7 +24,7 @@ public class MemberAddtionalInfoRequestDto {
     private LocalDate birthdate;
 
     @Schema(description = "전화번호", example = "01098765432")
-    @Pattern(regexp = "^01[016789]\\\\d{7,8}$", message = "전화번호 형식이 올바르지 않습니다.")
+    @Pattern(regexp = "^010\\d{8}$", message = "전화번호는 010으로 시작하는 11자리 숫자여야 합니다.")
     private String phoneNumber;
 
     @Schema(description = "사용자 선호 태그")
