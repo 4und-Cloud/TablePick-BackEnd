@@ -3,13 +3,18 @@ package com.goorm.tablepick.domain.restaurant.controller;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantCategorySearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantKeywordSearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantResponseDto;
 import com.goorm.tablepick.domain.restaurant.service.RestaurantService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -18,9 +23,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class RestaurantController {
     private final RestaurantService restaurantService;
 
-    @GetMapping
-    public String getAll() {
-        return "식당 목록";
+    @GetMapping("/all")
+    @Operation(summary = "전체 식당 목록 조회", description = "전체 식당 목록을 조회합니다.")
+    public Page<RestaurantResponseDto> getAllRestaurants(
+            @RequestParam(defaultValue = "0") int page
+    ) {
+        Pageable pageable = PageRequest.of(page, 4);
+        return restaurantService.getAllRestaurants(pageable);
     }
 
     @GetMapping("/search")

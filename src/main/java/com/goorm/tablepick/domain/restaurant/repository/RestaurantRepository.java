@@ -19,6 +19,19 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
     @Query("SELECT r FROM Restaurant r JOIN FETCH r.restaurantCategory rc WHERE rc.id = :categoryId")
     Page<Restaurant> findAllByCategory(@Param("categoryId") Long categoryId, Pageable pageable);
 
+    @Query("""
+                SELECT r FROM Restaurant r
+                LEFT JOIN ReservationSlot slot ON r.id = slot.restaurant.id
+                LEFT JOIN Reservation res ON slot.id = res.reservationSlot.id
+                WHERE r.restaurantCategory IS NOT NULL
+                  AND SIZE(r.restaurantImages) > 0
+                GROUP BY r.id
+                ORDER BY COUNT(res.id) DESC
+            """)
+    Page<Restaurant> findPopularRestaurants(Pageable pageable);
+
+
     @Query("SELECT r FROM Restaurant r ORDER BY SIZE(r.boards) DESC")
     Page<Restaurant> findAllOrderedByCreatedAt(Pageable pageable);
+
 }
