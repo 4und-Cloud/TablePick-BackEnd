@@ -1,5 +1,6 @@
 package com.goorm.tablepick.global.jwt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.entity.RefreshToken;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
@@ -10,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -38,32 +40,57 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         String refreshToken = getRefreshTokenFromCookie(request);
         String email = extractEmail(attributes);
 
+        // 사용자 정보 조회
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("인증 후 사용자 정보가 없습니다."));
 
         authenticateUser(member);
-        //로그인할 사용자가 이미 액세스 토큰을 가지고 있지 않거나(처음 로그인) or 토큰이 있지만 유효하지 않다면 재발급
+
+        // 액세스 토큰 유효성 검사 및 재발급
         if (accessToken == null || !jwtProvider.validateToken(accessToken)) {
             accessToken = jwtProvider.createAccessToken(member.getId(), email);
-            if (refreshToken == null || !jwtProvider.validateToken(refreshToken)) { //리프레쉬 토큰도 없거나 유효하지 않다면
+
+            // 리프레시 토큰 유효성 검사 및 재발급
+            if (refreshToken == null || !jwtProvider.validateToken(refreshToken)) {
                 refreshToken = jwtProvider.createRefreshToken(member.getId(), email);
                 issueAndSaveRefreshToken(member, refreshToken);
             }
         }
 
-        // 토큰을 헤더에 설정
-        response.setHeader("Access-Token", accessToken);
+        // 리프레시 토큰을 쿠키에 설정
         Cookie refreshCookie = new Cookie("refresh_token", refreshToken);
         refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(true); // https 일 때만
+        refreshCookie.setSecure(true); // HTTPS에서만 전송
         refreshCookie.setPath("/");
         refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
         response.addCookie(refreshCookie);
+
+        // 액세스 토큰을 헤더에 설정
+        response.setHeader("Access-Token", accessToken);
         response.setHeader("Access-Control-Expose-Headers", "Access-Token");
 
-        // 상태 코드만 전달 (200 OK)
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().write("Login Success");
+        // 사용자 정보 구성 (null이면 ""로 설정)
+        String phoneNumber = member.getPhoneNumber() != null ? member.getPhoneNumber() : "";
+        String gender = member.getGender() != null ? String.valueOf(member.getGender()) : "";
+        String birthDate = member.getBirthdate() != null ? String.valueOf(member.getBirthdate()) : "";
+
+        // JSON 응답 데이터 구성
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("phoneNumber", phoneNumber);
+        responseData.put("gender", gender);
+        responseData.put("birthDate", birthDate);
+
+        // JSON 응답 설정
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        // ObjectMapper를 사용해 JSON으로 변환
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonResponse = objectMapper.writeValueAsString(responseData);
+        response.getWriter().write(jsonResponse);
+
+        String redirectUrl = "http://localhost:5173/oauth2/redirect";
+        response.sendRedirect(redirectUrl);
     }
 
     private String extractEmail(Map<String, Object> attributes) {
