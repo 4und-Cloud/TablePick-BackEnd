@@ -71,12 +71,12 @@ public class MemberServiceImpl implements MemberService {
         Member member = memberRepository.findByEmail(username)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        List<MemberTag> collect = memberAddtionalInfoRequestDto.getMemberTags().stream()
+        List<MemberTag> memberTagList = memberAddtionalInfoRequestDto.getMemberTags().stream()
                 .map(tag -> new MemberTag(member, new Tag(tag)))
                 .collect(Collectors.toList());
 
-        member.addMemberInfo(memberAddtionalInfoRequestDto, collect);
-        memberTagRepository.saveAll(collect);
+        member.addMemberInfo(memberAddtionalInfoRequestDto, memberTagList);
+        memberTagRepository.saveAll(memberTagList);
         memberRepository.save(member);
     }
 }
