@@ -19,14 +19,14 @@ public class SwaggerConfig {
                 .info(new Info()
                         .title("TablePick API 문서")
                         .version("v1.0.0")
-                        .description("테이블 예약, 식당 관리, 결제 등 API 명세서입니다."))
-                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
-                .components(new Components()
-                        .addSecuritySchemes(securitySchemeName,
-                                new SecurityScheme()
-                                        .name(securitySchemeName)
-                                        .type(SecurityScheme.Type.HTTP)
-                                        .scheme("bearer")
-                                        .bearerFormat("JWT")));
+                        .description("테이블 예약, 식당 관리, 결제 등 API 명세서입니다."));
+//                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
+//                .components(new Components()
+//                        .addSecuritySchemes(securitySchemeName,
+//                                new SecurityScheme()
+//                                        .name(securitySchemeName)
+//                                        .type(SecurityScheme.Type.HTTP)
+//                                        .scheme("bearer")
+//                                        .bearerFormat("JWT")));
     }
 }

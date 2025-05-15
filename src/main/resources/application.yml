@@ -48,3 +48,6 @@ jwt:
 
 server:
   port: 8080
+
+firebase:
+  service-account-file: classpath:firebase-service-account.json
