@@ -1,5 +1,6 @@
 package com.goorm.tablepick.domain.restaurant.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -19,6 +20,7 @@ public class RestaurantImage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
     private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)

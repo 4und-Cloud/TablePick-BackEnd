@@ -3,15 +3,18 @@ package com.goorm.tablepick.domain.restaurant.controller;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantCategorySearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantKeywordSearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantDetailResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantResponseDto;
 import com.goorm.tablepick.domain.restaurant.service.RestaurantService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -50,6 +53,13 @@ public class RestaurantController {
     @Operation(summary = "식당 목록", description = "식당 목록을 리뷰 많은 순으로 반환합니다.")
     public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page) {
         return restaurantService.getAllRestaurantsOrderedByBoardNum(page);
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "식당 상세 조회", description = "특정 식당의 상세 정보를 조회합니다.")
+    public RestaurantDetailResponseDto getRestaurantDetail(
+            @PathVariable @Parameter(description = "식당 ID", example = "1") Long id) {
+        return restaurantService.getRestaurantDetail(id);
     }
 
 }
