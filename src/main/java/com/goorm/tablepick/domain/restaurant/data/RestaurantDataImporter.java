@@ -337,7 +337,7 @@ public class RestaurantDataImporter {
                     }
                     String name = menu.getString("menu_name");
                     String priceStr = menu.getString("menu_price").replaceAll("[^0-9]", "");
-                    BigDecimal price = new BigDecimal(priceStr).divide(new BigDecimal("100.00"));
+                    BigDecimal price = new BigDecimal(priceStr).divide(new BigDecimal("1"));
                     pstmt.setLong(1, restaurantId);
                     pstmt.setString(2, name);
                     pstmt.setBigDecimal(3, price);
