@@ -50,7 +50,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
                 issueAndSaveRefreshToken(member, refreshToken);
             }
         }
-
+        System.out.println(accessToken);
         // 토큰을 헤더에 설정
         response.setHeader("Access-Token", accessToken);
         Cookie refreshCookie = new Cookie("refresh_token", refreshToken);

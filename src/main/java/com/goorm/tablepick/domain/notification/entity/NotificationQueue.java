@@ -30,7 +30,7 @@ public class NotificationQueue {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "notification_types_id")
-    private NotificationType notificationType;
+    private NotificationTypes notificationTypes;
 
     @Column(name = "member_id")
     private Long memberId;

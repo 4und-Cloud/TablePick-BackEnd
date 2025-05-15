@@ -29,7 +29,7 @@ messaging.onBackgroundMessage((payload) => {
     const notificationTitle = payload.notification.title || "알림"
     const notificationOptions = {
         body: payload.notification.body || "",
-        icon: "/images/logo.png",
+        icon: "./images/logo.png",
     }
 
     self.registration.showNotification(notificationTitle, notificationOptions)

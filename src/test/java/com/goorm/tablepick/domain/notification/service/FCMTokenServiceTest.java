@@ -13,70 +13,104 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class FCMTokenServiceTest {
 
-    @InjectMocks
-    private FCMTokenService fcmTokenService;
-
     @Mock
     private MemberRepository memberRepository;
 
+    @InjectMocks
+    private FCMTokenService fcmTokenService;
+
     private Member testMember;
-    private final Long memberId = 1L;
-    private final String fcmToken = "test-fcm-token";
 
     @BeforeEach
     void setUp() {
-        testMember = Member.builder()
-                .id(memberId)
-                .build();
+        testMember = mock(Member.class);
+        when(testMember.getId()).thenReturn(1L);
     }
 
     @Test
-    @DisplayName("FCM 토큰 업데이트 성공")
-    void updateFcmTokenSuccess() {
-        // given
-        given(memberRepository.findById(memberId)).willReturn(Optional.of(testMember));
+    @DisplayName("FCM 토큰 업데이트 테스트")
+    void updateFcmToken_ShouldUpdateToken() {
+        // Given
+        when(memberRepository.findById(anyLong())).thenReturn(Optional.of(testMember));
+        doNothing().when(testMember).updateFcmToken(anyString());
 
-        // when
-        fcmTokenService.updateFcmToken(memberId, fcmToken);
+        // When
+        fcmTokenService.updateFcmToken(1L, "new-fcm-token");
 
-        // then
-        assertThat(testMember.getFcmToken()).isEqualTo(fcmToken);
-        verify(memberRepository).findById(memberId);
+        // Then
+        verify(memberRepository, times(1)).findById(1L);
+        verify(testMember, times(1)).updateFcmToken("new-fcm-token");
     }
 
     @Test
-    @DisplayName("존재하지 않는 회원의 FCM 토큰 업데이트 시도")
-    void updateFcmTokenMemberNotFound() {
-        // given
-        given(memberRepository.findById(any())).willReturn(Optional.empty());
+    @DisplayName("존재하지 않는 회원의 FCM 토큰 업데이트 테스트")
+    void updateFcmToken_WithNonExistingMember_ShouldThrowException() {
+        // Given
+        when(memberRepository.findById(anyLong())).thenReturn(Optional.empty());
 
-        // when & then
-        assertThatThrownBy(() -> fcmTokenService.updateFcmToken(memberId, fcmToken))
-                .isInstanceOf(NotificationException.class)
-                .hasMessageContaining("Member not found");
+        // When & Then
+        NotificationException exception = assertThrows(NotificationException.class, () -> {
+            fcmTokenService.updateFcmToken(999L, "new-fcm-token");
+        });
+
+        assertEquals("Member not found", exception.getMessage());
+        assertEquals("MEMBER_NOT_FOUND", exception.getErrorCode());
+        verify(memberRepository, times(1)).findById(999L);
     }
 
     @Test
-    @DisplayName("FCM 토큰 삭제 성공")
-    void deleteFcmTokenSuccess() {
-        // given
-        testMember.updateFcmToken(fcmToken);
-        given(memberRepository.findById(memberId)).willReturn(Optional.of(testMember));
+    @DisplayName("FCM 토큰 삭제 테스트")
+    void deleteFcmToken_ShouldRemoveToken() {
+        // Given
+        when(memberRepository.findById(anyLong())).thenReturn(Optional.of(testMember));
+        doNothing().when(testMember).removeFcmToken();
 
-        // when
-        fcmTokenService.deleteFcmToken(memberId);
+        // When
+        fcmTokenService.deleteFcmToken(1L);
 
-        // then
-        assertThat(testMember.getFcmToken()).isNull();
-        verify(memberRepository).findById(memberId);
+        // Then
+        verify(memberRepository, times(1)).findById(1L);
+        verify(testMember, times(1)).removeFcmToken();
+    }
+
+    @Test
+    @DisplayName("FCM 토큰 조회 테스트")
+    void getFcmToken_ShouldReturnToken() {
+        // Given
+        when(memberRepository.findById(anyLong())).thenReturn(Optional.of(testMember));
+        when(testMember.getFcmToken()).thenReturn("test-fcm-token");
+
+        // When
+        String token = fcmTokenService.getFcmToken(1L);
+
+        // Then
+        assertEquals("test-fcm-token", token);
+        verify(memberRepository, times(1)).findById(1L);
+        verify(testMember, times(1)).getFcmToken();
+    }
+
+    @Test
+    @DisplayName("FCM 토큰이 없는 회원의 토큰 조회 테스트")
+    void getFcmToken_WithNoToken_ShouldThrowException() {
+        // Given
+        when(memberRepository.findById(anyLong())).thenReturn(Optional.of(testMember));
+        when(testMember.getFcmToken()).thenReturn(null);
+
+        // When & Then
+        NotificationException exception = assertThrows(NotificationException.class, () -> {
+            fcmTokenService.getFcmToken(1L);
+        });
+
+        assertEquals("FCM token not found", exception.getMessage());
+        assertEquals("TOKEN_NOT_FOUND", exception.getErrorCode());
+        verify(memberRepository, times(1)).findById(1L);
+        verify(testMember, times(1)).getFcmToken();
     }
 }

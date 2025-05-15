@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 public interface ReservationService {
+
     void createReservation(ReservationRequestDto request);
 
     void cancelReservation(Long reservationId);

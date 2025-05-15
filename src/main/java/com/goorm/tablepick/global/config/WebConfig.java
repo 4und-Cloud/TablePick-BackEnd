@@ -21,10 +21,11 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("*")
-                .allowedMethods("*")
-                .allowedHeaders("*")
-                .exposedHeaders("Access-Token", "Refresh-Token");
+                .allowedOrigins("http://localhost:5173")
+                .allowedMethods("GET", "POST", "PATCH", "DELETE", "OPTIONS")
+                .allowedHeaders("Content-Type", "Access-Token")
+                .exposedHeaders("Access-Token")
+                .allowCredentials(true);
     }
 
     // Firebase 서비스 워커를 위한 리소스 핸들러 추가

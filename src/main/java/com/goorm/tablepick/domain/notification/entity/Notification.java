@@ -21,7 +21,7 @@ public class Notification {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "notification_type_id")
-    private NotificationType notificationType;
+    private NotificationTypes notificationTypes;
 
     private String status;
     private LocalDateTime scheduledAt;

@@ -1,38 +1,44 @@
 package com.goorm.tablepick.domain.notification.service;
 
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.MessagingErrorCode;
 import com.goorm.tablepick.domain.notification.constant.NotificationStatus;
 import com.goorm.tablepick.domain.notification.dto.request.NotificationRequest;
+import com.goorm.tablepick.domain.notification.dto.response.NotificationResponse;
+import com.goorm.tablepick.domain.notification.entity.NotificationLog;
 import com.goorm.tablepick.domain.notification.entity.NotificationQueue;
-import com.goorm.tablepick.domain.notification.entity.NotificationType;
+import com.goorm.tablepick.domain.notification.entity.NotificationTypes;
+import com.goorm.tablepick.domain.notification.repository.NotificationLogRepository;
 import com.goorm.tablepick.domain.notification.repository.NotificationQueueRepository;
-import com.goorm.tablepick.domain.notification.repository.NotificationTypeRepository;
+import com.goorm.tablepick.domain.notification.repository.NotificationTypesRepository;
+import com.goorm.tablepick.global.exception.NotificationException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Optional;
+import java.util.*;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
-
-    @InjectMocks
-    private NotificationService notificationService;
 
     @Mock
     private NotificationQueueRepository notificationQueueRepository;
 
     @Mock
-    private NotificationTypeRepository notificationTypeRepository;
+    private NotificationLogRepository notificationLogRepository;
+
+    @Mock
+    private NotificationTypesRepository notificationTypesRepository;
 
     @Mock
     private FCMService fcmService;
@@ -40,71 +46,172 @@ class NotificationServiceTest {
     @Mock
     private FCMTokenService fcmTokenService;
 
-    @Test
-    @DisplayName("알림 예약 성공")
-    void scheduleNotificationSuccess() {
-        // given
-        NotificationRequest request = createNotificationRequest();
-        NotificationType type = createNotificationType();
-        NotificationQueue queue = createNotificationQueue(type);
+    @InjectMocks
+    private NotificationService notificationService;
 
-        given(notificationTypeRepository.findById(any())).willReturn(Optional.of(type));
-        given(notificationQueueRepository.save(any())).willReturn(queue);
+    private NotificationTypes notificationType;
+    private NotificationQueue notificationQueue;
+    private NotificationRequest notificationRequest;
 
-        // when
-        var response = notificationService.scheduleNotification(request);
+    @BeforeEach
+    void setUp() {
+        LocalDateTime now = LocalDateTime.now();
 
-        // then
-        assertThat(response.getId()).isEqualTo(queue.getId());
-        assertThat(response.getStatus()).isEqualTo(NotificationStatus.PENDING.name());
-        verify(notificationQueueRepository).save(any());
+        notificationType = mock(NotificationTypes.class);
+        when(notificationType.getId()).thenReturn(1L);
+        when(notificationType.getType()).thenReturn("RESERVATION_1DAY_BEFORE");
+        when(notificationType.getTitle()).thenReturn("예약 1일 전 알림");
+        when(notificationType.getBody()).thenReturn("내일은 {restaurantName} 예약이 있습니다.");
+        when(notificationType.getUrl()).thenReturn("/reservations/{id}");
+
+        notificationQueue = mock(NotificationQueue.class);
+        when(notificationQueue.getId()).thenReturn(1L);
+        when(notificationQueue.getMemberId()).thenReturn(1L);
+        when(notificationQueue.getReservationId()).thenReturn(1L);
+        when(notificationQueue.getNotificationTypes()).thenReturn(notificationType);
+        when(notificationQueue.getStatus()).thenReturn(NotificationStatus.PENDING.name());
+        when(notificationQueue.getScheduledAt()).thenReturn(now.plusHours(1));
+        when(notificationQueue.getRetryCount()).thenReturn(0);
+
+        notificationRequest = NotificationRequest.builder()
+                .memberId(1L)
+                .reservationId(1L)
+                .notificationTypeId(1L)
+                .scheduledAt(now.plusHours(1))
+                .build();
     }
 
     @Test
-    @DisplayName("예약된 알림 처리")
-    void processNotificationQueueSuccess() {
-        // given
-        NotificationType type = createNotificationType();
-        NotificationQueue queue = createNotificationQueue(type);
-        given(notificationQueueRepository.findByStatusAndScheduledAtBefore(any(), any()))
-                .willReturn(Arrays.asList(queue));
-        given(fcmTokenService.getFcmToken(any())).willReturn("test-token");
+    @DisplayName("알림 예약 테스트")
+    void scheduleNotification_ShouldCreateNotificationQueue() {
+        // Given
+        when(notificationTypesRepository.findById(anyLong())).thenReturn(Optional.of(notificationType));
+        when(notificationQueueRepository.save(any(NotificationQueue.class))).thenReturn(notificationQueue);
 
-        // when
+        // When
+        NotificationResponse response = notificationService.scheduleNotification(notificationRequest);
+
+        // Then
+        assertNotNull(response);
+        assertEquals(1L, response.getId());
+        assertEquals(NotificationStatus.PENDING.name(), response.getStatus());
+
+        verify(notificationTypesRepository, times(1)).findById(1L);
+        verify(notificationQueueRepository, times(1)).save(any(NotificationQueue.class));
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 알림 타입으로 알림 예약 테스트")
+    void scheduleNotification_WithNonExistingType_ShouldThrowException() {
+        // Given
+        when(notificationTypesRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        // When & Then
+        NotificationException exception = assertThrows(NotificationException.class, () -> {
+            notificationService.scheduleNotification(notificationRequest);
+        });
+
+        assertEquals("Notification type not found", exception.getMessage());
+        assertEquals("TYPE_NOT_FOUND", exception.getErrorCode());
+        verify(notificationTypesRepository, times(1)).findById(1L);
+        verify(notificationQueueRepository, never()).save(any(NotificationQueue.class));
+    }
+
+    @Test
+    @DisplayName("알림 큐 처리 테스트")
+    void processNotificationQueue_ShouldProcessPendingNotifications() {
+        // Given
+        List<NotificationQueue> pendingNotifications = Collections.singletonList(notificationQueue);
+        when(notificationQueueRepository.findByStatusAndScheduledAtBefore(
+                eq(NotificationStatus.PENDING.name()), any(LocalDateTime.class)))
+                .thenReturn(pendingNotifications);
+
+        when(fcmTokenService.getFcmToken(anyLong())).thenReturn("test-fcm-token");
+        when(fcmService.sendMessage(anyString(), anyString(), anyString(), anyMap())).thenReturn("message-id");
+
+        // When
         notificationService.processNotificationQueue();
 
-        // then
-        verify(fcmService).sendMessage(any(), any(), any(), any());
+        // Then
+        verify(notificationQueueRepository, times(1))
+                .findByStatusAndScheduledAtBefore(eq(NotificationStatus.PENDING.name()), any(LocalDateTime.class));
+        verify(fcmTokenService, times(1)).getFcmToken(1L);
+        verify(fcmService, times(1)).sendMessage(eq("test-fcm-token"), anyString(), anyString(), anyMap());
+        verify(notificationQueue, times(1)).setStatus(NotificationStatus.SENT.name());
+        verify(notificationQueueRepository, times(1)).save(notificationQueue);
+        verify(notificationLogRepository, times(1)).save(any(NotificationLog.class));
     }
 
-    private NotificationRequest createNotificationRequest() {
-        return NotificationRequest.builder()
-                .memberId(1L)
-                .notificationTypeId(1L)
-                .reservationId(1L)
-                .scheduledAt(LocalDateTime.now().plusHours(1))
-                .build();
+    @Test
+    @DisplayName("알림 상태 조회 테스트")
+    void getNotificationStatus_ShouldReturnNotification() {
+        // Given
+        when(notificationQueueRepository.findById(anyLong())).thenReturn(Optional.of(notificationQueue));
+
+        // When
+        NotificationResponse response = notificationService.getNotificationStatus(1L);
+
+        // Then
+        assertNotNull(response);
+        assertEquals(1L, response.getId());
+        assertEquals(NotificationStatus.PENDING.name(), response.getStatus());
+
+        verify(notificationQueueRepository, times(1)).findById(1L);
     }
 
-    private NotificationType createNotificationType() {
-        return NotificationType.builder()
-                .id(1L)
-                .type("TEST")
-                .title("Test Title")
-                .body("Test Body")
-                .url("test-url")
-                .build();
+    @Test
+    @DisplayName("존재하지 않는 알림 상태 조회 테스트")
+    void getNotificationStatus_WithNonExistingId_ShouldThrowException() {
+        // Given
+        when(notificationQueueRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        // When & Then
+        NotificationException exception = assertThrows(NotificationException.class, () -> {
+            notificationService.getNotificationStatus(999L);
+        });
+
+        assertEquals("Notification not found", exception.getMessage());
+        assertEquals("NOTIFICATION_NOT_FOUND", exception.getErrorCode());
+        verify(notificationQueueRepository, times(1)).findById(999L);
     }
 
-    private NotificationQueue createNotificationQueue(NotificationType type) {
-        return NotificationQueue.builder()
-                .id(1L)
-                .notificationType(type)
-                .memberId(1L)
-                .reservationId(1L)
-                .status(NotificationStatus.PENDING.name())
-                .scheduledAt(LocalDateTime.now().plusHours(1))
-                .createdAt(LocalDateTime.now())
-                .build();
+    @Test
+    @DisplayName("회원 알림 목록 조회 테스트 - 상태 필터 있음")
+    void getMemberNotifications_WithStatusFilter_ShouldReturnFilteredList() {
+        // Given
+        List<NotificationQueue> notifications = Collections.singletonList(notificationQueue);
+        when(notificationQueueRepository.findByMemberIdAndStatus(anyLong(), anyString())).thenReturn(notifications);
+
+        // When
+        List<NotificationResponse> responses = notificationService.getMemberNotifications(1L, "PENDING");
+
+        // Then
+        assertNotNull(responses);
+        assertEquals(1, responses.size());
+        assertEquals(1L, responses.get(0).getId());
+        assertEquals(NotificationStatus.PENDING.name(), responses.get(0).getStatus());
+
+        verify(notificationQueueRepository, times(1)).findByMemberIdAndStatus(1L, "PENDING");
+        verify(notificationQueueRepository, never()).findByMemberId(anyLong());
+    }
+
+    @Test
+    @DisplayName("회원 알림 목록 조회 테스트 - 상태 필터 없음")
+    void getMemberNotifications_WithoutStatusFilter_ShouldReturnAllList() {
+        // Given
+        List<NotificationQueue> notifications = Collections.singletonList(notificationQueue);
+        when(notificationQueueRepository.findByMemberId(anyLong())).thenReturn(notifications);
+
+        // When
+        List<NotificationResponse> responses = notificationService.getMemberNotifications(1L, null);
+
+        // Then
+        assertNotNull(responses);
+        assertEquals(1, responses.size());
+        assertEquals(1L, responses.get(0).getId());
+        assertEquals(NotificationStatus.PENDING.name(), responses.get(0).getStatus());
+
+        verify(notificationQueueRepository, never()).findByMemberIdAndStatus(anyLong(), anyString());
+        verify(notificationQueueRepository, times(1)).findByMemberId(1L);
     }
 }
