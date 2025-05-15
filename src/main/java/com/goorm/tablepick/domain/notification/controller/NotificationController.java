@@ -1,6 +1,6 @@
 package com.goorm.tablepick.domain.notification.controller;
 
-import com.goorm.tablepick.domain.notification.dto.request.FcmTokenRequest;
+import com.goorm.tablepick.domain.notification.dto.request.FCMTokenRequest;
 import com.goorm.tablepick.domain.notification.dto.request.NotificationRequest;
 import com.goorm.tablepick.domain.notification.dto.response.NotificationResponse;
 import com.goorm.tablepick.domain.notification.service.FCMTokenService;
@@ -164,9 +164,9 @@ public class NotificationController {
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "FCM 토큰 정보",
                     required = true,
-                    content = @Content(schema = @Schema(implementation = FcmTokenRequest.class))
+                    content = @Content(schema = @Schema(implementation = FCMTokenRequest.class))
             )
-            @RequestBody FcmTokenRequest request) {
+            @RequestBody FCMTokenRequest request) {
         fcmTokenService.updateFcmToken(memberId, request.getToken());
         return ResponseEntity.ok().build();
     }
