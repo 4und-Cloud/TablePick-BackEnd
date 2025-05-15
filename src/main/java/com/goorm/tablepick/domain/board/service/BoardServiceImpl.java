@@ -55,7 +55,6 @@ public class BoardServiceImpl implements BoardService {
         return new PagedBoardsResponseDto(boardPage);
     }
 
-
     @Override
     @Transactional
     public Long createBoard(BoardRequestDto dto, Member member) {
