@@ -17,12 +17,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -31,6 +27,11 @@ import java.util.List;
 public class BoardController {
 
     private final BoardService boardService;
+
+    @GetMapping("/main")
+    public List<BoardListResponseDto> getMainBoards() {
+        return boardService.getBoardsForMainPage();
+    }
 
     @PostMapping
     @Operation(summary = "게시글 생성", description = "로그인된 사용자가 게시글을 생성합니다.")

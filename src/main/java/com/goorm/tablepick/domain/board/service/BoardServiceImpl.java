@@ -40,6 +40,23 @@ public class BoardServiceImpl implements BoardService {
     private final BoardTagRepository boardTagRepository;
 
     @Override
+    public List<BoardListResponseDto> getBoardsForMainPage() {
+        Pageable pageable = PageRequest.of(0, 4, Sort.by("createdAt").descending());
+        Page<Board> boardPage = boardRepository.findAll(pageable);
+        return boardPage.getContent().stream()
+                .map(BoardListResponseDto::from)
+                .toList();
+    }
+
+    @Override
+    public PagedBoardsResponseDto getBoards(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Board> boardPage = boardRepository.findAll(pageable);
+        return new PagedBoardsResponseDto(boardPage);
+    }
+
+
+    @Override
     @Transactional
     public Long createBoard(BoardRequestDto dto, Member member) {
         Restaurant restaurant = restaurantRepository.findById(dto.getRestaurantId())
@@ -119,7 +136,7 @@ public class BoardServiceImpl implements BoardService {
                     .collect(Collectors.toList());
 
             return BoardListResponseDto.builder()
-                    .boardId(board.getId())
+                    .id(board.getId())
                     .content(board.getContent())
                     .restaurantName(board.getRestaurant().getName())
                     .restaurantAddress(board.getRestaurant().getAddress())

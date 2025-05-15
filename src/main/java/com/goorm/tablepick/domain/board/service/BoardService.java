@@ -11,6 +11,9 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 public interface BoardService {
+    List<BoardListResponseDto> getBoardsForMainPage();
+    PagedBoardsResponseDto getBoards(int page, int size);
+
     Long createBoard(BoardRequestDto dto, Member member);
 
     BoardDetailResponseDto getBoardDetail(Long boardId);
