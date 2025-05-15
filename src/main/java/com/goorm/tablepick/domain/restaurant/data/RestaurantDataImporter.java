@@ -2,6 +2,7 @@ package com.goorm.tablepick.domain.restaurant.data;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -85,7 +86,6 @@ public class RestaurantDataImporter {
                         conn.commit();
                         System.out.println("라인 " + lineNum + " 처리 완료: " + name);
                     } catch (Exception e) {
-                        System.err.println("라인 " + lineNum + " 처리 중 에러: " + e.getMessage());
                         conn.rollback();
                     }
                     lineNum++;
@@ -321,30 +321,48 @@ public class RestaurantDataImporter {
 
     private static void insertMenus(Connection conn, long restaurantId, String menuJson) throws SQLException {
         try {
+            System.out.println("메뉴 JSON 처리 시작: restaurant_id=" + restaurantId + ", menuJson=" + menuJson);
             JSONArray menus = new JSONArray(menuJson);
             if (menus.length() == 0) {
-                return; // 빈 배열일 경우 스킵
+                System.out.println("메뉴 JSON이 비어있음: restaurant_id=" + restaurantId);
+                return;
             }
             String sql = "INSERT INTO menu (restaurant_id, name, price) VALUES (?, ?, ?)";
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                 for (int i = 0; i < menus.length(); i++) {
                     JSONObject menu = menus.getJSONObject(i);
                     if (menu.length() == 0) {
-                        continue; // 빈 객체일 경우 스킵
+                        System.out.println("빈 메뉴 객체 스킵: restaurant_id=" + restaurantId + ", index=" + i);
+                        continue;
                     }
                     String name = menu.getString("menu_name");
-                    String priceStr = menu.getString("menu_price").replaceAll("[^0-9]", ""); // 쉼표와 "원" 제거
-                    double price = Double.parseDouble(priceStr) / 100.0; // 원 단위로 변환 (예: 6000원 -> 60.00)
+                    String priceStr = menu.getString("menu_price").replaceAll("[^0-9]", "");
+                    BigDecimal price = new BigDecimal(priceStr).divide(new BigDecimal("100.00"));
                     pstmt.setLong(1, restaurantId);
                     pstmt.setString(2, name);
-                    pstmt.setDouble(3, price);
-                    pstmt.executeUpdate();
+                    pstmt.setBigDecimal(3, price);
+                    try {
+                        int affectedRows = pstmt.executeUpdate();
+                        System.out.println(
+                                "메뉴 삽입 성공: restaurant_id=" + restaurantId + ", name=" + name + ", price=" + price
+                                        + ", affectedRows=" + affectedRows);
+                    } catch (SQLException e) {
+                        if (e.getMessage().contains("Duplicate entry")) {
+                            System.out.println("중복 메뉴 스킵: restaurant_id=" + restaurantId + ", name=" + name);
+                        } else {
+                            throw e;
+                        }
+                    }
                 }
             }
         } catch (JSONException e) {
-            System.err.println("메뉴 JSON 파싱 실패: " + menuJson + ", 에러: " + e.getMessage());
+            System.err.println("메뉴 JSON 파싱 실패: restaurant_id=" + restaurantId + ", menuJson=" + menuJson + ", 에러: "
+                    + e.getMessage());
+            throw new SQLException("JSON 파싱 실패", e);
         } catch (NumberFormatException e) {
-            System.err.println("메뉴 가격 변환 실패: " + e.getMessage());
+            System.err.println("메뉴 가격 변환 실패: restaurant_id=" + restaurantId + ", menuJson=" + menuJson + ", 에러: "
+                    + e.getMessage());
+            throw new SQLException("가격 변환 실패", e);
         }
     }
 
