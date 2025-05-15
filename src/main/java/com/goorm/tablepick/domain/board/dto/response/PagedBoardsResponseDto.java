@@ -1,14 +1,17 @@
 package com.goorm.tablepick.domain.board.dto.response;
 
 import com.goorm.tablepick.domain.board.entity.Board;
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.domain.Page;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Getter
 @Setter
+@AllArgsConstructor
 public class PagedBoardsResponseDto {
     private List<BoardSearchResponseDto> boardSearchResponseDtoList;
     private int pageNumber;

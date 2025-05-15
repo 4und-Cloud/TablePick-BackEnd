@@ -8,6 +8,7 @@ import com.goorm.tablepick.domain.board.dto.response.PagedBoardsResponseDto;
 import com.goorm.tablepick.domain.board.entity.Board;
 import com.goorm.tablepick.domain.board.entity.BoardImage;
 import com.goorm.tablepick.domain.board.entity.BoardTag;
+import com.goorm.tablepick.domain.board.exception.BoardErrorCode;
 import com.goorm.tablepick.domain.board.repository.BoardRepository;
 import com.goorm.tablepick.domain.board.repository.BoardTagRepository;
 import com.goorm.tablepick.domain.member.entity.Member;
@@ -15,10 +16,10 @@ import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
+import com.goorm.tablepick.global.exception.BoardException;
+
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +28,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class BoardServiceImpl implements BoardService {
@@ -34,6 +38,23 @@ public class BoardServiceImpl implements BoardService {
     private final RestaurantRepository restaurantRepository;
     private final TagRepository tagRepository;
     private final BoardTagRepository boardTagRepository;
+
+    @Override
+    public List<BoardListResponseDto> getBoardsForMainPage() {
+        Pageable pageable = PageRequest.of(0, 4, Sort.by("createdAt").descending());
+        Page<Board> boardPage = boardRepository.findAll(pageable);
+        return boardPage.getContent().stream()
+                .map(BoardListResponseDto::from)
+                .toList();
+    }
+
+    @Override
+    public PagedBoardsResponseDto getBoards(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Board> boardPage = boardRepository.findAll(pageable);
+        return new PagedBoardsResponseDto(boardPage);
+    }
+
 
     @Override
     @Transactional
@@ -115,7 +136,7 @@ public class BoardServiceImpl implements BoardService {
                     .collect(Collectors.toList());
 
             return BoardListResponseDto.builder()
-                    .boardId(board.getId())
+                    .id(board.getId())
                     .content(board.getContent())
                     .restaurantName(board.getRestaurant().getName())
                     .restaurantAddress(board.getRestaurant().getAddress())
@@ -126,6 +147,32 @@ public class BoardServiceImpl implements BoardService {
     }
 
     @Override
+    public void deleteBoard(Long boardId, Member member) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardException(BoardErrorCode.NOT_FOUND));
+
+        if (!board.getMember().getId().equals(member.getId())) {
+            throw new BoardException(BoardErrorCode.NO_PERMISSION);
+        }
+
+        boardRepository.delete(board);
+    }
+
+    @Override
+    @Transactional
+    public void updateBoard(Long boardId, BoardRequestDto dto, Member member) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardException(BoardErrorCode.NOT_FOUND));
+
+        if (!board.getMember().getId().equals(member.getId())) {
+            throw new BoardException(BoardErrorCode.NO_PERMISSION);
+        }
+
+        board.updateFromDto(dto); // → Board 엔티티에 updateFromDto() 메서드가 있어야 함
+        boardRepository.save(board);
+    }
+
+    @Override
     public PagedBoardsResponseDto searchAllByCategory(@Valid BoardCategorySearchRequestDto boardSearchRequestDto) {
         Pageable pageable = PageRequest.of(boardSearchRequestDto.getPage() - 1, 6,
                 Sort.by("createdAt").ascending()); //페이지는 0부터 시작
@@ -133,5 +180,4 @@ public class BoardServiceImpl implements BoardService {
 
         return new PagedBoardsResponseDto(boardList);
     }
-
 }
