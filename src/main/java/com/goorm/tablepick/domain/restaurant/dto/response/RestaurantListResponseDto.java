@@ -18,7 +18,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-@JsonIgnoreProperties({"reservationSlots", "boards", "restaurantImages", "restaurantOperatingHours"})
+@JsonIgnoreProperties({"restaurantImages", "restaurantOperatingHours", "restaurantTags"})
 public class RestaurantListResponseDto {
     @Schema(description = "식당 아이디", example = "1")
     private Long id;
