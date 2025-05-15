@@ -9,9 +9,11 @@ import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @Schema(description = "사용자 정보 수정시 정보")
 public class MemberUpdateRequestDto {
     @Schema(description = "닉네임", example = "gildong1234")

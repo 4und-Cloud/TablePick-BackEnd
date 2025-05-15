@@ -12,8 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
 public class MyBoardListResponseDto {
     @Schema(description = "게시글 ID", example = "1")
     private Long id;

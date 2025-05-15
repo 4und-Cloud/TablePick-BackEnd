@@ -2,14 +2,15 @@ package com.goorm.tablepick.domain.board.dto.response;
 
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
+import lombok.Setter;
 
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor // Jackson이 JSON으로 역직렬화할 때 필요
 @AllArgsConstructor // @Builder와 함께 쓰면 좋음
