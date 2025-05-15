@@ -37,7 +37,7 @@ public class MemberController {
     @Operation(summary = "로그인한 사용자 정보 조회", description = "회원가입 후 추가적인 사용자 정보를 받습니다.")
     public ResponseEntity<MemberResponseDto> getMemberAfterRegistration(
             @AuthenticationPrincipal UserDetails userDetails) {
-        MemberResponseDto dto = memberService.getMemberInfo("test@example.com");
+        MemberResponseDto dto = memberService.getMemberInfo(userDetails.getUsername());
         return ResponseEntity.ok(dto);
     }
 
