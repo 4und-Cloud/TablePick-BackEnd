@@ -37,33 +37,40 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         String accessToken = request.getHeader("Access-Token");
         String refreshToken = getRefreshTokenFromCookie(request);
         String email = extractEmail(attributes);
-
+        // 사용자 정보 조회
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("인증 후 사용자 정보가 없습니다."));
 
         authenticateUser(member);
-        //로그인할 사용자가 이미 액세스 토큰을 가지고 있지 않거나(처음 로그인) or 토큰이 있지만 유효하지 않다면 재발급
+
+        // 액세스 토큰 유효성 검사 및 재발급
         if (accessToken == null || !jwtProvider.validateToken(accessToken)) {
             accessToken = jwtProvider.createAccessToken(member.getId(), email);
-            if (refreshToken == null || !jwtProvider.validateToken(refreshToken)) { //리프레쉬 토큰도 없거나 유효하지 않다면
+
+            // 리프레시 토큰 유효성 검사 및 재발급
+            if (refreshToken == null || !jwtProvider.validateToken(refreshToken)) {
                 refreshToken = jwtProvider.createRefreshToken(member.getId(), email);
                 issueAndSaveRefreshToken(member, refreshToken);
             }
         }
-        System.out.println(accessToken);
-        // 토큰을 헤더에 설정
-        response.setHeader("Access-Token", accessToken);
+
+
+        Cookie accessCookie = new Cookie("access_token", accessToken);
+        accessCookie.setPath("/");
+        accessCookie.setMaxAge(7 * 24 * 60 * 60);
+      
+        // 리프레시 토큰을 쿠키에 설정
         Cookie refreshCookie = new Cookie("refresh_token", refreshToken);
         refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(true); // https 일 때만
+//        refreshCookie.setSecure(true); // HTTPS에서만 전송
         refreshCookie.setPath("/");
         refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
-        response.addCookie(refreshCookie);
-        response.setHeader("Access-Control-Expose-Headers", "Access-Token");
 
-        // 상태 코드만 전달 (200 OK)
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().write("Login Success");
+        response.addCookie(refreshCookie);
+        response.addCookie(accessCookie);
+
+        String redirectUrl = "http://localhost:5173/oauth2/success";
+        response.sendRedirect(redirectUrl);
     }
 
     private String extractEmail(Map<String, Object> attributes) {

@@ -103,7 +103,7 @@ public class BoardServiceImpl implements BoardService {
 
 
     public List<BoardListResponseDto> getBoardList() {
-        List<Board> boards = boardRepository.findAll();
+        List<Board> boards = boardRepository.findAllByOrderByCreatedAtDesc();
 
         return boards.stream().map(board -> {
             String imageUrl = board.getBoardImages().isEmpty()
@@ -127,7 +127,7 @@ public class BoardServiceImpl implements BoardService {
 
     @Override
     public PagedBoardsResponseDto searchAllByCategory(@Valid BoardCategorySearchRequestDto boardSearchRequestDto) {
-        Pageable pageable = PageRequest.of(boardSearchRequestDto.getPage() - 1, 8,
+        Pageable pageable = PageRequest.of(boardSearchRequestDto.getPage() - 1, 6,
                 Sort.by("createdAt").ascending()); //페이지는 0부터 시작
         Page<Board> boardList = boardRepository.findAllByCategory(boardSearchRequestDto.getCategoryId(), pageable);
 

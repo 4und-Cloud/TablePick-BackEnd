@@ -3,6 +3,8 @@ package com.goorm.tablepick.domain.restaurant.service;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantCategorySearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantKeywordSearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantDetailResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantResponseDto;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantErrorCode;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
@@ -25,7 +27,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     public PagedRestaurantResponseDto searchAllByKeyword(
             @Valid RestaurantKeywordSearchRequestDto keywordSearchRequestDto) {
-        Pageable pageable = PageRequest.of(keywordSearchRequestDto.getPage() - 1, 8, Sort.by("name").ascending());
+        Pageable pageable = PageRequest.of(keywordSearchRequestDto.getPage() - 1, 6, Sort.by("name").ascending());
         Page<Restaurant> restaurantListByKeyword = restaurantRepository.findAllByKeyword(
                 keywordSearchRequestDto.getKeyword(), pageable);
 
@@ -35,7 +37,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     public PagedRestaurantResponseDto searchAllByCategory(
             @Valid RestaurantCategorySearchRequestDto categorySearchRequestDto) {
-        Pageable pageable = PageRequest.of(categorySearchRequestDto.getPage() - 1, 8, Sort.by("name").ascending());
+        Pageable pageable = PageRequest.of(categorySearchRequestDto.getPage() - 1, 6, Sort.by("name").ascending());
         Long categoryId = categorySearchRequestDto.getCategoryId();
         if (!restaurantCategoryRepository.existsById(categoryId)) {
             throw new RestaurantException(RestaurantErrorCode.NO_RESTAURANT_CATEGORY);
@@ -43,5 +45,34 @@ public class RestaurantServiceImpl implements RestaurantService {
         Page<Restaurant> restaurantListByCategory = restaurantRepository.findAllByCategory(categoryId,
                 pageable);
         return new PagedRestaurantResponseDto(restaurantListByCategory);
+    }
+
+    @Override
+    public Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable) {
+        Page<Restaurant> restaurantPage = restaurantRepository.findPopularRestaurants(pageable);
+        Page<RestaurantResponseDto> dtoPage = restaurantPage.map(restaurant ->
+                new RestaurantResponseDto(
+                        restaurant.getId(),
+                        restaurant.getName(),
+                        restaurant.getRestaurantCategory().getName(),
+                        restaurant.getRestaurantImages().isEmpty() ? null
+                                : restaurant.getRestaurantImages().get(0).getImageUrl()
+                )
+        );
+        return dtoPage;
+    }
+
+    @Override
+    public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page) {
+        Pageable pageable = PageRequest.of(page - 1, 6);
+        Page<Restaurant> restaurantList = restaurantRepository.findAllOrderedByCreatedAt(pageable);
+        return new PagedRestaurantResponseDto(restaurantList);
+    }
+
+    @Override
+    public RestaurantDetailResponseDto getRestaurantDetail(Long id) {
+        Restaurant restaurant = restaurantRepository.findById(id)
+                .orElseThrow(() -> new RestaurantException(RestaurantErrorCode.NOT_FOUND));
+        return RestaurantDetailResponseDto.fromEntity(restaurant);
     }
 }

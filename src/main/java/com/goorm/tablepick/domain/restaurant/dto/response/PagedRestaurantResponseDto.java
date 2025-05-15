@@ -10,7 +10,7 @@ import org.springframework.data.domain.Page;
 @Getter
 @Setter
 public class PagedRestaurantResponseDto {
-    private List<RestaurantSearchResponseDto> restaurants;
+    private List<RestaurantListResponseDto> restaurants;
     private int pageNumber;
     private int pageSize;
     private long totalElements;
@@ -20,7 +20,7 @@ public class PagedRestaurantResponseDto {
 
     public PagedRestaurantResponseDto(Page<Restaurant> page) {
         this.restaurants = page.getContent().stream()
-                .map(RestaurantSearchResponseDto::toDto)
+                .map(RestaurantListResponseDto::toDto)
                 .collect(Collectors.toList());
         this.pageNumber = page.getNumber();
         this.pageSize = page.getSize();
