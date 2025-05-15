@@ -12,9 +12,11 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 @Builder
 @Getter
+@Setter
 @AllArgsConstructor
 @JsonIgnoreProperties({"reservationSlots", "boards", "restaurantImages", "restaurantOperatingHours"})
 public class RestaurantListResponseDto {
@@ -42,7 +44,9 @@ public class RestaurantListResponseDto {
                 .restaurantPhoneNumber(restaurant.getRestaurantPhoneNumber())
                 .address(restaurant.getAddress())
                 .restaurantCategory(restaurant.getRestaurantCategory())
-                .restaurantImage(restaurant.getRestaurantImages().get(0) == null ? restaurant.getRestaurantImages().get(0): null)
+                .restaurantImage(
+                        restaurant.getRestaurantImages().get(0) == null ? restaurant.getRestaurantImages().get(0)
+                                : null)
                 .restaurantOperatingHours(restaurant.getRestaurantOperatingHours())
                 .restaurantTags(restaurant.getRestaurantTags())
                 .build();

@@ -10,9 +10,12 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
-@Builder
+
 @Getter
+@Setter
+@Builder
 @AllArgsConstructor
 public class BoardSearchResponseDto {
     @Schema(description = "게시물 아이디", example = "1")

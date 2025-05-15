@@ -4,7 +4,11 @@ import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.enums.Gender;
 import java.time.LocalDate;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Builder
 public class MemberResponseDto {
     private String nickname;
