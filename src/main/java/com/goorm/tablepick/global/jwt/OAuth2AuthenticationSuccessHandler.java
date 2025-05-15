@@ -53,9 +53,12 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
                 issueAndSaveRefreshToken(member, refreshToken);
             }
         }
+
+
         Cookie accessCookie = new Cookie("access_token", accessToken);
         accessCookie.setPath("/");
         accessCookie.setMaxAge(7 * 24 * 60 * 60);
+      
         // 리프레시 토큰을 쿠키에 설정
         Cookie refreshCookie = new Cookie("refresh_token", refreshToken);
         refreshCookie.setHttpOnly(true);
