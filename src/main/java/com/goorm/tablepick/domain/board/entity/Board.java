@@ -1,5 +1,6 @@
 package com.goorm.tablepick.domain.board.entity;
 
+import com.goorm.tablepick.domain.board.dto.request.BoardRequestDto;
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import jakarta.persistence.CascadeType;
@@ -65,6 +66,13 @@ public class Board {
         this.restaurant = restaurant;
         this.member = member;
         this.content = content;
+    }
+
+    public void updateFromDto(BoardRequestDto dto) {
+        //this.title = dto.getTitle();
+        this.content = dto.getContent();
+        //this.category = dto.getCategory();   // 제목, 카테고리는 나중에 사용할 수도 있어서. 일단 남겨두고. 주석 처리
+        // 필요시 이미지, 태그 등도 포함
     }
 
     public void addImage(BoardImage image) {
