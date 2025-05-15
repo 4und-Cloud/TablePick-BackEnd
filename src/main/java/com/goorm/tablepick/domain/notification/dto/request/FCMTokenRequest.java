@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FcmTokenRequest {
+public class FCMTokenRequest {
     private String token;
 }
