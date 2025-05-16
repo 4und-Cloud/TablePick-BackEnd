@@ -2,9 +2,7 @@ package com.goorm.tablepick.domain.board.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.goorm.tablepick.domain.board.entity.Board;
-import com.goorm.tablepick.domain.board.entity.BoardImage;
 import com.goorm.tablepick.domain.board.entity.BoardTag;
-import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
@@ -34,12 +32,10 @@ public class MyBoardListResponseDto {
     private Restaurant restaurant;
 
     @Schema(description = "작성자", example = "작성자")
-    @JsonIgnore
-    private Member member;
+    private String nickName;
 
     @Schema(description = "게시글 이미지", example = "url")
-    @JsonIgnore
-    private List<BoardImage> boardImages = new ArrayList<>();
+    private String boardImage;
 
     @Schema(description = "게시글 태그", example = "조용해요, 맛있어요")
     @JsonIgnore
@@ -52,8 +48,10 @@ public class MyBoardListResponseDto {
         this.createdAt = board.getCreatedAt();
         this.updatedAt = board.getUpdatedAt();
         this.restaurant = board.getRestaurant();
-        this.member = board.getMember();
-        this.boardImages = board.getBoardImages();
+        this.nickName = board.getMember().getNickname();
+        this.boardImage =
+                board.getBoardImages().get(0).getImageUrl() == null ? board.getBoardImages().get(0).getImageUrl()
+                        : null;
         this.boardTags = board.getBoardTags();
     }
 }
