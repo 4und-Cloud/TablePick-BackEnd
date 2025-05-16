@@ -28,7 +28,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String accessToken = resolveToken(request);
+        String accessToken = getAccessTokenFromCookie(request);
+
         if (accessToken != null) {
             if (jwtProvider.validateToken(accessToken)) {
                 setAuthentication(accessToken, request);
@@ -44,7 +45,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     // accessToken 만료 시
     protected void handleExpiredAccessToken(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        String refreshToken = request.getHeader("Refresh-Token");
+        String refreshToken = getRefreshTokenFromCookie(request);
         if (refreshToken != null && !jwtProvider.validateToken(refreshToken)) {
             Long userId = jwtProvider.getUserIdFromToken(refreshToken);
             String email = jwtProvider.getEmailFromToken(refreshToken);
@@ -52,13 +53,14 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             if (newRefreshToken != null) {
                 // AccessToken 재발급
                 String newAccessToken = jwtProvider.createAccessToken(userId, email);
-                response.setHeader("Access-Token", newAccessToken);
-                setAuthentication(newAccessToken, request);
+                Cookie accessCookie = new Cookie("access_token", newAccessToken);
+                accessCookie.setPath("/");
+                accessCookie.setMaxAge(7 * 24 * 60 * 60);
 
                 // 새 RefreshToken을 쿠키에 담아 전송
                 Cookie refreshCookie = new Cookie("refresh_token", newRefreshToken);
                 refreshCookie.setHttpOnly(true);
-                refreshCookie.setSecure(true); // https 일 때만
+//                refreshCookie.setSecure(true); // https 일 때만
                 refreshCookie.setPath("/");
                 refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
                 response.addCookie(refreshCookie);
@@ -78,10 +80,15 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         }
     }
 
-    private String resolveToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+    // 쿠키에서 액세스 토큰 가져오기
+    private String getAccessTokenFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("access_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
         }
         return null;
     }

@@ -79,4 +79,9 @@ public class MemberServiceImpl implements MemberService {
         memberTagRepository.saveAll(memberTagList);
         memberRepository.save(member);
     }
+
+    @Override
+    public Member getMember(String email) {
+        return memberRepository.findByEmail(email).get();
+    }
 }

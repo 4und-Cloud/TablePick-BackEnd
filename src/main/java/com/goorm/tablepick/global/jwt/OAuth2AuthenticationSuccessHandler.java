@@ -19,6 +19,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -30,6 +31,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     private final CustomUserDetailsService customUserDetailsService;
 
     @Override
+    @Transactional
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
         DefaultOAuth2User oAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
@@ -46,16 +48,15 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         // 액세스 토큰 유효성 검사 및 재발급
         if (accessToken == null || !jwtProvider.validateToken(accessToken)) {
             accessToken = jwtProvider.createAccessToken(member.getId(), email);
-
             // 리프레시 토큰 유효성 검사 및 재발급
-            if (refreshToken == null || !jwtProvider.validateToken(refreshToken)) {
-                refreshToken = jwtProvider.createRefreshToken(member.getId(), email);
-                issueAndSaveRefreshToken(member, refreshToken);
+            if (member.getRefreshToken() == null || !jwtProvider.validateToken(refreshToken)) {
+                refreshToken = issueAndSaveRefreshToken(member).getToken();
             }
         }
         Cookie accessCookie = new Cookie("access_token", accessToken);
+        accessCookie.setHttpOnly(true);
         accessCookie.setPath("/");
-        accessCookie.setMaxAge(7 * 24 * 60 * 60);
+        accessCookie.setMaxAge(60 * 60);
         // 리프레시 토큰을 쿠키에 설정
         Cookie refreshCookie = new Cookie("refresh_token", refreshToken);
         refreshCookie.setHttpOnly(true);
@@ -86,17 +87,24 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     }
 
     //refresh 토큰 발급 및 db 저장
-    private void issueAndSaveRefreshToken(Member member, String refreshTokenString) {
+
+    private RefreshToken issueAndSaveRefreshToken(Member member) {
         LocalDateTime expiredAt = LocalDateTime.now().plusDays(7);
-        refreshTokenRepository.deleteByToken(refreshTokenString);
+        //기존 토큰이 있다면 삭제
+        if (member.getRefreshToken() != null) {
+            refreshTokenRepository.delete(member.getRefreshToken());
+        }
+        String newRefreshToken = jwtProvider.createRefreshToken(member.getId(), member.getEmail());
 
         RefreshToken refreshToken = RefreshToken.builder()
-                .token(refreshTokenString)
+                .token(newRefreshToken)
                 .expiredAt(expiredAt)
                 .member(member)
                 .build();
 
         refreshTokenRepository.save(refreshToken);
+
+        return refreshToken;
     }
 
     // 쿠키에서 리프레쉬 토큰 가져오기
