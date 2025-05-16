@@ -1,5 +1,6 @@
 package com.goorm.tablepick.domain.notification.entity;
 
+import com.goorm.tablepick.domain.notification.constant.NotificationTypes;
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -19,9 +20,9 @@ public class Notification {
     @JoinColumn(name = "reservation_id")
     private Reservation reservation;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "notification_type_id")
-    private NotificationTypes notificationTypes;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "notification_type")
+    private NotificationTypes notificationType;
 
     private String status;
     private LocalDateTime scheduledAt;

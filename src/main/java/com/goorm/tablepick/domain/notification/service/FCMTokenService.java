@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class FCMTokenService {
     private final MemberRepository memberRepository;
 
-    // FCM 토큰 업데이트
+    // FCM 토큰 부분 업데이트
     public void updateFcmToken(Long memberId, String fcmToken) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotificationException("Member not found", "MEMBER_NOT_FOUND"));

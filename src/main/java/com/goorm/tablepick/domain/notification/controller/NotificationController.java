@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -138,7 +139,7 @@ public class NotificationController {
 
     @Operation(
             summary = "FCM 토큰 업데이트",
-            description = "회원의 FCM 토큰을 업데이트합니다."
+            description = "회원의 FCM 토큰을 부분 업데이트합니다."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -151,7 +152,7 @@ public class NotificationController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-    @PutMapping("/fcm-token")
+    @PatchMapping("/fcm-token")
     public ResponseEntity<Void> updateFcmToken(
             @Parameter(
                     name = "memberId",

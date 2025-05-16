@@ -11,12 +11,13 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)  // Builder를 위해 필요
-@Builder    // 추가
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 @Table(name = "notification_logs")
 public class NotificationLog {
     @Id
-    private String key;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "notification_queue_id")
     private Long notificationQueueId;
