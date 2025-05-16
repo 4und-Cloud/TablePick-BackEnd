@@ -3,17 +3,17 @@ package com.goorm.tablepick.global.filter;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
 import com.goorm.tablepick.global.jwt.JwtProvider;
 import com.goorm.tablepick.global.jwt.JwtTokenService;
+import com.goorm.tablepick.global.security.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -24,6 +24,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final MemberRepository memberRepository;
     private final JwtTokenService jwtTokenService; // 서비스 추가
+    private final CustomUserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -73,8 +74,10 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         Long userId = jwtProvider.getUserIdFromToken(token);
         var member = memberRepository.findById(userId).orElse(null);
         if (member != null) {
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    member, null, Collections.singleton(new SimpleGrantedAuthority("ROLE_" + member.getRoles())));
+            UserDetails userDetails = userDetailsService.loadUserByUsername(member.getEmail());
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
