@@ -18,8 +18,9 @@ public class BoardTagController {
 
     private final BoardTagService boardTagService;
 
-    @PostMapping(value = "/{boardId}")
-    @Operation(summary = "게시글 태그 수정", description = "게시글 ID와 태그 ID 목록을 전달하여 게시글의 태그를 수정합니다.")
+    @PatchMapping(value = "/{boardId}")
+    @Operation(summary = "게시글 태그 수정",
+            description = "게시글 ID와 태그 ID 목록을 전달하여 게시글의 태그를 수정합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "태그 수정 성공"),
             @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")

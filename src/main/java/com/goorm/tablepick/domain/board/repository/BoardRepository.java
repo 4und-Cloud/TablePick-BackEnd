@@ -19,6 +19,4 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
 
     @Query("SELECT b FROM Board b WHERE b.restaurant.restaurantCategory.id = :categoryId")
     Page<Board> findAllByCategory(@Param("categoryId") Long categoryId, Pageable pageable);
-
 }
-
