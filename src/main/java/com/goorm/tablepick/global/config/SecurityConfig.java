@@ -46,7 +46,7 @@ public class SecurityConfig {
                         .logoutUrl("/api/members/logout")  // 로그아웃 URL 변경
                         .logoutSuccessUrl("/")  // 로그아웃 성공 후 이동할 URL
                         .invalidateHttpSession(true)  // 세션 무효화
-                        .deleteCookies("JSESSIONID", "refresh_token")
+                        .deleteCookies("JSESSIONID", "access_token", "refresh_token")
                 );
 
         return http.build();

@@ -15,7 +15,6 @@ import org.springframework.stereotype.Repository;
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
     List<Reservation> findByReservationSlot(ReservationSlot reservationSlot);
-
     List<Reservation> findAllByMember_Email(String username);
 
     // 특정 시간 범위 내의 예약을 조회하는 메서드 (알림 스케줄링용)
