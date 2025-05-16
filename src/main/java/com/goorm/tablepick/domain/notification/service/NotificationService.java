@@ -7,10 +7,10 @@ import com.goorm.tablepick.domain.notification.dto.response.NotificationResponse
 import com.goorm.tablepick.domain.notification.entity.NotificationLog;
 import com.goorm.tablepick.domain.notification.entity.NotificationQueue;
 import com.goorm.tablepick.domain.notification.entity.NotificationTypes;
-import com.goorm.tablepick.global.exception.NotificationException;
 import com.goorm.tablepick.domain.notification.repository.NotificationLogRepository;
 import com.goorm.tablepick.domain.notification.repository.NotificationQueueRepository;
 import com.goorm.tablepick.domain.notification.repository.NotificationTypesRepository;
+import com.goorm.tablepick.global.exception.NotificationException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationService {
     private final NotificationQueueRepository notificationQueueRepository;
     private final NotificationLogRepository notificationLogRepository;
-    private final NotificationTypesRepository notificationTypesRepository;
     private final FCMService fcmService;
     private final FCMTokenService fcmTokenService;
 
@@ -40,6 +39,7 @@ public class NotificationService {
 
     // 재시도 간격 (분) = 5분
     private static final int RETRY_DELAY_MINUTES = 5;
+    private final NotificationTypesRepository notificationTypesRepository;
 
 
     // 알림 예약
@@ -151,7 +151,6 @@ public class NotificationService {
     // 알림 처리 결과를 로그로 저장
     private void saveNotificationLog(NotificationQueue notification, boolean success, String errorMessage) {
         NotificationLog log = NotificationLog.builder()
-                .key(UUID.randomUUID().toString())
                 .notificationQueueId(notification.getId())
                 .sentAt(LocalDateTime.now())
                 .isSuccess(success)
