@@ -51,3 +51,21 @@ server:
 
 firebase:
   service-account-file: classpath:firebase-service-account.json
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    displayRequestDuration: true
+    docExpansion: none
+
+logging:
+  level:
+    root: info  # 전체 로그 레벨 (info 이상 출력)
+    com.goorm.tablepick: debug  # 너의 패키지에 debug 로그까지 출력
+    org.springframework.web: info
+    org.hibernate.SQL: debug  # Hibernate 실행 쿼리
+    org.hibernate.type.descriptor.sql: trace  # 바인딩되는 실제 파라미터까지
+
