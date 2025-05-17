@@ -52,8 +52,8 @@ server:
 
 kakao:
   admin:
-    key: ${kakao.admin.key}
-    
+    key: ${KAKAO_ADMIN_KEY}
+
 firebase:
   service-account-file: classpath:firebase-service-account.json
 
