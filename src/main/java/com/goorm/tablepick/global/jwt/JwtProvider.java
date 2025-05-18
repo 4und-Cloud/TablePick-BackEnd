@@ -61,7 +61,7 @@ public class JwtProvider {
         try {
             Claims claims = parseClaims(token);
             Date expiration = claims.getExpiration();
-            return !Instant.now().isAfter(expiration.toInstant());
+            return Instant.now().isBefore(expiration.toInstant());
         } catch (ExpiredJwtException e) {
             // 토큰이 만료된 경우도 false 반환
             return false;
