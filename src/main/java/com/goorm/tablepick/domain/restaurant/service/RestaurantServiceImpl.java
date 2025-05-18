@@ -13,6 +13,7 @@ import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryRepository;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import jakarta.validation.Valid;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -59,8 +60,14 @@ public class RestaurantServiceImpl implements RestaurantService {
                         restaurant.getId(),
                         restaurant.getName(),
                         restaurant.getRestaurantCategory().getName(),
+                        restaurant.getAddress(),
                         restaurant.getRestaurantImages().isEmpty() ? null
-                                : restaurant.getRestaurantImages().get(0).getImageUrl()
+                                : restaurant.getRestaurantImages().get(0).getImageUrl(),
+                        restaurant.getRestaurantTags() != null
+                                ? restaurant.getRestaurantTags().stream()
+                                .map(tag -> tag.getTag().getName())
+                                .collect(Collectors.toList())
+                                : Collections.emptyList()
                 )
         );
         return dtoPage;
