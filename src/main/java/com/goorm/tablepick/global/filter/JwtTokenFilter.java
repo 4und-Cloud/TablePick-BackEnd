@@ -3,7 +3,7 @@ package com.goorm.tablepick.global.filter;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
 import com.goorm.tablepick.global.jwt.JwtProvider;
 import com.goorm.tablepick.global.jwt.JwtTokenService;
-import com.goorm.tablepick.global.security.CustomUserDetailsService;
+import com.goorm.tablepick.global.security.CustomUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -24,11 +24,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 @Slf4j
 public class JwtTokenFilter extends OncePerRequestFilter {
-
     private final JwtProvider jwtProvider;
     private final MemberRepository memberRepository;
     private final JwtTokenService jwtTokenService;
-    private final CustomUserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -65,7 +63,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
         if (member != null) {
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    member, null, Collections.singleton(new SimpleGrantedAuthority("ROLE_" + member.getRoles()))
+                    new CustomUserDetails(member), null,
+                    Collections.singleton(new SimpleGrantedAuthority("ROLE_" + member.getRoles()))
             );
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
