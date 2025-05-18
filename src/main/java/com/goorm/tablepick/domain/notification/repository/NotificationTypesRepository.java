@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface NotificationTypesRepository extends JpaRepository<NotificationTypes, Long> {
-    Optional<NotificationTypes> findByType(String type);  // 추가
+    Optional<NotificationTypes> findByType(String type);
 }

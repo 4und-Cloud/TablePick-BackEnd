@@ -47,11 +47,11 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public List<ReservationResponseDto> getMemberReservationList(String username) {
-        List<Reservation> reservationList = reservationRepository.findAllByMember_Email(username);
+        List<Reservation> reservationList = reservationRepository.findAllByMemberEmail(username);
 
         List<ReservationResponseDto> list = reservationList.stream()
                 .map(ReservationResponseDto::new)
-                .toList();
+                .collect(Collectors.toList());
         return list;
     }
 
@@ -61,7 +61,8 @@ public class MemberServiceImpl implements MemberService {
 
         List<MyBoardListResponseDto> list = boardList.stream()
                 .map(MyBoardListResponseDto::new)
-                .toList();
+                .collect(Collectors.toList());
+
         return list;
     }
 
@@ -78,5 +79,10 @@ public class MemberServiceImpl implements MemberService {
         member.addMemberInfo(memberAddtionalInfoRequestDto, memberTagList);
         memberTagRepository.saveAll(memberTagList);
         memberRepository.save(member);
+    }
+
+    @Override
+    public Member getMember(String email) {
+        return memberRepository.findByEmail(email).get();
     }
 }

@@ -49,6 +49,11 @@ jwt:
 server:
   port: 8080
 
+
+kakao:
+  admin:
+    key: ${KAKAO_ADMIN_KEY}
+
 firebase:
   service-account-file: classpath:firebase-service-account.json
 
