@@ -9,19 +9,16 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import java.io.IOException;
+import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.Collections;
 
 @Component
 @RequiredArgsConstructor
@@ -36,7 +33,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String accessToken = resolveToken(request);
+        String accessToken = getAccessTokenFromCookie(request);
         log.info("🪪 [JwtTokenFilter] Authorization Header: {}", request.getHeader("Authorization"));
         log.info("🪪 [JwtTokenFilter] Extracted Access Token: {}", accessToken);
 
@@ -80,7 +77,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     protected void handleExpiredAccessToken(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        String refreshToken = request.getHeader("Refresh-Token");
+        String refreshToken = getRefreshTokenFromCookie(request);
         log.warn("♻️ [JwtTokenFilter] accessToken 만료 - refreshToken 시도: {}", refreshToken);
 
         if (refreshToken != null && jwtProvider.validateToken(refreshToken)) {
@@ -92,7 +89,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 String newAccessToken = jwtProvider.createAccessToken(userId, email);
                 Cookie accessCookie = new Cookie("access_token", newAccessToken);
                 accessCookie.setPath("/");
-                accessCookie.setMaxAge(7 * 24 * 60 * 60);
+                accessCookie.setMaxAge(24 * 60 * 60);
 
                 Cookie refreshCookie = new Cookie("refresh_token", newRefreshToken);
                 refreshCookie.setHttpOnly(true);
@@ -110,13 +107,16 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         }
     }
 
-    private String resolveToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-            log.warn("📛 [JwtTokenFilter] 잘못된 Authorization 형식: {}", bearerToken);
-            return null;
+    private String getAccessTokenFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("access_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
         }
-        return bearerToken.substring(7);
+        return null;
     }
 
     private String getRefreshTokenFromCookie(HttpServletRequest request) {
