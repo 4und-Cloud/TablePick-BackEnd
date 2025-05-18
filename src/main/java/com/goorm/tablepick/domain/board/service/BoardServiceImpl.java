@@ -17,10 +17,10 @@ import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
 import com.goorm.tablepick.global.exception.BoardException;
-
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BoardServiceImpl implements BoardService {
     private final BoardRepository boardRepository;
     private final RestaurantRepository restaurantRepository;
@@ -51,6 +52,7 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public PagedBoardsResponseDto getBoards(int page, int size) {
         Pageable pageable = PageRequest.of(page-1, size, Sort.by("createdAt").descending());
+        // 클라이언트는 1페이지부터 요청하므로 0-based page index로 변환
         Page<Board> boardPage = boardRepository.findAll(pageable);
         return new PagedBoardsResponseDto(boardPage);
     }
@@ -58,6 +60,13 @@ public class BoardServiceImpl implements BoardService {
     @Override
     @Transactional
     public Long createBoard(BoardRequestDto dto, Member member) {
+        log.info("🙋‍♂️ member: {}", member); // 이 위치에서 로그를 찍으세요
+        if (member == null) {
+            throw new BoardException(BoardErrorCode.NO_PERMISSION); // 또는 적절한 인증 관련 에러코드 추가
+            //throw new IllegalArgumentException("인증되지 않은 사용자입니다.");
+        }
+        log.info("✅ [createBoard] 게시글 생성 요청 시작: {}", dto);
+
         Restaurant restaurant = restaurantRepository.findById(dto.getRestaurantId())
                 .orElseThrow(() -> new IllegalArgumentException("식당이 존재하지 않습니다."));
 
@@ -67,29 +76,34 @@ public class BoardServiceImpl implements BoardService {
                 .content(dto.getContent())
                 .build();
 
-        // 이미지 처리
-        if (dto.getImages() != null) {
-            for (MultipartFile file : dto.getImages()) {
-                String storeFileName = convertToFile(file);
-                String originalFileName = file.getOriginalFilename();
+        log.info("✅ [createBoard] Board 객체 생성 완료");
 
-                BoardImage boardImage = new BoardImage(originalFileName, storeFileName);
-                board.addImage(boardImage);
+        // 이미지 처리
+        if (dto.getImages() != null && !dto.getImages().isEmpty()) {
+            log.info("✅ [createBoard] 이미지 개수: {}", dto.getImages().size());
+            for (MultipartFile file : dto.getImages()) {
+                if (!file.isEmpty()) {
+                    String storeFileName = convertToFile(file);
+                    String originalFileName = file.getOriginalFilename();
+                    BoardImage boardImage = new BoardImage(originalFileName, storeFileName);
+                    board.addImage(boardImage);
+                }
             }
         }
 
         // 태그 처리
         if (dto.getTagNames() != null) {
+            log.info("✅ [createBoard] 태그 개수: {}", dto.getTagNames().size());
             for (String tagName : dto.getTagNames()) {
                 Tag tag = tagRepository.findByName(tagName)
                         .orElseGet(() -> tagRepository.save(new Tag(tagName)));
-
-                BoardTag boardTag = new BoardTag(tag);
-                board.addTag(boardTag);
+                board.addTag(new BoardTag(tag));
             }
         }
 
-        return boardRepository.save(board).getId();
+        Board savedBoard = boardRepository.save(board);
+        log.info("✅ [createBoard] 게시글 저장 완료. 생성된 ID: {}", savedBoard.getId());
+        return savedBoard.getId();
     }
 
     @Override
@@ -120,7 +134,6 @@ public class BoardServiceImpl implements BoardService {
         // 저장 로직 구현 필요 (예: S3, 로컬 등)
         return java.util.UUID.randomUUID() + "_" + file.getOriginalFilename();
     }
-
 
     public List<BoardListResponseDto> getBoardList() {
         List<Board> boards = boardRepository.findAllByOrderByCreatedAtDesc();
@@ -174,7 +187,7 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public PagedBoardsResponseDto searchAllByCategory(@Valid BoardCategorySearchRequestDto boardSearchRequestDto) {
         Pageable pageable = PageRequest.of(boardSearchRequestDto.getPage() - 1, 6,
-                Sort.by("createdAt").ascending()); //페이지는 0부터 시작
+                Sort.by("createdAt").ascending()); //페이지는 0부터 시작 - 이게 맞나. 이게 맞는지?
         Page<Board> boardList = boardRepository.findAllByCategory(boardSearchRequestDto.getCategoryId(), pageable);
 
         return new PagedBoardsResponseDto(boardList);
