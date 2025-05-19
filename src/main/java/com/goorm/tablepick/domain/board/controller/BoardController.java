@@ -44,6 +44,7 @@ public class BoardController {
     public PagedBoardsResponseDto getBoards(
             @RequestParam(defaultValue = "1") int page,  // [수정] 기본값 0 → 1
             @RequestParam(defaultValue = "6") int size
+
     ) {
         return boardService.getBoards(page, size);
     }

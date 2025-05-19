@@ -14,6 +14,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,22 +26,24 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("api/reservation")
+@RequestMapping("api/reservations")
 @RequiredArgsConstructor
 public class ReservationController {
     private final ReservationService reservationService;
 
     @PostMapping
     @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
-    public ResponseEntity<Void> createReservation(@RequestBody @Valid ReservationRequestDto request) {
-        reservationService.createReservation(request);
+    public ResponseEntity<Void> createReservation(@AuthenticationPrincipal UserDetails userDetails,
+                                                  @RequestBody @Valid ReservationRequestDto request) {
+        reservationService.createReservation(userDetails.getUsername(), request);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{reservationId}")
     @Operation(summary = "예약 취소", description = "예약 ID를 기반으로 예약을 취소합니다.")
-    public ResponseEntity<Void> cancelReservation(@PathVariable Long reservationId) {
-        reservationService.cancelReservation(reservationId);
+    public ResponseEntity<Void> cancelReservation(@AuthenticationPrincipal UserDetails userDetails,
+                                                  @PathVariable Long reservationId) {
+        reservationService.cancelReservation(userDetails.getUsername(), reservationId);
         return ResponseEntity.ok().build();
     }
 
