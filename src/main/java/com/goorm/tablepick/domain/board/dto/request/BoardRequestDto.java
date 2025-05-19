@@ -1,6 +1,8 @@
 package com.goorm.tablepick.domain.board.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,9 +18,11 @@ public class BoardRequestDto {
     @Schema(description = "식당 ID", example = "1")
     private Long restaurantId;
 
+    @NotBlank
     @Schema(description = "게시글 내용", example = "정말 맛있는 집이에요.")
     private String content;
 
+    @Size(min = 1, max = 5)
     @Schema(description = "태그 리스트", example = "[\"조용해요\", \"가성비 좋아요\"]")
     private List<String> tagNames; // 태그 문자열 리스트
 

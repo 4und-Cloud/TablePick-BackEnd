@@ -17,10 +17,11 @@ public class BoardListResponseDto {
     private String content;
     private String restaurantName;
     private String restaurantAddress;
-    private String title;     // 혹시 추후 필요하면 사용
-    private String thumbnail; // 혹시 추후 필요하면 사용
-    //private List<String> tagNames;
-    //private String imageUrl;
+
+    @ArraySchema(schema = @Schema(type = "string"))
+    private List<String> tagNames;
+
+    private String imageUrl;
 
     public static BoardListResponseDto from(Board board) {
         return BoardListResponseDto.builder()
@@ -38,9 +39,4 @@ public class BoardListResponseDto {
                 )
                 .build();
     }
-
-    @ArraySchema(schema = @Schema(type = "string"))
-    private List<String> tagNames;
-
-    private String imageUrl;
 }

@@ -33,19 +33,36 @@ public class BoardController {
 
     private final BoardService boardService;
 
+    // 게시글 목록 페이지. 랜딩 페이지. 4개시씩 보여지는 화면. 게시글 이미지는 1개만.
     @GetMapping("/main")
     public List<BoardListResponseDto> getMainBoards() {
         return boardService.getBoardsForMainPage();
     }
 
+    // "게시물 더보기"를 누르면. 게시물만 한 화면에 6개씩 페이지네이션 해서 보여짐.
     @GetMapping("/list")
     public PagedBoardsResponseDto getBoards(
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,  // [수정] 기본값 0 → 1
             @RequestParam(defaultValue = "6") int size
     ) {
         return boardService.getBoards(page, size);
     }
 
+    // 게시글 상세 페이지. 기존에 있던 게시물을 불러오는 거. 많아봐야 이미지 2, 3개라고 함.
+    @GetMapping("/{boardId}")
+    @Operation(summary = "게시글 상세 조회", description = "게시글 ID로 게시글 상세 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "게시글 상세 정보 반환",
+                    content = @Content(schema = @Schema(implementation = BoardDetailResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
+    })
+    public ResponseEntity<BoardDetailResponseDto> getBoardDetail(
+            @PathVariable @Parameter(description = "게시글 ID") Long boardId) {
+        return ResponseEntity.ok(boardService.getBoardDetail(boardId));
+    }
+
+
+    // 게시글 작성 페이지, 이미지는 0개~3개 첨부 가능. 태그 선택은 1개에서 5개.
     @Operation(summary = "게시글 생성", description = "로그인된 사용자가 게시글을 생성합니다.")
     @ApiResponses(value = {
             @ApiResponse(
@@ -55,13 +72,13 @@ public class BoardController {
     })
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createBoard(
-            @RequestPart("data") BoardRequestDto dto, // JSON 본문
+            @RequestPart("data") BoardRequestDto dto, // JSON 본문   //- 이 부분 지혜님이 지적한 듯. 무슨 뜻인지 알아야.
 
 //            @RequestParam("restaurantId") Long restaurantId, // ✅ JSON 대신 개별 필드 처리
 //            @RequestParam("content") String content,
 //            @RequestParam("tagNames") List<String> tagNames, // ✅ 다중 태그 처리
 
-            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,   //- 이 부분 지혜님이 지적한 듯. 무슨 뜻인지 알아야.    // 이 코드가 필요한 코드로 알고 있는데. 뭐더라.
             @AuthenticationPrincipal Member member
     ) {
         dto.setImages(images);
@@ -88,42 +105,7 @@ public class BoardController {
         return ResponseEntity.status(HttpStatus.CREATED).body(boardId);
     }
 
-    @GetMapping("/{boardId}")
-    @Operation(summary = "게시글 상세 조회", description = "게시글 ID로 게시글 상세 정보를 조회합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "게시글 상세 정보 반환",
-                    content = @Content(schema = @Schema(implementation = BoardDetailResponseDto.class))),
-            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
-    })
-    public ResponseEntity<BoardDetailResponseDto> getBoardDetail(
-            @PathVariable @Parameter(description = "게시글 ID") Long boardId) {
-        return ResponseEntity.ok(boardService.getBoardDetail(boardId));
-    }
-
-    @GetMapping
-    public ResponseEntity<?> getBoards() {
-        List<BoardListResponseDto> boards = boardService.getBoardList();
-        if (boards.isEmpty()) {
-            return ResponseEntity.noContent().build();  // 204 No Content
-        }
-        return ResponseEntity.ok(boards); // 200 OK
-    }
-
-    @DeleteMapping("/{boardId}")
-    @Operation(summary = "게시글 삭제", description = "게시글 ID를 통해 해당 게시글을 삭제합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "게시글 삭제 성공"),
-            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
-            @ApiResponse(responseCode = "403", description = "작성자 본인만 삭제 가능")
-    })
-    public ResponseEntity<Void> deleteBoard(
-            @PathVariable @Parameter(description = "게시글 ID") Long boardId,
-            @AuthenticationPrincipal Member member
-    ) {
-        boardService.deleteBoard(boardId, member);
-        return ResponseEntity.ok().build(); // 200 OK 반환
-    }
-
+    // 게시글 수정 페이지
     @PutMapping("/{boardId}")
     @Operation(summary = "게시글 수정", description = "게시글 ID를 통해 기존 게시글을 수정합니다.")
     @ApiResponses(value = {
@@ -141,6 +123,32 @@ public class BoardController {
         return ResponseEntity.ok().build();
     }
 
+    // 이건 뭔지. 필요 없어 보임. 확인 후 삭제 예정.
+    @GetMapping
+    public ResponseEntity<?> getBoards() {
+        List<BoardListResponseDto> boards = boardService.getBoardList();
+        if (boards.isEmpty()) {
+            return ResponseEntity.noContent().build();  // 204 No Content
+        }
+        return ResponseEntity.ok(boards); // 200 OK
+    }
+
+    // 게시글 삭제 페이지
+    @DeleteMapping("/{boardId}")
+    @Operation(summary = "게시글 삭제", description = "게시글 ID를 통해 해당 게시글을 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "게시글 삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+            @ApiResponse(responseCode = "403", description = "작성자 본인만 삭제 가능")
+    })
+    public ResponseEntity<Void> deleteBoard(
+            @PathVariable @Parameter(description = "게시글 ID") Long boardId,
+            @AuthenticationPrincipal Member member
+    ) {
+        boardService.deleteBoard(boardId, member);
+        return ResponseEntity.ok().build(); // 200 OK 반환
+    }
+    // 게시글 검색 페이지
     @GetMapping("/search/category")
     @Operation(summary = "게시글 카테고리 검색", description = "카테고리로 게시글 내용을 통해 게시글을 검색합니다.")
     public ResponseEntity<PagedBoardsResponseDto> searchBoards(
