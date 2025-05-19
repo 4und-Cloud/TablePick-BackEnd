@@ -41,6 +41,9 @@ public class RestaurantListResponseDto {
                 .restaurantPhoneNumber(restaurant.getRestaurantPhoneNumber())
                 .address(restaurant.getAddress())
                 .restaurantCategory(restaurant.getRestaurantCategory())
+                .restaurantImage(
+                        restaurant.getRestaurantImages().get(0) ? restaurant.getRestaurantImages().get(0).getImageUrl()
+                                : null)
                 .restaurantOperatingHours(
                         restaurant.getRestaurantOperatingHours() != null
                                 ? restaurant.getRestaurantOperatingHours().stream()
