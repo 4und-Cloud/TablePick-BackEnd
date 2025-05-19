@@ -74,11 +74,10 @@ public class MemberServiceImpl implements MemberService {
         Member member = memberRepository.findByEmail(username)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        // 태그 이름으로 Tag 객체 조회 또는 생성
         List<MemberTag> memberTagList = dto.getMemberTags().stream()
-                .map(tagName -> {
-                    Tag tag = tagRepository.findByName(tagName)
-                            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다: " + tagName));
+                .map(tagId -> {
+                    Tag tag = tagRepository.findById(tagId)
+                            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다: " + tagId));
                     return new MemberTag(member, tag);
                 })
                 .collect(Collectors.toList());
