@@ -42,7 +42,7 @@ public class RestaurantListResponseDto {
                 .address(restaurant.getAddress())
                 .restaurantCategory(restaurant.getRestaurantCategory())
                 .restaurantImage(
-                        restaurant.getRestaurantImages().get(0) ? restaurant.getRestaurantImages().get(0).getImageUrl()
+                        restaurant.getRestaurantImages().get(0) != null ? restaurant.getRestaurantImages().get(0).getImageUrl()
                                 : null)
                 .restaurantOperatingHours(
                         restaurant.getRestaurantOperatingHours() != null
