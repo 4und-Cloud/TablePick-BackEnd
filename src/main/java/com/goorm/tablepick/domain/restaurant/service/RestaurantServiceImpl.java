@@ -2,15 +2,20 @@ package com.goorm.tablepick.domain.restaurant.service;
 
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantCategorySearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantKeywordSearchRequestDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.CategoryResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantDetailResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantResponseDto;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
+import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantErrorCode;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryRepository;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import jakarta.validation.Valid;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -55,8 +60,14 @@ public class RestaurantServiceImpl implements RestaurantService {
                         restaurant.getId(),
                         restaurant.getName(),
                         restaurant.getRestaurantCategory().getName(),
+                        restaurant.getAddress(),
                         restaurant.getRestaurantImages().isEmpty() ? null
-                                : restaurant.getRestaurantImages().get(0).getImageUrl()
+                                : restaurant.getRestaurantImages().get(0).getImageUrl(),
+                        restaurant.getRestaurantTags() != null
+                                ? restaurant.getRestaurantTags().stream()
+                                .map(tag -> tag.getTag().getName())
+                                .collect(Collectors.toList())
+                                : Collections.emptyList()
                 )
         );
         return dtoPage;
@@ -74,5 +85,13 @@ public class RestaurantServiceImpl implements RestaurantService {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new RestaurantException(RestaurantErrorCode.NOT_FOUND));
         return RestaurantDetailResponseDto.fromEntity(restaurant);
+    }
+
+    @Override
+    public List<CategoryResponseDto> getCategoryList() {
+        List<RestaurantCategory> categoryList = restaurantCategoryRepository.findAll();
+        return categoryList.stream()
+                .map(CategoryResponseDto::toDto)
+                .collect(Collectors.toList());
     }
 }

@@ -25,4 +25,9 @@ public enum NotificationTypes {
     private final String title;
     private final String bodyTemplate;
     private final String url;
+
+    // 필요한 경우 메시지 템플릿을 처리하는 메서드 추가
+    public String getFormattedBody(String restaurantName) {
+        return bodyTemplate.replace("{restaurantName}", restaurantName);
+    }
 }

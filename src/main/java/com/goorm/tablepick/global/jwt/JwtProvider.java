@@ -7,7 +7,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpServletRequest;
 import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
@@ -62,7 +61,7 @@ public class JwtProvider {
         try {
             Claims claims = parseClaims(token);
             Date expiration = claims.getExpiration();
-            return !Instant.now().isAfter(expiration.toInstant());
+            return Instant.now().isBefore(expiration.toInstant());
         } catch (ExpiredJwtException e) {
             // 토큰이 만료된 경우도 false 반환
             return false;
@@ -82,15 +81,6 @@ public class JwtProvider {
             // 이미 만료된 경우라도 Claims는 얻을 수 있음
             return e.getClaims();
         }
-    }
-
-    //HTTP 요청에서 Authorization 헤더에서 Bearer 토큰 추출
-    public String resolveToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        return null;
     }
 
     // JWT에서 이메일 클레임 추출
