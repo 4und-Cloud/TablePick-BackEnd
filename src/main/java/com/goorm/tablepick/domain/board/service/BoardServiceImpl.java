@@ -4,6 +4,7 @@ import com.goorm.tablepick.domain.board.dto.request.BoardCategorySearchRequestDt
 import com.goorm.tablepick.domain.board.dto.request.BoardRequestDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardDetailResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardListResponseDto;
+import com.goorm.tablepick.domain.board.dto.response.PagedBoardListResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.PagedBoardsResponseDto;
 import com.goorm.tablepick.domain.board.entity.Board;
 import com.goorm.tablepick.domain.board.entity.BoardImage;
@@ -28,8 +29,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -43,23 +45,121 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public List<BoardListResponseDto> getBoardsForMainPage() {
         Pageable pageable = PageRequest.of(0, 4, Sort.by("createdAt").descending());
-        Page<Board> boardPage = boardRepository.findAll(pageable);
+
+        Page<Board> boardPage = boardRepository.findBoardsWithImages(pageable);
         return boardPage.getContent().stream()
                 .map(BoardListResponseDto::from)
                 .toList();
     }
 
     @Override
-    public PagedBoardsResponseDto getBoards(int page, int size) {
+    public PagedBoardListResponseDto getBoards(int page, int size) {
         // page가 1보다 작으면 강제로 1로 설정 (or throw new IllegalArgumentException)
         if (page < 1) {
             page = 1;
         }
 
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
-        // 클라이언트는 1페이지부터 요청하므로 0-based page index로 변환
-        Page<Board> boardPage = boardRepository.findAll(pageable);
-        return new PagedBoardsResponseDto(boardPage);
+
+        // imageUrl 있는 게시글만 조회
+        Page<Board> boardPage = boardRepository.findBoardsWithImages(pageable);
+
+        return new PagedBoardListResponseDto(boardPage);
+    }
+
+    public List<BoardListResponseDto> getBoardList() {
+        List<Board> boards = boardRepository.findAllByOrderByCreatedAtDesc();
+
+        return boards.stream().map(board -> {
+            // 이미지 URL 처리
+            String imageUrl = board.getBoardImages().stream()
+                    .map(image -> {
+                        if (image.getImageUrl() != null) return image.getImageUrl();
+                        else return image.getStoreFileName(); // 대체용
+                    })
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(null); // 없으면 null
+
+            // 태그 리스트
+            List<String> tagNames = board.getBoardTags().stream()
+                    .map(boardTag -> boardTag.getTag().getName())
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            return BoardListResponseDto.builder()
+                    .id(board.getId())
+                    .content(board.getContent())
+                    .restaurantName(board.getRestaurant().getName())
+                    .restaurantAddress(board.getRestaurant().getAddress())
+                    .restaurantCategoryName(
+                            board.getRestaurant().getRestaurantCategory() != null
+                                    ? board.getRestaurant().getRestaurantCategory().getName()
+                                    : null
+                    )
+                    .memberNickname(board.getMember().getNickname())
+                    .memberProfileImage(board.getMember().getProfileImage())
+                    .imageUrl(imageUrl) // 수정됨
+                    .tagNames(tagNames)
+                    .build();
+        }).toList();
+    }
+
+    @Override
+    public BoardDetailResponseDto getBoardDetail(Long boardId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
+
+        Restaurant restaurant = board.getRestaurant();
+        Member member = board.getMember();
+
+        List<String> imageUrls = board.getBoardImages().stream()
+
+                .map(image -> {
+                    // 우선 imageUrl이 있으면 사용, 없으면 storeFileName 사용
+                    if (image.getImageUrl() != null) return image.getImageUrl();
+                    return image.getStoreFileName();
+                })
+                .filter(Objects::nonNull) // null 제거
+                .limit(3) // 최대 3장으로 제한
+                .toList();
+                //.collect(Collectors.toList());
+
+        List<String> tagNames = board.getBoardTags().stream()
+                .map(boardTag -> boardTag.getTag().getName())
+                .filter(Objects::nonNull) // (선택) null 태그 방지
+                .toList();
+                //.collect(Collectors.toList());
+
+        // NullPointer 방지  // 카테고리 null 방지
+        String restaurantCategoryName = restaurant.getRestaurantCategory() != null
+                ? restaurant.getRestaurantCategory().getName()
+                : null;
+
+        // 작성일 null 방지 + 포맷
+        String createdAtStr = board.getCreatedAt() != null // Null 체크
+                ? board.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss"))
+                : null;
+
+        return BoardDetailResponseDto.builder()
+                .restaurantName(restaurant.getName())
+                .restaurantAddress(restaurant.getAddress())
+                .restaurantCategoryName(restaurantCategoryName)  // 수정됨
+                //.restaurantCategoryName(restaurant.getRestaurantCategory().getName())
+
+                .memberNickname(member.getNickname())
+                .memberProfileImage(member.getProfileImage())
+
+                .content(board.getContent())
+
+                .tagNames(tagNames)
+                .imageUrls(imageUrls)
+
+                .createdAt(createdAtStr) // ✅ 수정
+                //.createdAt(board.getCreatedAt().format(
+                 //       java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss"))) // 포맷팅
+
+                .build();
     }
 
     @Override
@@ -111,28 +211,7 @@ public class BoardServiceImpl implements BoardService {
         return savedBoard.getId();
     }
 
-    @Override
-    public BoardDetailResponseDto getBoardDetail(Long boardId) {
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
 
-        List<String> imageUrls = board.getBoardImages().stream()
-                .map(BoardImage::getStoreFileName)
-                .collect(Collectors.toList());
-
-        List<String> tagNames = board.getBoardTags().stream()
-                .map(boardTag -> boardTag.getTag().getName())
-                .collect(Collectors.toList());
-
-        return BoardDetailResponseDto.builder()
-                .restaurantName(board.getRestaurant().getName())
-                .createdAt(board.getCreatedAt())
-                .imageUrls(imageUrls)
-                .tagNames(tagNames)
-                .content(board.getContent())
-                .memberNickname(board.getMember().getNickname())
-                .build();
-    }
 
     // 예시: 파일 저장 로직 (단순화)
     private String convertToFile(MultipartFile file) {
@@ -140,28 +219,6 @@ public class BoardServiceImpl implements BoardService {
         return java.util.UUID.randomUUID() + "_" + file.getOriginalFilename();
     }
 
-    public List<BoardListResponseDto> getBoardList() {
-        List<Board> boards = boardRepository.findAllByOrderByCreatedAtDesc();
-
-        return boards.stream().map(board -> {
-            String imageUrl = board.getBoardImages().isEmpty()
-                    ? null
-                    : "/images/" + board.getBoardImages().get(0).getStoreFileName();
-
-            List<String> tagNames = board.getBoardTags().stream()
-                    .map(boardTag -> boardTag.getTag().getName())
-                    .collect(Collectors.toList());
-
-            return BoardListResponseDto.builder()
-                    .id(board.getId())
-                    .content(board.getContent())
-                    .restaurantName(board.getRestaurant().getName())
-                    .restaurantAddress(board.getRestaurant().getAddress())
-                    .imageUrl(imageUrl)
-                    .tagNames(tagNames)
-                    .build();
-        }).collect(Collectors.toList());
-    }
 
 
 

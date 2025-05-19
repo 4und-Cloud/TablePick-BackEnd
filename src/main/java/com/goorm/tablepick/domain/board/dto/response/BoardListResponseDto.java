@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -47,16 +48,23 @@ public class BoardListResponseDto {
                 // 작성자 프로필 이미지 경로
                 .memberProfileImage(board.getMember().getProfileImage())
 
-                // 대표 이미지 (없으면 null 반환)
-                .imageUrl(board.getBoardImages().isEmpty()
-                        ? null
-                        : "/images/" + board.getBoardImages().get(0).getStoreFileName()
+                // 이미지 URL 처리: imageUrl → 없으면 storeFileName
+                .imageUrl(
+                        board.getBoardImages().stream()
+                                .map(image -> {
+                                    if (image.getImageUrl() != null) return image.getImageUrl();
+                                    return image.getStoreFileName();  // fallback
+                                })
+                                .filter(Objects::nonNull)
+                                .findFirst()
+                                .orElse(null)
                 )
 
                 // 게시글 태그 이름 리스트
                 .tagNames(
                         board.getBoardTags().stream()
                                 .map(tag -> tag.getTag().getName())
+                                .filter(Objects::nonNull)
                                 .toList()
                 )
                 .build();
