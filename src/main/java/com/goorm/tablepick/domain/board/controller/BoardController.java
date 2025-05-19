@@ -33,6 +33,14 @@ public class BoardController {
         return boardService.getBoardsForMainPage();
     }
 
+    @GetMapping("/boards")
+    public PagedBoardsResponseDto getBoards(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size
+    ) {
+        return boardService.getBoards(page, size);
+    }
+
     @PostMapping
     @Operation(summary = "게시글 생성", description = "로그인된 사용자가 게시글을 생성합니다.")
     @ApiResponses(value = {

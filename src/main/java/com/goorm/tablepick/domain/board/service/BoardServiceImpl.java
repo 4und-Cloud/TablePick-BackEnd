@@ -50,11 +50,10 @@ public class BoardServiceImpl implements BoardService {
 
     @Override
     public PagedBoardsResponseDto getBoards(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequest.of(page-1, size, Sort.by("createdAt").descending());
         Page<Board> boardPage = boardRepository.findAll(pageable);
         return new PagedBoardsResponseDto(boardPage);
     }
-
 
     @Override
     @Transactional
