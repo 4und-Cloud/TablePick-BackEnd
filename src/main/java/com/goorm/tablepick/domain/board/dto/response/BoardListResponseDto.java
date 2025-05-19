@@ -13,15 +13,23 @@ import java.util.List;
 @NoArgsConstructor // Jackson이 JSON으로 역직렬화할 때 필요
 @AllArgsConstructor // @Builder와 함께 쓰면 좋음
 public class BoardListResponseDto {
+
     private Long id;
     private String content;
+
     private String restaurantName;
     private String restaurantAddress;
+
+    private String restaurantCategoryName; // [추가] 식당 카테고리
+    private String memberNickname;         // [추가] 작성자 이름
+    private String memberProfileImage;  //
+
+    // [추가] 작성자 프로필 이미지
 
     @ArraySchema(schema = @Schema(type = "string"))
     private List<String> tagNames;
 
-    private String imageUrl;
+    private String imageUrl;   // 게시글 대표 이미지
 
     public static BoardListResponseDto from(Board board) {
         return BoardListResponseDto.builder()
@@ -29,9 +37,25 @@ public class BoardListResponseDto {
                 .content(board.getContent())
                 .restaurantName(board.getRestaurant().getName())
                 .restaurantAddress(board.getRestaurant().getAddress())
+
+                // [추가] Null 체크와 함께 식당 카테고리 이름 추출
+                .restaurantCategoryName(
+                        board.getRestaurant().getRestaurantCategory() != null
+                                ? board.getRestaurant().getRestaurantCategory().getName()
+                                : null
+                )
+                // [추가] 작성자 닉네임
+                .memberNickname(board.getMember().getNickname())
+                // [추가] 작성자 프로필 이미지 경로
+                .memberProfileImage(board.getMember().getProfileImage())
+
+                // 대표 이미지 (없으면 null 반환)
                 .imageUrl(board.getBoardImages().isEmpty()
                         ? null
-                        : "/images/" + board.getBoardImages().get(0).getStoreFileName())
+                        : "/images/" + board.getBoardImages().get(0).getStoreFileName()
+                )
+
+                // 게시글 태그 이름 리스트
                 .tagNames(
                         board.getBoardTags().stream()
                                 .map(tag -> tag.getTag().getName())
