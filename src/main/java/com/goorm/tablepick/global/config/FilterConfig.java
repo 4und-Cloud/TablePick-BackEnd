@@ -1,12 +1,11 @@
 package com.goorm.tablepick.global.config;
 
 import jakarta.servlet.DispatcherType;
+import java.util.EnumSet;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.util.EnumSet;
 
 @Configuration
 public class FilterConfig { // 필터 설정을 위한 구성 클래스, Service Worker 관련 필터 설정을 담당
