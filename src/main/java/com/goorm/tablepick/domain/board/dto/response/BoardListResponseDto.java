@@ -20,11 +20,9 @@ public class BoardListResponseDto {
     private String restaurantName;
     private String restaurantAddress;
 
-    private String restaurantCategoryName; // [추가] 식당 카테고리
-    private String memberNickname;         // [추가] 작성자 이름
-    private String memberProfileImage;  //
-
-    // [추가] 작성자 프로필 이미지
+    private String restaurantCategoryName; // 식당 카테고리
+    private String memberNickname;         // 작성자 이름
+    private String memberProfileImage;  // 작성자 프로필 이미지
 
     @ArraySchema(schema = @Schema(type = "string"))
     private List<String> tagNames;
@@ -38,15 +36,15 @@ public class BoardListResponseDto {
                 .restaurantName(board.getRestaurant().getName())
                 .restaurantAddress(board.getRestaurant().getAddress())
 
-                // [추가] Null 체크와 함께 식당 카테고리 이름 추출
+                // Null 체크와 함께 식당 카테고리 이름 추출
                 .restaurantCategoryName(
                         board.getRestaurant().getRestaurantCategory() != null
                                 ? board.getRestaurant().getRestaurantCategory().getName()
                                 : null
                 )
-                // [추가] 작성자 닉네임
+                // 작성자 닉네임
                 .memberNickname(board.getMember().getNickname())
-                // [추가] 작성자 프로필 이미지 경로
+                // 작성자 프로필 이미지 경로
                 .memberProfileImage(board.getMember().getProfileImage())
 
                 // 대표 이미지 (없으면 null 반환)
