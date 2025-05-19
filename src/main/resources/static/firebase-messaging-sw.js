@@ -5,18 +5,17 @@ importScripts("https://www.gstatic.com/firebasejs/11.7.1/firebase-messaging-comp
 // 콘솔 로그 추가
 console.log("[firebase-messaging-sw.js] 서비스 워커 로드됨")
 
-// Initialize Firebase (fix for undeclared variable)
 const firebase = self.firebase
 
 // Firebase 초기화
 firebase.initializeApp({
-    apiKey: "AIzaSyA7Qw41MPAqVcpetusZjgMfEPYXis4q3RQ",
-    authDomain: "project-tablepick.firebaseapp.com",
-    projectId: "project-tablepick",
-    storageBucket: "project-tablepick.firebasestorage.app",
-    messagingSenderId: "806487490296",
-    appId: "1:806487490296:web:96a37b5c5e12464066850d",
-    measurementId: "G-7VLJ4SH0RF",
+    apiKey: "firebaseConfig.ts에 있는 코드 넣기",
+    authDomain: "firebaseConfig.ts에 있는 코드 넣기",
+    projectId: "firebaseConfig.ts에 있는 코드 넣기",
+    storageBucket: "firebaseConfig.ts에 있는 코드 넣기",
+    messagingSenderId: "firebaseConfig.ts에 있는 코드 넣기",
+    appId: "firebaseConfig.ts에 있는 코드 넣기",
+    measurementId: "firebaseConfig.ts에 있는 코드 넣기",
 })
 
 // Firebase 메시징 인스턴스 가져오기
