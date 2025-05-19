@@ -51,7 +51,12 @@ public class BoardServiceImpl implements BoardService {
 
     @Override
     public PagedBoardsResponseDto getBoards(int page, int size) {
-        Pageable pageable = PageRequest.of(page-1, size, Sort.by("createdAt").descending());
+        // page가 1보다 작으면 강제로 1로 설정 (or throw new IllegalArgumentException)
+        if (page < 1) {
+            page = 1;
+        }
+
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
         // 클라이언트는 1페이지부터 요청하므로 0-based page index로 변환
         Page<Board> boardPage = boardRepository.findAll(pageable);
         return new PagedBoardsResponseDto(boardPage);
@@ -158,17 +163,7 @@ public class BoardServiceImpl implements BoardService {
         }).collect(Collectors.toList());
     }
 
-    @Override
-    public void deleteBoard(Long boardId, Member member) {
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new BoardException(BoardErrorCode.NOT_FOUND));
 
-        if (!board.getMember().getId().equals(member.getId())) {
-            throw new BoardException(BoardErrorCode.NO_PERMISSION);
-        }
-
-        boardRepository.delete(board);
-    }
 
     @Override
     @Transactional
@@ -182,6 +177,18 @@ public class BoardServiceImpl implements BoardService {
 
         board.updateFromDto(dto); // → Board 엔티티에 updateFromDto() 메서드가 있어야 함
         boardRepository.save(board);
+    }
+
+    @Override
+    public void deleteBoard(Long boardId, Member member) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new BoardException(BoardErrorCode.NOT_FOUND));
+
+        if (!board.getMember().getId().equals(member.getId())) {
+            throw new BoardException(BoardErrorCode.NO_PERMISSION);
+        }
+
+        boardRepository.delete(board);
     }
 
     @Override

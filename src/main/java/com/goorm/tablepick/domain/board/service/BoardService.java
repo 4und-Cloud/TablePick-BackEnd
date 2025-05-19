@@ -8,21 +8,22 @@ import com.goorm.tablepick.domain.board.dto.response.BoardListResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.PagedBoardsResponseDto;
 import com.goorm.tablepick.domain.member.entity.Member;
 import jakarta.validation.Valid;
+
 import java.util.List;
 
 public interface BoardService {
     List<BoardListResponseDto> getBoardsForMainPage();
     PagedBoardsResponseDto getBoards(int page, int size);
 
-    Long createBoard(BoardRequestDto dto, Member member);
+    List<BoardListResponseDto> getBoardList();
 
     BoardDetailResponseDto getBoardDetail(Long boardId);
 
-    List<BoardListResponseDto> getBoardList();
-
-    void deleteBoard(Long boardId, Member member);
+    Long createBoard(BoardRequestDto dto, Member member);
 
     void updateBoard(Long boardId, BoardRequestDto dto, Member member);
+
+    void deleteBoard(Long boardId, Member member);
 
     PagedBoardsResponseDto searchAllByCategory(@Valid BoardCategorySearchRequestDto boardSearchRequestDto);
       
