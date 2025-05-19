@@ -32,18 +32,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        String accessToken = getAccessTokenFromCookie(request);
+        log.info("🪪 [JwtTokenFilter] Authorization Header: {}", request.getHeader("Authorization"));
 
-        // ✅ [추가] Authorization 헤더에서 Bearer 토큰 추출
-        String authorizationHeader = request.getHeader("Authorization");
-        String accessToken = null;
-
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            accessToken = authorizationHeader.substring(7).trim();  // ✅ 앞뒤 공백 제거
-        } else {
-            accessToken = getAccessTokenFromCookie(request); // ✅ 기존 쿠키 방식 유지
-        }
-
-        log.info("🪪 [JwtTokenFilter] Authorization Header: {}", authorizationHeader);
         log.info("🪪 [JwtTokenFilter] Extracted Access Token: {}", accessToken);
 
         try {
@@ -57,7 +48,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                     return;
                 }
             } else {
-                log.warn("🚫 [JwtTokenFilter] 토큰이 없음 (헤더 & 쿠키 모두 실패)");
+                log.warn("🚫 [JwtTokenFilter] Authorization 헤더가 없거나 Bearer 형식 아님");
             }
         } catch (Exception e) {
             log.error("🔥 [JwtTokenFilter] 필터 처리 중 예외 발생: {}", e.getMessage(), e);
