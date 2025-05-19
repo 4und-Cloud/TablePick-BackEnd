@@ -4,6 +4,7 @@ import com.goorm.tablepick.domain.board.dto.request.BoardCategorySearchRequestDt
 import com.goorm.tablepick.domain.board.dto.request.BoardRequestDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardDetailResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardListResponseDto;
+import com.goorm.tablepick.domain.board.dto.response.PagedBoardListResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.PagedBoardsResponseDto;
 import com.goorm.tablepick.domain.board.entity.Board;
 import com.goorm.tablepick.domain.board.entity.BoardImage;
@@ -28,6 +29,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,7 +52,7 @@ public class BoardServiceImpl implements BoardService {
     }
 
     @Override
-    public PagedBoardsResponseDto getBoards(int page, int size) {
+    public PagedBoardListResponseDto getBoards(int page, int size) {
         // page가 1보다 작으면 강제로 1로 설정 (or throw new IllegalArgumentException)
         if (page < 1) {
             page = 1;
@@ -59,7 +61,55 @@ public class BoardServiceImpl implements BoardService {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
         // 클라이언트는 1페이지부터 요청하므로 0-based page index로 변환
         Page<Board> boardPage = boardRepository.findAll(pageable);
-        return new PagedBoardsResponseDto(boardPage);
+
+        return new PagedBoardListResponseDto(boardPage); // 변경된 리턴
+    }
+
+    @Override
+    public BoardDetailResponseDto getBoardDetail(Long boardId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
+
+        Restaurant restaurant = board.getRestaurant();
+        Member member = board.getMember();
+
+        List<String> imageUrls = board.getBoardImages().stream()
+                .limit(3) // 최대 3장으로 제한
+                .map(BoardImage::getStoreFileName)
+                .collect(Collectors.toList());
+
+        List<String> tagNames = board.getBoardTags().stream()
+                .map(boardTag -> boardTag.getTag().getName())
+                .collect(Collectors.toList());
+
+        // NullPointer 방지
+        String restaurantCategoryName = restaurant.getRestaurantCategory() != null
+                ? restaurant.getRestaurantCategory().getName()
+                : null;
+
+        String createdAtStr = board.getCreatedAt() != null // ✅ Null 체크
+                ? board.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss"))
+                : null;
+
+        return BoardDetailResponseDto.builder()
+                .restaurantName(restaurant.getName())
+                .restaurantAddress(restaurant.getAddress())
+                .restaurantCategoryName(restaurantCategoryName)  // 수정됨
+                //.restaurantCategoryName(restaurant.getRestaurantCategory().getName())
+
+                .memberNickname(member.getNickname())
+                .memberProfileImage(member.getProfileImage())
+
+                .content(board.getContent())
+
+                .tagNames(tagNames)
+                .imageUrls(imageUrls)
+
+                .createdAt(createdAtStr) // ✅ 수정
+                //.createdAt(board.getCreatedAt().format(
+                 //       java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss"))) // 포맷팅
+
+                .build();
     }
 
     @Override
@@ -111,28 +161,7 @@ public class BoardServiceImpl implements BoardService {
         return savedBoard.getId();
     }
 
-    @Override
-    public BoardDetailResponseDto getBoardDetail(Long boardId) {
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
 
-        List<String> imageUrls = board.getBoardImages().stream()
-                .map(BoardImage::getStoreFileName)
-                .collect(Collectors.toList());
-
-        List<String> tagNames = board.getBoardTags().stream()
-                .map(boardTag -> boardTag.getTag().getName())
-                .collect(Collectors.toList());
-
-        return BoardDetailResponseDto.builder()
-                .restaurantName(board.getRestaurant().getName())
-                .createdAt(board.getCreatedAt())
-                .imageUrls(imageUrls)
-                .tagNames(tagNames)
-                .content(board.getContent())
-                .memberNickname(board.getMember().getNickname())
-                .build();
-    }
 
     // 예시: 파일 저장 로직 (단순화)
     private String convertToFile(MultipartFile file) {

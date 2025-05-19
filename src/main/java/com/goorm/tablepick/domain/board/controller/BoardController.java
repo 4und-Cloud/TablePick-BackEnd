@@ -4,6 +4,7 @@ import com.goorm.tablepick.domain.board.dto.request.BoardCategorySearchRequestDt
 import com.goorm.tablepick.domain.board.dto.request.BoardRequestDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardDetailResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardListResponseDto;
+import com.goorm.tablepick.domain.board.dto.response.PagedBoardListResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.PagedBoardsResponseDto;
 import com.goorm.tablepick.domain.board.service.BoardService;
 import com.goorm.tablepick.domain.member.entity.Member;
@@ -41,7 +42,7 @@ public class BoardController {
 
     // "게시물 더보기"를 누르면. 게시물만 한 화면에 6개씩 페이지네이션 해서 보여짐.
     @GetMapping("/list")
-    public PagedBoardsResponseDto getBoards(
+    public PagedBoardListResponseDto getBoards(
             @RequestParam(defaultValue = "1") int page,  // [수정] 기본값 0 → 1
             @RequestParam(defaultValue = "6") int size
     ) {
