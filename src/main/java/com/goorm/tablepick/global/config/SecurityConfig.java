@@ -28,7 +28,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/auth/**", "/oauth2/**", "/swagger-ui/**", "/swagger-ui.html/**",
-                                "/api/restaurants/all", "/api/restaurants/{id}", "/v3/api-docs/**"
+                                "/api/restaurants/all", "/api/restaurants/{id}", "/v3/api-docs/**",
+                                "/api/boards/main", "/api/tags","/api/restaurants/search",
+                                "/api/restaurants/list", "/api/reservation/available-times", "/api/board-tags/",
+                                "/api/boards/list", "api/boards", "/api/boards/{boardId}"
                         ).permitAll()
 
                         // 🔧 여기 수정: 권한 검사 조건 변경
