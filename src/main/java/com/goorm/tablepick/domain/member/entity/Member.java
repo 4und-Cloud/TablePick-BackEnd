@@ -21,7 +21,6 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -56,7 +55,7 @@ public class Member {
     private RefreshToken refreshToken;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MemberTag> memberTags = new ArrayList<>();
+    private List<MemberTag> memberTags;
 
     @Enumerated(EnumType.STRING)
     private AccountRole roles;
@@ -93,12 +92,22 @@ public class Member {
     public void removeFcmToken() {
         this.fcmToken = null;
     }
-  
-    public Member addMemberInfo(MemberAddtionalInfoRequestDto dto, List<MemberTag> memberTags) {
+
+    public void addMemberInfo(MemberAddtionalInfoRequestDto dto, List<MemberTag> newMemberTags) {
         this.phoneNumber = dto.getPhoneNumber();
         this.gender = dto.getGender();
         this.birthdate = dto.getBirthdate();
-        this.memberTags = memberTags;
-        return this;
+
+        if (this.memberTags == null) {
+            this.memberTags = new ArrayList<>();
+        } else {
+            this.memberTags.clear(); // 기존 값 제거 (orphanRemoval 작동)
+        }
+
+        for (MemberTag tag : newMemberTags) {
+            tag.setMember(this); // 양방향 연관관계 설정
+            this.memberTags.add(tag);
+        }
+
     }
 }

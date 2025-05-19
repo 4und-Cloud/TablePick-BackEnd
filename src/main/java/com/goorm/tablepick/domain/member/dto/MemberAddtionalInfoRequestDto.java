@@ -16,7 +16,7 @@ import lombok.Setter;
 @Schema(description = "로그인 후 사용자 정보 추가")
 public class MemberAddtionalInfoRequestDto {
 
-    @Schema(description = "성별", example = "male")
+    @Schema(description = "성별", example = "MALE")
     private Gender gender;
 
     @Schema(description = "생년월일", example = "2002-01-01")
@@ -28,6 +28,6 @@ public class MemberAddtionalInfoRequestDto {
     private String phoneNumber;
 
     @Schema(description = "사용자 선호 태그")
-    private List<String> memberTags = new ArrayList<>();
+    private List<String> memberTags;
 
 }
