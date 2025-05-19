@@ -10,12 +10,13 @@ import com.goorm.tablepick.domain.notification.entity.NotificationTypes;
 import com.goorm.tablepick.domain.notification.repository.NotificationLogRepository;
 import com.goorm.tablepick.domain.notification.repository.NotificationQueueRepository;
 import com.goorm.tablepick.domain.notification.repository.NotificationTypesRepository;
+import com.goorm.tablepick.domain.reservation.entity.Reservation;
+import com.goorm.tablepick.domain.reservation.repository.ReservationRepository;
 import com.goorm.tablepick.global.exception.NotificationException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ public class NotificationService {
     private final NotificationLogRepository notificationLogRepository;
     private final FCMService fcmService;
     private final FCMTokenService fcmTokenService;
+    private final ReservationRepository reservationRepository;
 
     // 최대 재시도 횟수 = 3번
     private static final int MAX_RETRY_COUNT = 3;
@@ -95,9 +97,24 @@ public class NotificationService {
     // FCM 메시지 전송
     private void sendFcmNotification(NotificationQueue notification, String fcmToken) {
         NotificationTypes type = notification.getNotificationTypes();
-        Map<String, String> data = createNotificationData(notification, type);
 
-        fcmService.sendMessage(fcmToken, type.getTitle(), type.getBody(), data);
+        // 예약 정보 조회
+        Reservation reservation = reservationRepository.getReservationById(notification.getReservationId());
+
+        // 파라미터 맵 생성
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("id", notification.getReservationId().toString());
+        parameters.put("restaurantName", reservation.getReservationSlot().getRestaurant().getName());
+
+        // 플레이스홀더 치환
+        String formattedBody = type.getFormattedBody(parameters);
+        String formattedUrl = type.getFormattedUrl(parameters);
+
+        // 알림 데이터 생성
+        Map<String, String> data = createNotificationData(notification, type);
+        data.put("url", formattedUrl); // 포맷된 URL로 업데이트
+
+        fcmService.sendMessage(fcmToken, type.getTitle(), formattedBody, data);
     }
 
     // 알림 데이터 생성

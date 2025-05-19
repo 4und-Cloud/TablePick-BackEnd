@@ -1,7 +1,6 @@
 package com.goorm.tablepick.domain.reservation.entity;
 
 import com.goorm.tablepick.domain.member.entity.Member;
-import com.goorm.tablepick.domain.notification.entity.Notification;
 import com.goorm.tablepick.domain.payment.entity.Payment;
 import com.goorm.tablepick.domain.reservation.enums.ReservationStatus;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
@@ -15,11 +14,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -51,9 +47,6 @@ public class Reservation {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant;
-
-    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Notification> notifications = new ArrayList<>();
 
     @OneToOne(mappedBy = "reservation", cascade = CascadeType.ALL)
     private Payment payment;

@@ -11,11 +11,13 @@ public enum NotificationTypes {
             "내일 이 시간에 {restaurantName} 예약이 있습니다!",
             "/reservations/{id}"
     ),
+
     RESERVATION_3HOURS_BEFORE(
             "예약 3시간 전 알림",
             "3시간 뒤에 {restaurantName} 예약이 있습니다! 까먹지 않게 또 알려드릴게요!",
             "/reservations/{id}"
     ),
+
     RESERVATION_1HOUR_BEFORE(
             "예약 1시간 전 알림",
             "예약하신 {restaurantName}이 열심히 준비하고 있습니다! 1시간 뒤에 늦지 않게 입장해주세용~!",
@@ -26,8 +28,4 @@ public enum NotificationTypes {
     private final String bodyTemplate;
     private final String url;
 
-    // 필요한 경우 메시지 템플릿을 처리하는 메서드 추가
-    public String getFormattedBody(String restaurantName) {
-        return bodyTemplate.replace("{restaurantName}", restaurantName);
-    }
 }

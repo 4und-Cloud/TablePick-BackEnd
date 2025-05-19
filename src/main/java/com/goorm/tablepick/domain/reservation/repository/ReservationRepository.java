@@ -28,4 +28,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     // 회원 ID로 예약을 조회하는 메서드
     List<Reservation> findByMemberId(Long memberId);
+
+    // ID로 예약 조회 (Optional이 아닌 직접 Reservation 반환)
+    // 기본 findById는 Optional<Reservation>을 반환하므로 추가
+    @Query("SELECT r FROM Reservation r WHERE r.id = :id")
+    Reservation getReservationById(@Param("id") Long id);
 }

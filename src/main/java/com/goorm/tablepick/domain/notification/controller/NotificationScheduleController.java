@@ -42,7 +42,7 @@ public class NotificationScheduleController {
 
         Map<String, String> response = new HashMap<>();
         response.put("status", "success");
-        response.put("message", "Daily notification scheduling completed");
+        response.put("message", "일일 알림 스케줄링 실행 성공 ^^");
 
         return ResponseEntity.ok(response);
     }
@@ -68,7 +68,7 @@ public class NotificationScheduleController {
 
         Map<String, String> response = new HashMap<>();
         response.put("status", "success");
-        response.put("message", "Notification scheduling completed for reservation ID: " + reservationId);
+        response.put("message", "지정된 예약 ID에 대한 알림을 스케줄링 진행 중~~: " + reservationId);
 
         return ResponseEntity.ok(response);
     }
