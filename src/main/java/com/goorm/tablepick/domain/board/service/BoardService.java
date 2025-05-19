@@ -14,7 +14,6 @@ import java.util.List;
 
 public interface BoardService {
     List<BoardListResponseDto> getBoardsForMainPage();
-    //PagedBoardsResponseDto getBoards(int page, int size);
 
     List<BoardListResponseDto> getBoardList();
     PagedBoardListResponseDto getBoards(int page, int size);

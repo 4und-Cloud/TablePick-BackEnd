@@ -31,7 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -45,7 +45,8 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public List<BoardListResponseDto> getBoardsForMainPage() {
         Pageable pageable = PageRequest.of(0, 4, Sort.by("createdAt").descending());
-        Page<Board> boardPage = boardRepository.findAll(pageable);
+
+        Page<Board> boardPage = boardRepository.findBoardsWithImages(pageable);
         return boardPage.getContent().stream()
                 .map(BoardListResponseDto::from)
                 .toList();
@@ -59,10 +60,49 @@ public class BoardServiceImpl implements BoardService {
         }
 
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
-        // 클라이언트는 1페이지부터 요청하므로 0-based page index로 변환
-        Page<Board> boardPage = boardRepository.findAll(pageable);
 
-        return new PagedBoardListResponseDto(boardPage); // 변경된 리턴
+        // imageUrl 있는 게시글만 조회
+        Page<Board> boardPage = boardRepository.findBoardsWithImages(pageable);
+
+        return new PagedBoardListResponseDto(boardPage);
+    }
+
+    public List<BoardListResponseDto> getBoardList() {
+        List<Board> boards = boardRepository.findAllByOrderByCreatedAtDesc();
+
+        return boards.stream().map(board -> {
+            // 이미지 URL 처리
+            String imageUrl = board.getBoardImages().stream()
+                    .map(image -> {
+                        if (image.getImageUrl() != null) return image.getImageUrl();
+                        else return image.getStoreFileName(); // 대체용
+                    })
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(null); // 없으면 null
+
+            // 태그 리스트
+            List<String> tagNames = board.getBoardTags().stream()
+                    .map(boardTag -> boardTag.getTag().getName())
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            return BoardListResponseDto.builder()
+                    .id(board.getId())
+                    .content(board.getContent())
+                    .restaurantName(board.getRestaurant().getName())
+                    .restaurantAddress(board.getRestaurant().getAddress())
+                    .restaurantCategoryName(
+                            board.getRestaurant().getRestaurantCategory() != null
+                                    ? board.getRestaurant().getRestaurantCategory().getName()
+                                    : null
+                    )
+                    .memberNickname(board.getMember().getNickname())
+                    .memberProfileImage(board.getMember().getProfileImage())
+                    .imageUrl(imageUrl) // 수정됨
+                    .tagNames(tagNames)
+                    .build();
+        }).toList();
     }
 
     @Override
@@ -74,20 +114,30 @@ public class BoardServiceImpl implements BoardService {
         Member member = board.getMember();
 
         List<String> imageUrls = board.getBoardImages().stream()
+
+                .map(image -> {
+                    // 우선 imageUrl이 있으면 사용, 없으면 storeFileName 사용
+                    if (image.getImageUrl() != null) return image.getImageUrl();
+                    return image.getStoreFileName();
+                })
+                .filter(Objects::nonNull) // null 제거
                 .limit(3) // 최대 3장으로 제한
-                .map(BoardImage::getStoreFileName)
-                .collect(Collectors.toList());
+                .toList();
+                //.collect(Collectors.toList());
 
         List<String> tagNames = board.getBoardTags().stream()
                 .map(boardTag -> boardTag.getTag().getName())
-                .collect(Collectors.toList());
+                .filter(Objects::nonNull) // (선택) null 태그 방지
+                .toList();
+                //.collect(Collectors.toList());
 
-        // NullPointer 방지
+        // NullPointer 방지  // 카테고리 null 방지
         String restaurantCategoryName = restaurant.getRestaurantCategory() != null
                 ? restaurant.getRestaurantCategory().getName()
                 : null;
 
-        String createdAtStr = board.getCreatedAt() != null // ✅ Null 체크
+        // 작성일 null 방지 + 포맷
+        String createdAtStr = board.getCreatedAt() != null // Null 체크
                 ? board.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss"))
                 : null;
 
@@ -169,28 +219,6 @@ public class BoardServiceImpl implements BoardService {
         return java.util.UUID.randomUUID() + "_" + file.getOriginalFilename();
     }
 
-    public List<BoardListResponseDto> getBoardList() {
-        List<Board> boards = boardRepository.findAllByOrderByCreatedAtDesc();
-
-        return boards.stream().map(board -> {
-            String imageUrl = board.getBoardImages().isEmpty()
-                    ? null
-                    : "/images/" + board.getBoardImages().get(0).getStoreFileName();
-
-            List<String> tagNames = board.getBoardTags().stream()
-                    .map(boardTag -> boardTag.getTag().getName())
-                    .collect(Collectors.toList());
-
-            return BoardListResponseDto.builder()
-                    .id(board.getId())
-                    .content(board.getContent())
-                    .restaurantName(board.getRestaurant().getName())
-                    .restaurantAddress(board.getRestaurant().getAddress())
-                    .imageUrl(imageUrl)
-                    .tagNames(tagNames)
-                    .build();
-        }).collect(Collectors.toList());
-    }
 
 
 
