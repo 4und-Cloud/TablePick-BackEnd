@@ -4,6 +4,8 @@ package com.goorm.tablepick.domain.member.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.goorm.tablepick.domain.member.enums.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -28,6 +30,8 @@ public class MemberAddtionalInfoRequestDto {
     private String phoneNumber;
 
     @Schema(description = "사용자 선호 태그")
-    private List<String> memberTags;
+    @Max(value = 5, message = "선호 태그는 5개까지만 가능합니다.")
+    @Min(value = 1, message = "선호 태그는 1개 이상 선택해주세요.")
+    private List<Long> memberTags;
 
 }
