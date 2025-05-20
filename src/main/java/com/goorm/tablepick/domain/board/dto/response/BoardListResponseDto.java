@@ -31,16 +31,23 @@ public class BoardListResponseDto {
     private String imageUrl;   // 게시글 대표 이미지
 
     public static BoardListResponseDto from(Board board) {
+
+        // 안전하게 Reservation과 Restaurant 꺼내기
+        var reservation = board.getReservation();
+        var restaurant = (reservation != null) ? reservation.getRestaurant() : null;
+
         return BoardListResponseDto.builder()
                 .id(board.getId())
                 .content(board.getContent())
-                .restaurantName(board.getRestaurant().getName())
-                .restaurantAddress(board.getRestaurant().getAddress())
 
-                // Null 체크와 함께 식당 카테고리 이름 추출
+                // null 체크 추가
+                .restaurantName(restaurant != null ? restaurant.getName() : null)
+                .restaurantAddress(restaurant != null ? restaurant.getAddress() : null)
+
+                // ✅ null 체크 추가: restaurantCategory도 존재할 경우만 접근
                 .restaurantCategoryName(
-                        board.getRestaurant().getRestaurantCategory() != null
-                                ? board.getRestaurant().getRestaurantCategory().getName()
+                        restaurant != null && restaurant.getRestaurantCategory() != null
+                                ? restaurant.getRestaurantCategory().getName()
                                 : null
                 )
                 // 작성자 닉네임

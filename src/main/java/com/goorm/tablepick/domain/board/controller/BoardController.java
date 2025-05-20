@@ -1,6 +1,7 @@
 package com.goorm.tablepick.domain.board.controller;
 
 import com.goorm.tablepick.domain.board.dto.request.BoardCategorySearchRequestDto;
+import com.goorm.tablepick.domain.board.dto.request.BoardCreateResponseDto;
 import com.goorm.tablepick.domain.board.dto.request.BoardRequestDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardDetailResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardListResponseDto;
@@ -63,7 +64,6 @@ public class BoardController {
         return ResponseEntity.ok(boardService.getBoardDetail(boardId));
     }
 
-
     // 게시글 작성 페이지, 이미지는 0개~3개 첨부 가능. 태그 선택은 1개에서 5개.
     @Operation(summary = "게시글 생성", description = "로그인된 사용자가 게시글을 생성합니다.")
     @ApiResponses(value = {
@@ -74,13 +74,8 @@ public class BoardController {
     })
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createBoard(
-            @RequestPart("data") BoardRequestDto dto, // JSON 본문   //- 이 부분 지혜님이 지적한 듯. 무슨 뜻인지 알아야.
-
-//            @RequestParam("restaurantId") Long restaurantId, // ✅ JSON 대신 개별 필드 처리
-//            @RequestParam("content") String content,
-//            @RequestParam("tagNames") List<String> tagNames, // ✅ 다중 태그 처리
-
-            @RequestPart(value = "images", required = false) List<MultipartFile> images,   //- 이 부분 지혜님이 지적한 듯. 무슨 뜻인지 알아야.    // 이 코드가 필요한 코드로 알고 있는데. 뭐더라.
+            @RequestPart("data") BoardRequestDto dto,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @AuthenticationPrincipal Member member
     ) {
         dto.setImages(images);
@@ -96,15 +91,8 @@ public class BoardController {
             return ResponseEntity.badRequest().body("태그는 최소 1개, 최대 5개까지 등록 가능합니다.");
         }
 
-        // ✅ DTO 직접 생성
-//        BoardRequestDto dto = new BoardRequestDto();
-//        dto.setRestaurantId(restaurantId);
-//        dto.setContent(content);
-//        dto.setTagNames(tagNames);
-//        dto.setImages(images);
-
-        Long boardId = boardService.createBoard(dto, member);
-        return ResponseEntity.status(HttpStatus.CREATED).body(boardId);
+        BoardCreateResponseDto response = boardService.createBoard(dto, member);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     // 게시글 수정 페이지

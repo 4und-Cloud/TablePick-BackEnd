@@ -1,13 +1,6 @@
 package com.goorm.tablepick.global.config;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -26,6 +19,12 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedHeaders("Content-Type", "Access-Token")
                 .exposedHeaders("Access-Token")
                 .allowCredentials(true);
+
+        registry.addMapping("/images/**")
+                .allowedOrigins("http://localhost:5173")
+                .allowedMethods("GET")
+                .allowCredentials(true);
+
     }
 
     // Firebase 서비스 워커를 위한 리소스 핸들러 추가

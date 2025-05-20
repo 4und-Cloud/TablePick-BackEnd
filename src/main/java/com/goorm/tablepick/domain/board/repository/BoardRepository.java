@@ -22,6 +22,6 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     @Query("SELECT DISTINCT b FROM Board b JOIN b.boardImages i WHERE i.imageUrl IS NOT NULL ORDER BY b.createdAt DESC")
     Page<Board> findBoardsWithImages(Pageable pageable);
 
-    @Query("SELECT b FROM Board b WHERE b.restaurant.restaurantCategory.id = :categoryId")
+    @Query("SELECT b FROM Board b WHERE b.reservation.restaurant.restaurantCategory.id = :categoryId") // 수정
     Page<Board> findAllByCategory(@Param("categoryId") Long categoryId, Pageable pageable);
 }

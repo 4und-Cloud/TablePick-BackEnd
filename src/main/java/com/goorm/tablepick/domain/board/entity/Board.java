@@ -2,19 +2,9 @@ package com.goorm.tablepick.domain.board.entity;
 
 import com.goorm.tablepick.domain.board.dto.request.BoardRequestDto;
 import com.goorm.tablepick.domain.member.entity.Member;
+import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Column;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -52,6 +42,10 @@ public class Board {
     private Restaurant restaurant;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reservation_id")
+    private Reservation reservation;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
 
@@ -62,17 +56,14 @@ public class Board {
     private List<BoardTag> boardTags = new ArrayList<>();
 
     @Builder
-    public Board(Restaurant restaurant, Member member, String content) {
-        this.restaurant = restaurant;
+    public Board(Reservation reservation, Member member, String content) {
+        this.reservation = reservation;
         this.member = member;
         this.content = content;
     }
 
     public void updateFromDto(BoardRequestDto dto) {
-        //this.title = dto.getTitle();
         this.content = dto.getContent();
-        //this.category = dto.getCategory();   // 제목, 카테고리는 나중에 사용할 수도 있어서. 일단 남겨두고. 주석 처리
-        // 필요시 이미지, 태그 등도 포함
     }
 
     public void addImage(BoardImage image) {
