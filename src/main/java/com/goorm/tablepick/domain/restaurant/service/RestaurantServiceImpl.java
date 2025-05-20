@@ -13,15 +13,16 @@ import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryRepository;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import jakarta.validation.Valid;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -76,7 +77,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page) {
         Pageable pageable = PageRequest.of(page - 1, 6);
-        Page<Restaurant> restaurantList = restaurantRepository.findAllOrderedByCreatedAt(pageable);
+        Page<Restaurant> restaurantList = restaurantRepository.findAllOrderByNameAsc(pageable);
         return new PagedRestaurantResponseDto(restaurantList);
     }
 
