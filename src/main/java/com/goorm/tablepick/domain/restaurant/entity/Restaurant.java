@@ -1,6 +1,5 @@
 package com.goorm.tablepick.domain.restaurant.entity;
 
-import com.goorm.tablepick.domain.board.entity.Board;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -30,9 +29,6 @@ public class Restaurant {
     private BigDecimal ycoordinate;
 
     private Long maxCapacity;
-
-    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
-    private List<Board> boards = new ArrayList<>();
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     private List<ReservationSlot> reservationSlots = new ArrayList<>();

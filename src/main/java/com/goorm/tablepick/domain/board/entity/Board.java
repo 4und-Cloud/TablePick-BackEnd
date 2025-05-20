@@ -3,7 +3,6 @@ package com.goorm.tablepick.domain.board.entity;
 import com.goorm.tablepick.domain.board.dto.request.BoardRequestDto;
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
-import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -36,10 +35,6 @@ public class Board {
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "restaurant_id")
-    private Restaurant restaurant;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reservation_id")
