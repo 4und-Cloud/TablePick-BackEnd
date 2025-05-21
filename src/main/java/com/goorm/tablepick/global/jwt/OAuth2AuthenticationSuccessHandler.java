@@ -36,25 +36,25 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
                                         Authentication authentication) throws IOException {
         DefaultOAuth2User oAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
         Map<String, Object> attributes = oAuth2User.getAttributes();
-        String accessToken = request.getHeader("Access-Token");
+        String accessToken = getAccessTokenFromCookie(request);
         String refreshToken = getRefreshTokenFromCookie(request);
         String email = extractEmail(attributes);
         // 사용자 정보 조회
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("인증 후 사용자 정보가 없습니다."));
-
+        //인증된 객체로 저장
         authenticateUser(member);
-
+        //저장된 리프레쉬 토큰이 있는지 있으면 불러오고 없으면 null
+        String storedRefreshToken = member.getRefreshToken() != null ? member.getRefreshToken().getToken() : null;
         // 액세스 토큰 유효성 검사 및 재발급
         if (accessToken == null || !jwtProvider.validateToken(accessToken)) {
             accessToken = jwtProvider.createAccessToken(member.getId(), email);
             // 리프레시 토큰 유효성 검사 및 재발급
-            if (member.getRefreshToken() == null || !jwtProvider.validateToken(refreshToken)) {
+            if (member.getRefreshToken() == null || !jwtProvider.validateToken(storedRefreshToken)) {
                 refreshToken = issueAndSaveRefreshToken(member).getToken();
             }
         }
-
-
+        //액세스 토큰을 쿠키에 설정
         Cookie accessCookie = new Cookie("access_token", accessToken);
         accessCookie.setHttpOnly(true);
         accessCookie.setPath("/");
@@ -70,7 +70,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
         response.addCookie(refreshCookie);
         response.addCookie(accessCookie);
-
+        //리다이렉션
         String redirectUrl = "http://localhost:5173/oauth2/success";
         response.sendRedirect(redirectUrl);
     }
@@ -106,9 +106,24 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
                 .member(member)
                 .build();
 
+        member.setRefreshToken(refreshToken);
+
         refreshTokenRepository.save(refreshToken);
 
+
         return refreshToken;
+    }
+
+    private String getAccessTokenFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("access_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
     }
 
     // 쿠키에서 리프레쉬 토큰 가져오기
