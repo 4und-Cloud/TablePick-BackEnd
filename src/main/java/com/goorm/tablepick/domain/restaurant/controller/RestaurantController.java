@@ -1,20 +1,18 @@
 package com.goorm.tablepick.domain.restaurant.controller;
 
-import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantCategorySearchRequestDto;
-import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantKeywordSearchRequestDto;
+import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantSearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantDetailResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantResponseDto;
 import com.goorm.tablepick.domain.restaurant.service.RestaurantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -36,17 +34,16 @@ public class RestaurantController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "키워드 식당 검색", description = "키워드로 식당이름과 메뉴, 주소를 통해 식당을 검색합니다.")
-    public PagedRestaurantResponseDto searchRestaurantsByKeyword(
-            @ModelAttribute @Valid RestaurantKeywordSearchRequestDto requestDto) {
-        return restaurantService.searchAllByKeyword(requestDto);
-    }
-
-    @GetMapping("/search/category")
-    @Operation(summary = "카테고리 식당 검색", description = "카테고리로 식당을 검색합니다.")
-    public PagedRestaurantResponseDto searchByCategory(
-            @ModelAttribute @Valid RestaurantCategorySearchRequestDto requestDto) {
-        return restaurantService.searchAllByCategory(requestDto);
+    @Operation(summary = "식당 검색", description = "키워드와 태그로 식당이름과 메뉴, 주소, 태그를 통해 식당을 검색합니다.")
+    public PagedRestaurantResponseDto searchRestaurants(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) List<Long> tagIds,
+            @RequestParam(defaultValue = "1") int page) {
+        RestaurantSearchRequestDto requestDto = RestaurantSearchRequestDto.builder()
+                .keyword(keyword)
+                .tagIds(tagIds)
+                .page(page).build();
+        return restaurantService.searchRestaurants(requestDto);
     }
 
     @GetMapping("/list")
@@ -61,5 +58,4 @@ public class RestaurantController {
             @PathVariable @Parameter(description = "식당 ID", example = "1") Long id) {
         return restaurantService.getRestaurantDetail(id);
     }
-
 }

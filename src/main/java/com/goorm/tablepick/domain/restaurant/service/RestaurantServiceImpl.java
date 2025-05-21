@@ -1,7 +1,6 @@
 package com.goorm.tablepick.domain.restaurant.service;
 
-import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantCategorySearchRequestDto;
-import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantKeywordSearchRequestDto;
+import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantSearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.CategoryResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantDetailResponseDto;
@@ -12,11 +11,13 @@ import com.goorm.tablepick.domain.restaurant.exception.RestaurantErrorCode;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryRepository;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
+import com.goorm.tablepick.domain.restaurant.repository.RestaurantTagRepository;
 import jakarta.validation.Valid;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,32 +26,47 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RestaurantServiceImpl implements RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final RestaurantCategoryRepository restaurantCategoryRepository;
+    private final RestaurantTagRepository restaurantTagRepository;
 
     @Override
-    public PagedRestaurantResponseDto searchAllByKeyword(
-            @Valid RestaurantKeywordSearchRequestDto keywordSearchRequestDto) {
-        Pageable pageable = PageRequest.of(keywordSearchRequestDto.getPage() - 1, 6, Sort.by("name").ascending());
-        Page<Restaurant> restaurantListByKeyword = restaurantRepository.findAllByKeyword(
-                keywordSearchRequestDto.getKeyword(), pageable);
+    public PagedRestaurantResponseDto searchRestaurants(@Valid RestaurantSearchRequestDto dto) {
+        Pageable pageable = PageRequest.of(dto.getPage() - 1, 6, Sort.by("name").ascending());
 
-        return new PagedRestaurantResponseDto(restaurantListByKeyword);
-    }
+        String keyword = dto.getKeyword();
+        List<Long> tagIds = dto.getTagIds();
 
-    @Override
-    public PagedRestaurantResponseDto searchAllByCategory(
-            @Valid RestaurantCategorySearchRequestDto categorySearchRequestDto) {
-        Pageable pageable = PageRequest.of(categorySearchRequestDto.getPage() - 1, 6, Sort.by("name").ascending());
-        Long categoryId = categorySearchRequestDto.getCategoryId();
-        if (!restaurantCategoryRepository.existsById(categoryId)) {
-            throw new RestaurantException(RestaurantErrorCode.NO_RESTAURANT_CATEGORY);
+        boolean hasKeyword = keyword != null && !keyword.isEmpty();
+        boolean hasTags = tagIds != null && !tagIds.isEmpty();
+
+        Page<Restaurant> restaurantList;
+
+        if (hasKeyword && hasTags) {
+            restaurantList = restaurantRepository.findAllByKeywordAndTags(
+                    keyword, tagIds, tagIds.size(), pageable);
+            log.info("둘다 검색 -> "+keyword + tagIds);
+            return new PagedRestaurantResponseDto(restaurantList);
         }
-        Page<Restaurant> restaurantListByCategory = restaurantRepository.findAllByCategory(categoryId,
-                pageable);
-        return new PagedRestaurantResponseDto(restaurantListByCategory);
+
+        if (hasKeyword) {
+            restaurantList = restaurantRepository.findAllByKeyword(keyword, pageable);
+            log.info("키워드로만 검색 -> " + keyword+ tagIds);
+            return new PagedRestaurantResponseDto(restaurantList);
+        }
+
+        if (hasTags) {
+            restaurantList = restaurantRepository.findAllByTags(tagIds, tagIds.size(), pageable);
+            log.info("태그로만 검색 -> "+keyword+ tagIds);
+            return new PagedRestaurantResponseDto(restaurantList);
+        }
+
+        restaurantList = restaurantRepository.findAll(pageable);
+        return new PagedRestaurantResponseDto(restaurantList);
     }
+
 
     @Override
     public Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable) {
