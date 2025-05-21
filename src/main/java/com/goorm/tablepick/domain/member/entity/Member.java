@@ -23,6 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -50,6 +51,7 @@ public class Member {
 
     private Boolean isMemberDeleted;
 
+    @Setter
     @OneToOne
     @JoinColumn(name = "refresh_token_id")
     private RefreshToken refreshToken;
