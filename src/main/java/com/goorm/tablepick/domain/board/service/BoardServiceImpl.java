@@ -1,7 +1,7 @@
 package com.goorm.tablepick.domain.board.service;
 
 import com.goorm.tablepick.domain.board.dto.request.BoardCategorySearchRequestDto;
-import com.goorm.tablepick.domain.board.dto.request.BoardCreateResponseDto;
+import com.goorm.tablepick.domain.board.dto.response.BoardCreateResponseDto;
 import com.goorm.tablepick.domain.board.dto.request.BoardRequestDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardDetailResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardListResponseDto;
@@ -10,17 +10,15 @@ import com.goorm.tablepick.domain.board.dto.response.PagedBoardsResponseDto;
 import com.goorm.tablepick.domain.board.entity.Board;
 import com.goorm.tablepick.domain.board.entity.BoardImage;
 import com.goorm.tablepick.domain.board.entity.BoardTag;
-import com.goorm.tablepick.domain.board.exception.BoardErrorCode;
+import com.goorm.tablepick.domain.board.repository.BoardImageRepository;
 import com.goorm.tablepick.domain.board.repository.BoardRepository;
 import com.goorm.tablepick.domain.board.repository.BoardTagRepository;
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.repository.ReservationRepository;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
-import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
-import com.goorm.tablepick.global.exception.BoardException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,22 +27,31 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
+
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class BoardServiceImpl implements BoardService {
     private final BoardRepository boardRepository;
-    private final RestaurantRepository restaurantRepository;
-    private final TagRepository tagRepository;
-    private final BoardTagRepository boardTagRepository;
     private final ReservationRepository reservationRepository;
+    private final BoardImageRepository boardImageRepository;
+    private final BoardTagRepository boardTagRepository;
+    private final TagRepository tagRepository;
+
+    private final String uploadDir = "/Users/gihongjeong/Desktop/test_image_upload";
 
     @Override
     public List<BoardListResponseDto> getBoardsForMainPage() {
@@ -169,106 +176,77 @@ public class BoardServiceImpl implements BoardService {
 
     @Override
     @Transactional
-    public BoardCreateResponseDto createBoard(BoardRequestDto dto, Member member) {
-        log.info("🙋‍♂️ member: {}", member); // 이 위치에서 로그를 찍으세요
-        if (member == null) {
-            throw new BoardException(BoardErrorCode.NO_PERMISSION); // 또는 적절한 인증 관련 에러코드 추가
-            //throw new IllegalArgumentException("인증되지 않은 사용자입니다.");
-        }
-        log.info("✅ [createBoard] 게시글 생성 요청 시작: {}", dto);
-
+    public BoardCreateResponseDto createBoard(BoardRequestDto dto, List<MultipartFile> images, Member member) {
+        // 1. 예약 확인
         Reservation reservation = reservationRepository.findById(dto.getReservationId())
-                .orElseThrow(() -> new IllegalArgumentException("예약 정보가 존재하지 않습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("해당 예약이 존재하지 않습니다."));
 
         if (!reservation.getMember().getId().equals(member.getId())) {
-            throw new BoardException(BoardErrorCode.NO_PERMISSION); // ✅ 예약자 본인만 작성 가능
+            throw new AccessDeniedException("예약한 사용자만 게시글을 작성할 수 있습니다.");
         }
 
+        // 2. Board 저장
         Board board = Board.builder()
+                .content(dto.getContent())
                 .reservation(reservation)
                 .member(member)
-                .content(dto.getContent())
                 .build();
+        boardRepository.save(board);
 
-        log.info("✅ [createBoard] Board 객체 생성 완료");
-
-        // 이미지 처리
-        if (dto.getImages() != null && !dto.getImages().isEmpty()) {
-            log.info("✅ [createBoard] 이미지 개수: {}", dto.getImages().size());
-            for (MultipartFile file : dto.getImages()) {
-                if (!file.isEmpty()) {
-                    String storeFileName = convertToFile(file);
-                    String originalFileName = file.getOriginalFilename();
-                    BoardImage boardImage = new BoardImage(originalFileName, storeFileName);
-                    board.addImage(boardImage);
+        // 3. 이미지 저장
+        if (images != null && !images.isEmpty()) {
+            for (MultipartFile image : images) {
+                String originalFileName = image.getOriginalFilename();
+                String storeFileName = UUID.randomUUID() + "_" + originalFileName;
+                Path filePath = Paths.get(uploadDir, storeFileName);
+                try {
+                    Files.write(filePath, image.getBytes());
+                } catch (IOException e) {
+                    throw new RuntimeException("이미지 저장 실패", e);
                 }
+                BoardImage boardImage = new BoardImage(originalFileName, storeFileName);
+                board.addImage(boardImage); // 연관관계 설정
+                boardImageRepository.save(boardImage);
             }
         }
 
-        // 태그 처리
-        if (dto.getTagNames() != null) {
-            log.info("✅ [createBoard] 태그 개수: {}", dto.getTagNames().size());
-            for (String tagName : dto.getTagNames()) {
-                Tag tag = tagRepository.findByName(tagName)
-                        .orElseGet(() -> tagRepository.save(new Tag(tagName)));
-                board.addTag(new BoardTag(tag));
-            }
+        // 4. 태그 저장
+        List<String> tagNames = dto.getTagNames();
+        if (tagNames == null || tagNames.isEmpty()) {
+            throw new IllegalArgumentException("태그는 최소 1개 이상 입력해야 합니다.");
         }
 
-        Board savedBoard = boardRepository.save(board);
-
-        log.info("✅ [createBoard] 게시글 저장 완료. 생성된 ID: {}", savedBoard.getId());
+        for (String tagName : tagNames) {
+            Tag tag = tagRepository.findByName(tagName)
+                    .orElseGet(() -> tagRepository.save(new Tag(tagName))); // 태그가 없으면 생성
+            BoardTag boardTag = new BoardTag(board, tag);
+            board.addTag(boardTag);
+            boardTagRepository.save(boardTag);
+        }
 
         return BoardCreateResponseDto.builder()
-                .boardId(savedBoard.getId())
-                .content(savedBoard.getContent())
-                .imageUrls(savedBoard.getBoardImages().stream()
-                        .map(BoardImage::getImageUrl)
+                .boardId(board.getId())
+                .content(board.getContent())
+                .imageUrls(board.getBoardImages().stream()
+                        .map(image -> image.getImageUrl() != null ? image.getImageUrl() : image.getStoreFileName())
                         .toList())
-                .tags(savedBoard.getBoardTags().stream()
+                .tags(board.getBoardTags().stream()
                         .map(bt -> bt.getTag().getName())
                         .toList())
                 .writerNickname(member.getNickname())
                 .writerProfileImageUrl(member.getProfileImage())
-                .createdAt(savedBoard.getCreatedAt())
+                .createdAt(board.getCreatedAt())
                 .build();
     }
 
-
-
-    // 예시: 파일 저장 로직 (단순화)
-    private String convertToFile(MultipartFile file) {
-        // 저장 로직 구현 필요 (예: S3, 로컬 등)
-        return java.util.UUID.randomUUID() + "_" + file.getOriginalFilename();
-    }
-
-
-
-
     @Override
-    @Transactional
     public void updateBoard(Long boardId, BoardRequestDto dto, Member member) {
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new BoardException(BoardErrorCode.NOT_FOUND));
-
-        if (!board.getMember().getId().equals(member.getId())) {
-            throw new BoardException(BoardErrorCode.NO_PERMISSION);
-        }
-
-        board.updateFromDto(dto); // → Board 엔티티에 updateFromDto() 메서드가 있어야 함
-        boardRepository.save(board);
+        throw new UnsupportedOperationException("updateBoard() 아직 구현되지 않았습니다.");
     }
 
     @Override
     public void deleteBoard(Long boardId, Member member) {
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new BoardException(BoardErrorCode.NOT_FOUND));
-
-        if (!board.getMember().getId().equals(member.getId())) {
-            throw new BoardException(BoardErrorCode.NO_PERMISSION);
-        }
-
-        boardRepository.delete(board);
+        throw new UnsupportedOperationException("deleteBoard() 아직 구현되지 않았습니다.");
     }
 
     @Override
