@@ -1,11 +1,19 @@
 package com.goorm.tablepick.domain.board.dto.response;
 
-import java.time.LocalDateTime;
+import lombok.Builder;
+import lombok.Getter;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Getter
+@Builder
 public class BoardCreateResponseDto {
     private Long boardId;
-    private LocalDateTime createdAt;
-    private Long memberId;
-    private Long restaurantId;
     private String content;
+    private List<String> imageUrls;
+    private List<String> tags;
+    private String writerNickname;
+    private String writerProfileImageUrl;
+    private LocalDateTime createdAt;
 }

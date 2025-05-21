@@ -12,6 +12,7 @@ import java.util.List;
 
 @Repository
 public interface BoardRepository extends JpaRepository<Board, Long> {
+
     // 특정 회원 이메일로 게시글 조회
     List<Board> findAllByMemberEmail(String memberEmail);
 
