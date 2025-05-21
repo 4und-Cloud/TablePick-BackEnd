@@ -14,6 +14,7 @@ import com.goorm.tablepick.domain.reservation.dto.response.ReservationResponseDt
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.repository.ReservationRepository;
 import com.goorm.tablepick.domain.tag.entity.Tag;
+import com.goorm.tablepick.domain.tag.repository.TagRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class MemberServiceImpl implements MemberService {
     private final ReservationRepository reservationRepository;
     private final BoardRepository boardRepository;
     private final MemberTagRepository memberTagRepository;
+    private final TagRepository tagRepository;
 
     @Override
     public MemberResponseDto getMemberInfo(String username) {
@@ -68,17 +70,22 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     @Transactional
-    public void addMemberInfo(String username, MemberAddtionalInfoRequestDto memberAddtionalInfoRequestDto) {
+    public void addMemberInfo(String username, MemberAddtionalInfoRequestDto dto) {
         Member member = memberRepository.findByEmail(username)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        List<MemberTag> memberTagList = memberAddtionalInfoRequestDto.getMemberTags().stream()
-                .map(tag -> new MemberTag(member, new Tag(tag)))
+        List<MemberTag> memberTagList = dto.getMemberTags().stream()
+                .map(tagId -> {
+                    Tag tag = tagRepository.findById(tagId)
+                            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다: " + tagId));
+                    return new MemberTag(member, tag);
+                })
                 .collect(Collectors.toList());
 
-        member.addMemberInfo(memberAddtionalInfoRequestDto, memberTagList);
+        member.addMemberInfo(dto, memberTagList);
+
         memberTagRepository.saveAll(memberTagList);
-        memberRepository.save(member);
+        // memberRepository.save(member); → 변경 감지로 생략 가능
     }
 
     @Override

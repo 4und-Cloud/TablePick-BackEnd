@@ -7,9 +7,9 @@ import java.util.List;
 
 public interface ReservationService {
 
-    void createReservation(ReservationRequestDto request);
+    void createReservation(String username, ReservationRequestDto request);
 
-    void cancelReservation(Long reservationId);
+    void cancelReservation(String username, Long reservationId);
 
     List<LocalTime> getAvailableReservationTimes(Long restaurantId, LocalDate date);
 }

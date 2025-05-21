@@ -55,11 +55,11 @@ public class RestaurantController {
         return restaurantService.getAllRestaurantsOrderedByBoardNum(page);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{restaurantId}")
     @Operation(summary = "식당 상세 조회", description = "특정 식당의 상세 정보를 조회합니다.")
     public RestaurantDetailResponseDto getRestaurantDetail(
-            @PathVariable @Parameter(description = "식당 ID", example = "1") Long id) {
-        return restaurantService.getRestaurantDetail(id);
+            @PathVariable @Parameter(description = "식당 ID", example = "1") Long restaurantId) {
+        return restaurantService.getRestaurantDetail(restaurantId);
     }
 
 }

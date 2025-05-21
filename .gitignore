@@ -36,4 +36,6 @@ out/
 ### VS Code ###
 .vscode/
 
-src/main/resources/firebase-service-account.json
+# 프로젝트 전체에서 firebaseConfig.ts 파일 무시
+**/firebaseConfig.ts
+**/*firebaseConfig*.ts
