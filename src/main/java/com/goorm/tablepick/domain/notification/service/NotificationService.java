@@ -129,7 +129,7 @@ public class NotificationService {
     // 알림 오류 처리
     private void handleNotificationError(NotificationQueue notification, Exception e) {
         if (isInvalidTokenError(e)) {
-            fcmTokenService.deleteFcmToken(notification.getMemberId());
+            fcmTokenService.updateFcmTokenToNull(notification.getMemberId());
             updateNotificationStatus(notification, NotificationStatus.FAILED);
             saveNotificationLog(notification, false, "Invalid FCM token");
             return;
