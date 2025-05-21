@@ -65,34 +65,34 @@ public class NotificationService {
 
     // 예약된 알림 처리
     // 1분마다 실행되며 현재 시간 이전에 예약된 PENDING 상태의 알림을 처리
-    @Scheduled(fixedRate = 60000)
-    public void processNotificationQueue() {
-        List<NotificationQueue> pendingNotifications = notificationQueueRepository
-                .findByStatusAndScheduledAtBefore(NotificationStatus.PENDING.name(), LocalDateTime.now());
-
-        for (NotificationQueue notification : pendingNotifications) {
-            try {
-                processNotification(notification);
-            } catch (Exception e) {
-                log.error("Failed to process notification: {}", e.getMessage());
-                handleNotificationError(notification, e);
-            }
-        }
-    }
+//    @Scheduled(fixedRate = 60000)
+//    public void processNotificationQueue() {
+//        List<NotificationQueue> pendingNotifications = notificationQueueRepository
+//                .findByStatusAndScheduledAtBefore(NotificationStatus.PENDING.name(), LocalDateTime.now());
+//
+//        for (NotificationQueue notification : pendingNotifications) {
+//            try {
+//                processNotification(notification);
+//            } catch (Exception e) {
+//                log.error("Failed to process notification: {}", e.getMessage());
+//                handleNotificationError(notification, e);
+//            }
+//        }
+//    }
 
     // 개별 알림 처리
     // 회원의 FCM토큰 조회하고 알림 전송, 성공시 알림 상태 SENT로 업데이트하고 로그 기록
-    private void processNotification(NotificationQueue notification) {
-        try {
-            String fcmToken = fcmTokenService.getFcmToken(notification.getMemberId());
-            sendFcmNotification(notification, fcmToken);
-            updateNotificationStatus(notification, NotificationStatus.SENT);
-            saveNotificationLog(notification, true, null);
-        } catch (NotificationException e) {
-            log.error("Notification error: {}", e.getMessage());
-            handleNotificationError(notification, e);
-        }
-    }
+//    private void processNotification(NotificationQueue notification) {
+//        try {
+//            String fcmToken = fcmTokenService.getFcmToken(notification.getMemberId());
+//            sendFcmNotification(notification, fcmToken);
+//            updateNotificationStatus(notification, NotificationStatus.SENT);
+//            saveNotificationLog(notification, true, null);
+//        } catch (NotificationException e) {
+//            log.error("Notification error: {}", e.getMessage());
+//            handleNotificationError(notification, e);
+//        }
+//    }
 
     // FCM 메시지 전송
     private void sendFcmNotification(NotificationQueue notification, String fcmToken) {
