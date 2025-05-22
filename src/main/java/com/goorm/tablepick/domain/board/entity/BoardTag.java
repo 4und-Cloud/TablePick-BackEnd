@@ -1,5 +1,6 @@
 package com.goorm.tablepick.domain.board.entity;
 
+import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -29,6 +30,10 @@ public class BoardTag {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tag_id", nullable = false)
     private Tag tag;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "restaurant_id", nullable = false)
+    private Restaurant restaurant;
 
     public BoardTag(Tag tag) {
         this.tag = tag;
