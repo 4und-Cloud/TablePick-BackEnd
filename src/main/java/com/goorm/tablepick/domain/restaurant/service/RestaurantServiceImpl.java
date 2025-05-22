@@ -43,27 +43,27 @@ public class RestaurantServiceImpl implements RestaurantService {
         boolean hasTags = tagIds != null && !tagIds.isEmpty();
 
         Page<Restaurant> restaurantList;
-
+        //키워드, 태그 검색
         if (hasKeyword && hasTags) {
             restaurantList = restaurantRepository.findAllByKeywordAndTags(
                     keyword, tagIds, tagIds.size(), pageable);
             log.info("둘다 검색 -> "+keyword + tagIds);
             return new PagedRestaurantResponseDto(restaurantList);
         }
-
+        //키워드 검색
         if (hasKeyword) {
             restaurantList = restaurantRepository.findAllByKeyword(keyword, pageable);
             log.info("키워드로만 검색 -> " + keyword+ tagIds);
             return new PagedRestaurantResponseDto(restaurantList);
         }
-
+        //태그 검색
         if (hasTags) {
             restaurantList = restaurantRepository.findAllByTags(tagIds, tagIds.size(), pageable);
             log.info("태그로만 검색 -> "+keyword+ tagIds);
             return new PagedRestaurantResponseDto(restaurantList);
         }
-
-        restaurantList = restaurantRepository.findAll(pageable);
+        //키워드, 태그 둘 다 없으면 인기순으로 식당 목록 조회
+        restaurantList = restaurantRepository.findPopularRestaurants(pageable);
         return new PagedRestaurantResponseDto(restaurantList);
     }
 
