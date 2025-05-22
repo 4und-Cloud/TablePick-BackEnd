@@ -25,7 +25,7 @@ public class FCMTokenService {
     }
 
     // FCM 토큰 삭제
-    public void deleteFcmToken(Long memberId) {
+    public void updateFcmTokenToNull(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NotificationException("Member not found", "MEMBER_NOT_FOUND"));
 

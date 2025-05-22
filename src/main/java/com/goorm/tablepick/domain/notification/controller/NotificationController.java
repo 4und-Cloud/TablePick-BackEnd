@@ -17,12 +17,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -173,13 +171,13 @@ public class NotificationController {
     }
 
     @Operation(
-            summary = "FCM 토큰 삭제",
-            description = "회원의 FCM 토큰을 삭제합니다."
+            summary = "FCM 토큰 NULL로 변경",
+            description = "회원의 FCM 토큰을 NULL로 변경합니다."
     )
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "FCM 토큰 삭제 성공"
+                    description = "FCM 토큰 NULL로 변경 성공"
             ),
             @ApiResponse(
                     responseCode = "404",
@@ -187,19 +185,12 @@ public class NotificationController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))
             )
     })
-    @DeleteMapping("/fcm-token")
-    public ResponseEntity<Void> deleteFcmToken(
-            @Parameter(
-                    name = "memberId",
-                    description = "회원 ID",
-                    required = true,
-                    example = "1",
-                    in = ParameterIn.QUERY
-            )
-            @RequestParam Long memberId) {
-        fcmTokenService.deleteFcmToken(memberId);
+    @PatchMapping("/fcm-token/remove")
+    public ResponseEntity<Void> removeFcmToken(@RequestParam Long memberId) {
+        fcmTokenService.updateFcmTokenToNull(memberId);
         return ResponseEntity.ok().build();
     }
+
 
     // Swagger에서 사용할 오류 응답 스키마 정의
     @Schema(name = "ErrorResponse", description = "오류 응답")

@@ -47,7 +47,6 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             """)
     Page<Restaurant> findPopularRestaurants(Pageable pageable);
 
-
     @Query("SELECT r FROM Restaurant r ORDER BY SIZE(r.boards) DESC")
     Page<Restaurant> findAllOrderedByCreatedAt(Pageable pageable);
 
@@ -63,4 +62,8 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             HAVING COUNT(DISTINCT rt.tag.id) = :cnt
     """)
     Page<Restaurant> findAllByKeywordAndTags(String keyword, List<Long> tagIds, int cnt, Pageable pageable);
+
+    @Query("SELECT r FROM Restaurant r ORDER BY r.name ASC")
+    Page<Restaurant> findAllOrderByNameAsc(Pageable pageable);  // 가나다순 정렬
+
 }

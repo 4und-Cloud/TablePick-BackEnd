@@ -1,4 +1,4 @@
-package com.goorm.tablepick.domain.board.dto.response;
+package com.goorm.tablepick.domain.board.dto.request;
 
 import lombok.Builder;
 import lombok.Getter;

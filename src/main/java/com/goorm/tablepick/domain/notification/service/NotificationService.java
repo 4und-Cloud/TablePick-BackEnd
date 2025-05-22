@@ -10,12 +10,13 @@ import com.goorm.tablepick.domain.notification.entity.NotificationTypes;
 import com.goorm.tablepick.domain.notification.repository.NotificationLogRepository;
 import com.goorm.tablepick.domain.notification.repository.NotificationQueueRepository;
 import com.goorm.tablepick.domain.notification.repository.NotificationTypesRepository;
+import com.goorm.tablepick.domain.reservation.entity.Reservation;
+import com.goorm.tablepick.domain.reservation.repository.ReservationRepository;
 import com.goorm.tablepick.global.exception.NotificationException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ public class NotificationService {
     private final NotificationLogRepository notificationLogRepository;
     private final FCMService fcmService;
     private final FCMTokenService fcmTokenService;
+    private final ReservationRepository reservationRepository;
 
     // 최대 재시도 횟수 = 3번
     private static final int MAX_RETRY_COUNT = 3;
@@ -63,41 +65,56 @@ public class NotificationService {
 
     // 예약된 알림 처리
     // 1분마다 실행되며 현재 시간 이전에 예약된 PENDING 상태의 알림을 처리
-    @Scheduled(fixedRate = 60000)
-    public void processNotificationQueue() {
-        List<NotificationQueue> pendingNotifications = notificationQueueRepository
-                .findByStatusAndScheduledAtBefore(NotificationStatus.PENDING.name(), LocalDateTime.now());
-
-        for (NotificationQueue notification : pendingNotifications) {
-            try {
-                processNotification(notification);
-            } catch (Exception e) {
-                log.error("Failed to process notification: {}", e.getMessage());
-                handleNotificationError(notification, e);
-            }
-        }
-    }
+//    @Scheduled(fixedRate = 60000)
+//    public void processNotificationQueue() {
+//        List<NotificationQueue> pendingNotifications = notificationQueueRepository
+//                .findByStatusAndScheduledAtBefore(NotificationStatus.PENDING.name(), LocalDateTime.now());
+//
+//        for (NotificationQueue notification : pendingNotifications) {
+//            try {
+//                processNotification(notification);
+//            } catch (Exception e) {
+//                log.error("Failed to process notification: {}", e.getMessage());
+//                handleNotificationError(notification, e);
+//            }
+//        }
+//    }
 
     // 개별 알림 처리
     // 회원의 FCM토큰 조회하고 알림 전송, 성공시 알림 상태 SENT로 업데이트하고 로그 기록
-    private void processNotification(NotificationQueue notification) {
-        try {
-            String fcmToken = fcmTokenService.getFcmToken(notification.getMemberId());
-            sendFcmNotification(notification, fcmToken);
-            updateNotificationStatus(notification, NotificationStatus.SENT);
-            saveNotificationLog(notification, true, null);
-        } catch (NotificationException e) {
-            log.error("Notification error: {}", e.getMessage());
-            handleNotificationError(notification, e);
-        }
-    }
+//    private void processNotification(NotificationQueue notification) {
+//        try {
+//            String fcmToken = fcmTokenService.getFcmToken(notification.getMemberId());
+//            sendFcmNotification(notification, fcmToken);
+//            updateNotificationStatus(notification, NotificationStatus.SENT);
+//            saveNotificationLog(notification, true, null);
+//        } catch (NotificationException e) {
+//            log.error("Notification error: {}", e.getMessage());
+//            handleNotificationError(notification, e);
+//        }
+//    }
 
     // FCM 메시지 전송
     private void sendFcmNotification(NotificationQueue notification, String fcmToken) {
         NotificationTypes type = notification.getNotificationTypes();
-        Map<String, String> data = createNotificationData(notification, type);
 
-        fcmService.sendMessage(fcmToken, type.getTitle(), type.getBody(), data);
+        // 예약 정보 조회
+        Reservation reservation = reservationRepository.getReservationById(notification.getReservationId());
+
+        // 파라미터 맵 생성
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("id", notification.getReservationId().toString());
+        parameters.put("restaurantName", reservation.getReservationSlot().getRestaurant().getName());
+
+        // 플레이스홀더 치환
+        String formattedBody = type.getFormattedBody(parameters);
+        String formattedUrl = type.getFormattedUrl(parameters);
+
+        // 알림 데이터 생성
+        Map<String, String> data = createNotificationData(notification, type);
+        data.put("url", formattedUrl); // 포맷된 URL로 업데이트
+
+        fcmService.sendMessage(fcmToken, type.getTitle(), formattedBody, data);
     }
 
     // 알림 데이터 생성
@@ -112,7 +129,7 @@ public class NotificationService {
     // 알림 오류 처리
     private void handleNotificationError(NotificationQueue notification, Exception e) {
         if (isInvalidTokenError(e)) {
-            fcmTokenService.deleteFcmToken(notification.getMemberId());
+            fcmTokenService.updateFcmTokenToNull(notification.getMemberId());
             updateNotificationStatus(notification, NotificationStatus.FAILED);
             saveNotificationLog(notification, false, "Invalid FCM token");
             return;

@@ -2,13 +2,14 @@ package com.goorm.tablepick.global.security;
 
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.enums.AccountRole;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Getter
 public class CustomUserDetails implements UserDetails {
@@ -17,6 +18,11 @@ public class CustomUserDetails implements UserDetails {
 
     public CustomUserDetails(Member member) {
         this.member = member;
+    }
+
+    // ✅ 명시적으로 member 반환 메서드 추가 (이미 Lombok @Getter 있어도 명시 권장)
+    public Member getMember() {
+        return this.member;
     }
 
     @Override

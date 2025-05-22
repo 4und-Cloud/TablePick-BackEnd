@@ -34,14 +34,14 @@ public class ReservationImpl implements ReservationService {
 
     @Override
     @Transactional
-    public void createReservation(ReservationRequestDto request) {
+    public void createReservation(String username, ReservationRequestDto request) {
         // 식당 검증
         Restaurant restaurant = restaurantRepository.findById(request.getRestaurantId())
                 .orElseThrow(() -> new RestaurantException(RestaurantErrorCode.NOT_FOUND));
 
         // 멤버 검증 (임시 로그인용)
-        Member member = memberRepository.findById(1L)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+        Member member = memberRepository.findByEmail(username)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         // 예약 가능 시간 조회
         ReservationSlot reservationSlot = reservationSlotRepository.findByRestaurantIdAndDateAndTime(
@@ -83,14 +83,14 @@ public class ReservationImpl implements ReservationService {
 
     @Override
     @Transactional
-    public void cancelReservation(Long reservationId) {
+    public void cancelReservation(String username, Long reservationId) {
         // 예약 조회
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ReservationException(ReservationErrorCode.NOT_FOUND));
 
         // 멤버 검증 (임시 로그인용)
-        Member member = memberRepository.findById(1L)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+        Member member = memberRepository.findByEmail(username)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         if (!reservation.getMember().equals(member)) {
             throw new ReservationException(ReservationErrorCode.UNAUTHORIZED_CANCEL);
