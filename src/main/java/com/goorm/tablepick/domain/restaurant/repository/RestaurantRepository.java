@@ -30,7 +30,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             LEFT JOIN r.restaurantTags rt
             WHERE rt.tag.id IN :tagIds
             GROUP BY r.id
-            HAVING COUNT(DISTINCT rt.id) = 3
+            HAVING COUNT(DISTINCT rt.id) = :cnt
             ORDER BY COUNT(rt.id) DESC
     """)
     Page<Restaurant> findAllByTags(@Param("tagIds") List<Long> tagIds, @Param("cnt") int cnt, Pageable pageable);
