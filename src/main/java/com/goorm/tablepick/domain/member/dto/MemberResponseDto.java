@@ -11,6 +11,7 @@ import lombok.Setter;
 @Setter
 @Builder
 public class MemberResponseDto {
+    private Long id;
     private String nickname;
     private String email;
     private Gender gender;
@@ -22,6 +23,7 @@ public class MemberResponseDto {
 
     public static MemberResponseDto toDto(Member member) {
         return MemberResponseDto.builder()
+                .id(member.getId())
                 .nickname(member.getNickname())
                 .email(member.getEmail())
                 .gender(member.getGender())
