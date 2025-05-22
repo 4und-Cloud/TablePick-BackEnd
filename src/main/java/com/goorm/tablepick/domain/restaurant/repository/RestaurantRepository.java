@@ -47,9 +47,6 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             """)
     Page<Restaurant> findPopularRestaurants(Pageable pageable);
 
-    @Query("SELECT r FROM Restaurant r ORDER BY SIZE(r.boards) DESC")
-    Page<Restaurant> findAllOrderedByCreatedAt(Pageable pageable);
-
     @Query("""
             SELECT r FROM Restaurant r
             JOIN r.restaurantTags rt
