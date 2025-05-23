@@ -81,7 +81,17 @@ public class Member {
         this.gender = dto.getGender();
         this.birthdate = dto.getBirthdate();
         this.profileImage = dto.getProfileImage();
-        this.memberTags = dto.getMemberTags();
+        List<MemberTag> newMemberTags = dto.getMemberTags();
+        if (this.memberTags == null) {
+            this.memberTags = new ArrayList<>();
+        } else {
+            this.memberTags.clear(); // 기존 값 제거 (orphanRemoval 작동)
+        }
+
+        for (MemberTag tag : newMemberTags) {
+            tag.setMember(this); // 양방향 연관관계 설정
+            this.memberTags.add(tag);
+        }
         return this;
     }
 
