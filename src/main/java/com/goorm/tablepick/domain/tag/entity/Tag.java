@@ -16,7 +16,4 @@ public class Tag {
     @Column(unique = true, nullable = false)
     private String name;
 
-    public Tag(String name) {
-        this.name = name;
-    }
 }

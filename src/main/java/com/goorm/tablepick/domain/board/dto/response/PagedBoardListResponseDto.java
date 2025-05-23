@@ -18,10 +18,9 @@ public class PagedBoardListResponseDto {
     private long startNumber;
     private long endNumber;
 
-    public PagedBoardListResponseDto(Page<Board> page) {
+    public PagedBoardListResponseDto(Page<BoardListResponseDto> page) {
         this.boardList = page.getContent().stream()
-                .map(BoardListResponseDto::from)
-                .filter(dto -> dto.getImageUrl() != null)  // 추가
+                .filter(dto -> dto.getImageUrl() != null)
                 .toList();
         this.pageNumber = page.getNumber();
         this.pageSize = page.getSize();
@@ -30,4 +29,5 @@ public class PagedBoardListResponseDto {
         this.startNumber = (long) pageNumber * pageSize + 1;
         this.endNumber = startNumber + page.getNumberOfElements() - 1;
     }
+
 }

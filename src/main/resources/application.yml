@@ -49,6 +49,9 @@ jwt:
 server:
   port: 8080
 
+project:
+  upload:
+    path: C:/uploads
 
 kakao:
   admin:
