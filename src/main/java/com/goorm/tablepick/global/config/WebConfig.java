@@ -1,5 +1,6 @@
 package com.goorm.tablepick.global.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -10,6 +11,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
+
+    @Value("${project.upload.path}")
+    private String uploadBasePath;
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
@@ -27,6 +31,10 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/firebase-messaging-sw.js")
                 .addResourceLocations("classpath:/static/")
                 .setCachePeriod(0);  // 캐싱 비활성화
+
+        // 업로드된 이미지를 위한 핸들러 추가
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:" + uploadBasePath + "/");
     }
 
     // Firebase 서비스 워커를 위한 필터 빈 추가

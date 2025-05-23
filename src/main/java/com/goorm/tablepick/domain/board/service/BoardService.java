@@ -15,15 +15,9 @@ import java.util.List;
 
 public interface BoardService {
     List<BoardListResponseDto> getBoardsForMainPage();
-    List<BoardListResponseDto> getBoardList();
     PagedBoardListResponseDto getBoards(int page, int size);
     BoardDetailResponseDto getBoardDetail(Long boardId);
 
     BoardCreateResponseDto createBoard(BoardRequestDto dto, List<MultipartFile> images, Member member);
 
-
-    void updateBoard(Long boardId, BoardRequestDto dto, Member member);
-    void deleteBoard(Long boardId, Member member);
-
-    PagedBoardsResponseDto searchAllByCategory(@Valid BoardCategorySearchRequestDto boardSearchRequestDto);
 }
