@@ -141,7 +141,8 @@ public class BoardServiceImpl implements BoardService {
     // 이미지 저장 메서드
     private String saveImage(MultipartFile image) {
         String originalFileName = image.getOriginalFilename();
-        String storeFileName = UUID.randomUUID() + "_" + originalFileName;
+        String extension = getFileExtension(originalFileName);
+        String storeFileName = UUID.randomUUID() + extension;
         String uploadDir = uploadBasePath + "/images/review";
 
         try {
@@ -159,4 +160,19 @@ public class BoardServiceImpl implements BoardService {
             throw new RuntimeException("이미지 저장 실패", e);
         }
     }
+
+    // 확장자 추출 메서드 추가
+    private String getFileExtension(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return "";
+        }
+
+        int lastDotIndex = fileName.lastIndexOf('.');
+        if (lastDotIndex == -1) {
+            return ""; // 확장자 없음
+        }
+
+        return fileName.substring(lastDotIndex); // .jpg, .png 등
+    }
+
 }
