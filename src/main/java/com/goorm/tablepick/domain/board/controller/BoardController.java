@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -70,21 +71,12 @@ public class BoardController {
             @ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
     public ResponseEntity<BoardCreateResponseDto> createBoard(
-            @RequestParam("reservationId") Long reservationId,
-            @RequestParam("content") String content,
-            @RequestParam("tagId") List<Long> tagId,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @Valid @ModelAttribute BoardRequestDto boardRequestDto,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        BoardRequestDto dto = BoardRequestDto.builder()
-                .reservationId(reservationId)
-                .content(content)
-                .tagId(tagId)
-                .build();
-
         Member member = userDetails.getMember();
 
-        BoardCreateResponseDto response = boardService.createBoard(dto, images, member);
+        BoardCreateResponseDto response = boardService.createBoard(boardRequestDto, boardRequestDto.getImages(), member);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
