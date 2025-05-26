@@ -10,10 +10,5 @@ import java.util.List;
 @Builder
 public class BoardCreateResponseDto {
     private Long boardId;
-    private String content;
-    private List<String> imageUrls;
-    private List<String> tags;
-    private String writerNickname;
-    private String writerProfileImageUrl;
-    private LocalDateTime createdAt;
+    private String message;
 }
