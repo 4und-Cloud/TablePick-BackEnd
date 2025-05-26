@@ -45,31 +45,21 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         //인증된 객체로 저장
         authenticateUser(member);
         //저장된 리프레쉬 토큰이 있는지 있으면 불러오고 없으면 null
-        String storedRefreshToken = member.getRefreshToken() != null ? member.getRefreshToken().getToken() : null;
+        if (refreshToken == null) {
+            refreshToken = member.getRefreshToken() != null ? member.getRefreshToken().getToken() : null;
+        }
         // 액세스 토큰 유효성 검사 및 재발급
         if (accessToken == null || !jwtProvider.validateToken(accessToken)) {
             accessToken = jwtProvider.createAccessToken(member.getId(), email);
             // 리프레시 토큰 유효성 검사 및 재발급
-            if (member.getRefreshToken() == null || !jwtProvider.validateToken(storedRefreshToken)) {
+            if (member.getRefreshToken() == null || !jwtProvider.validateToken(refreshToken)) {
                 refreshToken = issueAndSaveRefreshToken(member).getToken();
             }
         }
-        //액세스 토큰을 쿠키에 설정
-        Cookie accessCookie = new Cookie("access_token", accessToken);
-        accessCookie.setHttpOnly(true);
-        accessCookie.setPath("/");
+        //토큰을 쿠키에 설정
+        response.addCookie(createAccessCookie(accessToken));
+        response.addCookie(createRefreshCookie(refreshToken));
 
-        accessCookie.setMaxAge(60 * 60);
-
-        // 리프레시 토큰을 쿠키에 설정
-        Cookie refreshCookie = new Cookie("refresh_token", refreshToken);
-        refreshCookie.setHttpOnly(true);
-//        refreshCookie.setSecure(true); // HTTPS에서만 전송
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
-
-        response.addCookie(refreshCookie);
-        response.addCookie(accessCookie);
         //리다이렉션
         String redirectUrl = "http://localhost:5173/oauth2/success";
         response.sendRedirect(redirectUrl);
@@ -94,7 +84,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
     private RefreshToken issueAndSaveRefreshToken(Member member) {
         LocalDateTime expiredAt = LocalDateTime.now().plusDays(7);
-        //기존 토큰이 있다면 삭제
+        //기존에 만료된 토큰이 있다면 삭제하고 다시 생성
         if (member.getRefreshToken() != null) {
             refreshTokenRepository.delete(member.getRefreshToken());
         }
@@ -107,9 +97,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
                 .build();
 
         member.setRefreshToken(refreshToken);
-
         refreshTokenRepository.save(refreshToken);
-
 
         return refreshToken;
     }
@@ -126,7 +114,6 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         return null;
     }
 
-    // 쿠키에서 리프레쉬 토큰 가져오기
     private String getRefreshTokenFromCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
@@ -137,5 +124,24 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
             }
         }
         return null;
+    }
+
+    private Cookie createAccessCookie(String accessToken) {
+        Cookie accessCookie = new Cookie("access_token", accessToken);
+        accessCookie.setHttpOnly(true);
+        accessCookie.setPath("/");
+        accessCookie.setMaxAge(60 * 60); // 1시간
+
+        return accessCookie;
+    }
+
+    private Cookie createRefreshCookie(String refreshToken) {
+        Cookie refreshCookie = new Cookie("refresh_token", refreshToken);
+        refreshCookie.setHttpOnly(true);
+//        refreshCookie.setSecure(true); // HTTPS에서만 전송
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
+
+        return refreshCookie;
     }
 }
