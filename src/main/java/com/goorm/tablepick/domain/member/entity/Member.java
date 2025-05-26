@@ -80,7 +80,6 @@ public class Member {
         this.phoneNumber = dto.getPhoneNumber();
         this.gender = dto.getGender();
         this.birthdate = dto.getBirthdate();
-        this.profileImage = dto.getProfileImage();
         List<MemberTag> newMemberTags = dto.getMemberTags();
         if (this.memberTags == null) {
             this.memberTags = new ArrayList<>();
