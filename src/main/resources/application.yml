@@ -51,7 +51,7 @@ server:
 
 project:
   upload:
-    path: C:/uploads
+    board-image-path: C:/uploads/images/board
 
 kakao:
   admin:
