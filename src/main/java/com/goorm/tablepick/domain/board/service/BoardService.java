@@ -19,5 +19,5 @@ public interface BoardService {
     BoardDetailResponseDto getBoardDetail(Long boardId);
 
     BoardCreateResponseDto createBoard(BoardRequestDto dto, List<MultipartFile> images, Member member);
-
+    void deleteBoard(Long boardId, Member member);
 }

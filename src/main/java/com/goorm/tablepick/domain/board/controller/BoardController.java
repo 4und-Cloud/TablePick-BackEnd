@@ -78,4 +78,19 @@ public class BoardController {
         BoardCreateResponseDto response = boardService.createBoard(boardRequestDto, boardRequestDto.getImages(), member);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @DeleteMapping("/{boardId}")
+    @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다.")
+    public ResponseEntity<BoardDeleteResponseDto> deleteBoard(
+            @PathVariable Long boardId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Member member = userDetails.getMember();
+        boardService.deleteBoard(boardId, member);
+
+        return ResponseEntity.ok(BoardDeleteResponseDto.builder()
+                .message("게시글이 삭제되었습니다.")
+                .build());
+    }
+
 }

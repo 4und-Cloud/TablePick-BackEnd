@@ -136,6 +136,20 @@ public class BoardServiceImpl implements BoardService {
                 .build();
     }
 
+    @Override
+    @Transactional
+    public void deleteBoard(Long boardId, Member member) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다."));
+
+        if (!board.getMember().getId().equals(member.getId())) {
+            throw new AccessDeniedException("게시글 작성자만 삭제할 수 있습니다.");
+        }
+
+        deletePhysicalImageFiles(board.getBoardImages());
+
+        boardRepository.delete(board);
+    }
 
 
     // 이미지 저장 메서드
@@ -169,10 +183,29 @@ public class BoardServiceImpl implements BoardService {
 
         int lastDotIndex = fileName.lastIndexOf('.');
         if (lastDotIndex == -1) {
-            return ""; // 확장자 없음
+            return "";
         }
 
-        return fileName.substring(lastDotIndex); // .jpg, .png 등
+        return fileName.substring(lastDotIndex);
     }
 
+    // 물리적 파일 삭제 메서드 추가
+    private void deletePhysicalImageFiles(List<BoardImage> boardImages) {
+        for (BoardImage boardImage : boardImages) {
+            try {
+                String fileName = boardImage.getImageUrl();
+                Path filePath = Paths.get(boardImagePath).resolve(fileName);
+
+                if (Files.exists(filePath)) {
+                    Files.delete(filePath);
+                    log.info("이미지 파일 삭제 성공: {}", fileName);
+                } else {
+                    log.warn("삭제할 이미지 파일이 존재하지 않음: {}", fileName);
+                }
+            } catch (IOException e) {
+                log.error("이미지 파일 삭제 실패: {}", boardImage.getImageUrl(), e);
+                // 파일 삭제 실패해도 DB 삭제는 계속 진행
+            }
+        }
+    }
 }
