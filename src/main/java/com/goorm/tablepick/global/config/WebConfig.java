@@ -12,9 +12,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${project.upload.path}")
-    private String uploadBasePath;
-
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
@@ -31,10 +28,6 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/firebase-messaging-sw.js")
                 .addResourceLocations("classpath:/static/")
                 .setCachePeriod(0);  // 캐싱 비활성화
-
-        // 업로드된 이미지를 위한 핸들러 추가
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + uploadBasePath + "/");
     }
 
     // Firebase 서비스 워커를 위한 필터 빈 추가

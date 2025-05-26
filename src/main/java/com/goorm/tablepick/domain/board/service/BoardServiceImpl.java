@@ -45,8 +45,8 @@ public class BoardServiceImpl implements BoardService {
     private final BoardTagRepository boardTagRepository;
     private final TagRepository tagRepository;
 
-    @Value("${project.upload.path}")
-    private String uploadBasePath;
+    @Value("${project.upload.board-image-path}")
+    private String boardImagePath;
 
     @Override
     public List<BoardListResponseDto> getBoardsForMainPage() {
@@ -143,7 +143,7 @@ public class BoardServiceImpl implements BoardService {
         String originalFileName = image.getOriginalFilename();
         String extension = getFileExtension(originalFileName);
         String storeFileName = UUID.randomUUID() + extension;
-        String uploadDir = uploadBasePath + "/images/review";
+        String uploadDir = boardImagePath;
 
         try {
             Path uploadPath = Paths.get(uploadDir);
@@ -154,7 +154,7 @@ public class BoardServiceImpl implements BoardService {
             Path filePath = uploadPath.resolve(storeFileName);
             Files.write(filePath, image.getBytes());
 
-            return "/uploads/images/review/" + storeFileName;
+            return storeFileName;
 
         } catch (IOException e) {
             throw new RuntimeException("이미지 저장 실패", e);
