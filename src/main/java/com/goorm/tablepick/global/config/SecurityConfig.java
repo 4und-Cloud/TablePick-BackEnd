@@ -29,15 +29,17 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/auth/**", "/oauth2/**", "/swagger-ui/**", "/swagger-ui.html/**",
-                                "/api/restaurants/all", "/api/restaurants/{id}", "/v3/api-docs/**",
-                                "/api/boards/main", "/api/tags","/api/restaurants/search",
+                                "/api/dev/**", "/api/notifications/schedule/**",
+                                "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
+                                "/auth/**", "/oauth2/**", "/swagger-ui.html/**",
+                                "/api/restaurants/all", "/api/restaurants/{id}",
+                                "/api/boards/main", "/api/tags", "/api/restaurants/search",
                                 "/api/restaurants/list", "/api/reservation/available-times", "/api/board-tags/",
                                 "/api/boards/list", "api/boards", "/api/boards/{boardId}",
                                 "/images/**"
                         ).permitAll()
 
-                        // 🔧 여기 수정: 권한 검사 조건 변경
+                        // 🔧 권한 검사 조건
                         .requestMatchers("/api/**").authenticated() // 테스트 목적이라면 이렇게
                         //.requestMatchers("/api/**").hasAuthority("ROLE_USER") // 실제 권한 검사 시 이렇게
 

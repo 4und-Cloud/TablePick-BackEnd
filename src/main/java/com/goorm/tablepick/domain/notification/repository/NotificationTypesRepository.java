@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface NotificationTypesRepository extends JpaRepository<NotificationTypes, Long> {
     Optional<NotificationTypes> findByType(String type);
+    boolean existsByType(String type);
+
 }
