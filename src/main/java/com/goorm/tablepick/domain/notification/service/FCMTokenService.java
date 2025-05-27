@@ -36,14 +36,23 @@ public class FCMTokenService {
     // FCM 토큰 조회
     @Transactional(readOnly = true)
     public String getFcmToken(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new NotificationException("Member not found", "MEMBER_NOT_FOUND"));
+        try {
+            Member member = memberRepository.findById(memberId)
+                    .orElseThrow(() -> new NotificationException("Member not found", "MEMBER_NOT_FOUND"));
 
-        String fcmToken = member.getFcmToken();
-        if (fcmToken == null || fcmToken.isEmpty()) {
-            throw new NotificationException("FCM token not found", "TOKEN_NOT_FOUND");
+            String fcmToken = member.getFcmToken();
+            log.debug("FCM Token for member {}: {}", memberId, fcmToken != null ? "Found" : "Not found");
+            
+            // 토큰이 없는 경우 null 반환 (예외 발생하지 않음)
+            if (fcmToken == null || fcmToken.isEmpty()) {
+                log.warn("FCM token not found for member ID: {}", memberId);
+                return null;
+            }
+
+            return fcmToken;
+        } catch (Exception e) {
+            log.error("Error retrieving FCM token for member ID {}: {}", memberId, e.getMessage());
+            return null;
         }
-
-        return fcmToken;
     }
 }

@@ -32,6 +32,14 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+
+        // Swagger UI 관련 경로는 필터 처리 건너뛰기
+        String path = request.getRequestURI();
+        if (path.contains("/swagger-ui") || path.contains("/v3/api-docs")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String accessToken = getAccessTokenFromCookie(request);
         log.info("🪪 [JwtTokenFilter] Authorization Header: {}", request.getHeader("Authorization"));
 

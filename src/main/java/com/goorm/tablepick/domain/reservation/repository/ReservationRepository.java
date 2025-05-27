@@ -2,6 +2,7 @@ package com.goorm.tablepick.domain.reservation.repository;
 
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,4 +35,15 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     // 기본 findById는 Optional<Reservation>을 반환하므로 추가
     @Query("SELECT r FROM Reservation r WHERE r.id = :id")
     Reservation getReservationById(@Param("id") Long id);
+
+    // 특정 날짜 범위 내의 대기 중인 예약을 조회하는 메서드
+    @Query("SELECT r FROM Reservation r " +
+            "JOIN r.reservationSlot rs " +
+            "WHERE r.reservationStatus = 'PENDING' " +
+            "AND rs.date BETWEEN :startDate AND :endDate")
+    List<Reservation> findPendingReservationsBetweenDates(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
 }

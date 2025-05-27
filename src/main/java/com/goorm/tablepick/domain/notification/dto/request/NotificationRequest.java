@@ -19,7 +19,7 @@ public class NotificationRequest {
     @Schema(description = "알림 타입 ID", example = "1", required = true)
     private Long notificationTypeId;
 
-    @Schema(description = "예약 ID", example = "100", required = true)
+    @Schema(description = "예약 ID", example = "100", required = false)
     private Long reservationId;
 
     @Schema(description = "예약 시간 (ISO-8601 형식)", example = "2025-05-14T19:30:00", required = true)
