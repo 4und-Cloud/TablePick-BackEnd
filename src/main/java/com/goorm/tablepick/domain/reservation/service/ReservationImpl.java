@@ -37,10 +37,9 @@ public class ReservationImpl implements ReservationService {
     private final ReservationSlotRepository reservationSlotRepository;
     private final RestaurantRepository restaurantRepository;
     private final RestaurantOperatingHourRepository restaurantOperatingHourRepository;
-    private final ReservationNotificationScheduler notificationScheduler;
     private final NotificationService notificationService;
     private final NotificationTypesRepository notificationTypesRepository;
-
+    private final ReservationNotificationScheduler reservationNotificationScheduler;
 
     @Override
     @Transactional
@@ -90,15 +89,18 @@ public class ReservationImpl implements ReservationService {
                 .build();
 
         Reservation savedReservation = reservationRepository.save(reservation);
-        
+
         // 예약 완료 알림 및 예약 시간 기준 알림 예약
         try {
             // 예약 완료 알림 즉시 전송
             scheduleReservationCompletedNotification(savedReservation);
-            
+
             // 예약 시간 기준 알림 예약 (1일 전, 3시간 전, 1시간 전, 3시간 후)
             scheduleAllReservationNotifications(savedReservation);
-            
+
+            // ReservationNotificationScheduler 인터페이스 사용
+            reservationNotificationScheduler.scheduleReservationNotifications(savedReservation);
+
             log.info("예약 ID: {}에 대한 모든 알림이 성공적으로 예약되었습니다.", savedReservation.getId());
         } catch (Exception e) {
             log.error("예약 알림 스케줄링 중 오류 발생: {}", e.getMessage(), e);
@@ -156,10 +158,10 @@ public class ReservationImpl implements ReservationService {
 
         return availableTimes;
     }
-    
+
     /**
      * 예약 완료 알림을 즉시 전송합니다.
-     * 
+     *
      * @param reservation 예약 정보
      */
     private void scheduleReservationCompletedNotification(Reservation reservation) {
@@ -168,14 +170,14 @@ public class ReservationImpl implements ReservationService {
             notificationTypesRepository.findByType(NotificationTypes.RESERVATION_COMPLETED)
                     .ifPresent(type -> {
                         // 알림 요청 생성 (현재 시간으로 설정)
-                        com.goorm.tablepick.domain.notification.dto.request.NotificationRequest request = 
-                            com.goorm.tablepick.domain.notification.dto.request.NotificationRequest.builder()
-                                .memberId(reservation.getMember().getId())
-                                .notificationTypeId(type.getId())
-                                .reservationId(reservation.getId())
-                                .scheduledAt(LocalDateTime.now()) // 즉시 실행
-                                .build();
-                        
+                        com.goorm.tablepick.domain.notification.dto.request.NotificationRequest request =
+                                com.goorm.tablepick.domain.notification.dto.request.NotificationRequest.builder()
+                                        .memberId(reservation.getMember().getId())
+                                        .notificationTypeId(type.getId())
+                                        .reservationId(reservation.getId())
+                                        .scheduledAt(LocalDateTime.now()) // 즉시 실행
+                                        .build();
+
                         // 알림 예약
                         notificationService.scheduleNotification(request);
                         log.info("예약 완료 알림이 성공적으로 예약되었습니다. 예약 ID: {}", reservation.getId());
@@ -184,10 +186,10 @@ public class ReservationImpl implements ReservationService {
             log.error("예약 완료 알림 예약 중 오류 발생: {}", e.getMessage(), e);
         }
     }
-    
+
     /**
      * 예약 시간 기준으로 모든 알림을 예약합니다.
-     * 
+     *
      * @param reservation 예약 정보
      */
     private void scheduleAllReservationNotifications(Reservation reservation) {
@@ -198,57 +200,57 @@ public class ReservationImpl implements ReservationService {
                 log.warn("예약 시간 정보가 없습니다. 알림을 예약할 수 없습니다. 예약 ID: {}", reservation.getId());
                 return;
             }
-            
+
             Long memberId = reservation.getMember().getId();
             Long reservationId = reservation.getId();
-            
+
             // 1일 전 알림 예약
-            scheduleNotificationByType(memberId, reservationId, NotificationTypes.RESERVATION_1DAY_BEFORE, 
+            scheduleNotificationByType(memberId, reservationId, NotificationTypes.RESERVATION_1DAY_BEFORE,
                     reservationDateTime.minusDays(1));
-            
+
             // 3시간 전 알림 예약
-            scheduleNotificationByType(memberId, reservationId, NotificationTypes.RESERVATION_3HOURS_BEFORE, 
+            scheduleNotificationByType(memberId, reservationId, NotificationTypes.RESERVATION_3HOURS_BEFORE,
                     reservationDateTime.minusHours(3));
-            
+
             // 1시간 전 알림 예약
-            scheduleNotificationByType(memberId, reservationId, NotificationTypes.RESERVATION_1HOUR_BEFORE, 
+            scheduleNotificationByType(memberId, reservationId, NotificationTypes.RESERVATION_1HOUR_BEFORE,
                     reservationDateTime.minusHours(1));
-            
+
             // 3시간 후 알림 예약
-            scheduleNotificationByType(memberId, reservationId, NotificationTypes.RESERVATION_3HOURS_AFTER, 
+            scheduleNotificationByType(memberId, reservationId, NotificationTypes.RESERVATION_3HOURS_AFTER,
                     reservationDateTime.plusHours(3));
-            
+
             log.info("예약 ID: {}에 대한 모든 시간 기준 알림이 성공적으로 예약되었습니다.", reservation.getId());
         } catch (Exception e) {
             log.error("예약 시간 기준 알림 예약 중 오류 발생: {}", e.getMessage(), e);
         }
     }
-    
+
     /**
      * 특정 알림 타입에 대한 알림을 예약합니다.
-     * 
-     * @param memberId 회원 ID
-     * @param reservationId 예약 ID
+     *
+     * @param memberId            회원 ID
+     * @param reservationId       예약 ID
      * @param notificationTypeStr 알림 타입 문자열
-     * @param scheduledAt 예약 시간
+     * @param scheduledAt         예약 시간
      */
-    private void scheduleNotificationByType(Long memberId, Long reservationId, String notificationTypeStr, 
-            LocalDateTime scheduledAt) {
+    private void scheduleNotificationByType(Long memberId, Long reservationId, String notificationTypeStr,
+                                            LocalDateTime scheduledAt) {
         try {
             notificationTypesRepository.findByType(notificationTypeStr)
                     .ifPresent(type -> {
                         // 알림 요청 생성
-                        com.goorm.tablepick.domain.notification.dto.request.NotificationRequest request = 
-                            com.goorm.tablepick.domain.notification.dto.request.NotificationRequest.builder()
-                                .memberId(memberId)
-                                .notificationTypeId(type.getId())
-                                .reservationId(reservationId)
-                                .scheduledAt(scheduledAt)
-                                .build();
-                        
+                        com.goorm.tablepick.domain.notification.dto.request.NotificationRequest request =
+                                com.goorm.tablepick.domain.notification.dto.request.NotificationRequest.builder()
+                                        .memberId(memberId)
+                                        .notificationTypeId(type.getId())
+                                        .reservationId(reservationId)
+                                        .scheduledAt(scheduledAt)
+                                        .build();
+
                         // 알림 예약
                         notificationService.scheduleNotification(request);
-                        log.info("알림이 성공적으로 예약되었습니다. 예약 ID: {}, 알림 타입: {}, 예약 시간: {}", 
+                        log.info("알림이 성공적으로 예약되었습니다. 예약 ID: {}, 알림 타입: {}, 예약 시간: {}",
                                 reservationId, notificationTypeStr, scheduledAt);
                     });
         } catch (Exception e) {
