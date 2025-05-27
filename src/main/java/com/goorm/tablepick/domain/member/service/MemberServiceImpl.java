@@ -45,8 +45,16 @@ public class MemberServiceImpl implements MemberService {
     public void updateMemberInfo(String username, MemberUpdateRequestDto memberUpdateRequestDto) {
         Member member = memberRepository.findByEmail(username)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+        List<Tag> selectedTags = new ArrayList<>();
+        for (Long id : memberUpdateRequestDto.getMemberTagsId()) {
+            Tag tag = tagRepository.findById(id).orElseThrow(() -> new MemberException(MemberErrorCode.NO_SUCH_TAG));
+            selectedTags.add(tag);
+        }
 
-        Member updatedMember = member.updateMember(memberUpdateRequestDto);
+        List<MemberTag> newMemberTags = selectedTags.stream().map(tag -> MemberTag.create(member, tag))
+                .toList();
+
+        Member updatedMember = member.updateMember(memberUpdateRequestDto, newMemberTags);
         memberRepository.save(updatedMember);
     }
 
@@ -69,6 +77,11 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    public Member getMember(String email) {
+        return memberRepository.findByEmail(email).get();
+    }
+
+    @Override
     @Transactional
     public void addMemberInfo(String username, MemberAddtionalInfoRequestDto dto) {
         Member member = memberRepository.findByEmail(username)
@@ -88,8 +101,4 @@ public class MemberServiceImpl implements MemberService {
         // memberRepository.save(member); → 변경 감지로 생략 가능
     }
 
-    @Override
-    public Member getMember(String email) {
-        return memberRepository.findByEmail(email).get();
-    }
 }
