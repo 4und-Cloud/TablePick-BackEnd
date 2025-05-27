@@ -20,7 +20,7 @@ public class MemberUpdateRequestDto {
     @NotBlank(message = "닉네임은 필수 항목입니다.")
     private String nickname;
 
-    @Schema(description = "성별", example = "male")
+    @Schema(description = "성별", example = "MALE")
     private Gender gender;
 
     @Schema(description = "생년월일", example = "2002-01-01")
@@ -32,6 +32,6 @@ public class MemberUpdateRequestDto {
     private String phoneNumber;
 
     @Schema(description = "사용자 선호 태그")
-    private List<MemberTag> memberTags = new ArrayList<>();
+    private List<Long> memberTagsId;
 
 }

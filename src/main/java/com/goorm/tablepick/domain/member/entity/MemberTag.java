@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.beans.factory.config.RuntimeBeanReference;
 
 @Entity
 @Getter
@@ -31,6 +32,11 @@ public class MemberTag {
         this.tag = tag;
     }
 
-
+    public static MemberTag create(Member member, Tag tag){
+        return MemberTag.builder()
+                .member(member)
+                .tag(tag)
+                .build();
+    }
 
 }
