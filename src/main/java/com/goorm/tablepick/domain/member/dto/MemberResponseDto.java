@@ -32,7 +32,7 @@ public class MemberResponseDto {
         List<Long>  memberTagIds = new ArrayList<>();
         List<MemberTag> memberTags = member.getMemberTags();
         if(memberTags != null && !memberTags.isEmpty()){
-            memberTagIds.addAll(memberTags.stream().map(MemberTag::getId).toList());
+            memberTagIds.addAll(memberTags.stream().map(memberTag -> {return memberTag.getTag().getId();}).toList());
         }
 
         return MemberResponseDto.builder()
