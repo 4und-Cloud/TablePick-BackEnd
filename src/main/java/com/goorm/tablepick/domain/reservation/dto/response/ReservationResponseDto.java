@@ -12,6 +12,7 @@ import lombok.Getter;
 
 
 @Getter
+@Builder
 @AllArgsConstructor
 public class ReservationResponseDto {
     @Schema(description = "예약 ID", example = "3")
@@ -31,12 +32,32 @@ public class ReservationResponseDto {
     @Schema(description = "예약 상태", example = "PENDING, CONFIRMED, CANCELLED")
     private ReservationStatus reservationStatus;
 
-    @Builder
-    public ReservationResponseDto(Reservation reservation) {
-        this.id = reservation.getId();
-        this.partySize = reservation.getPartySize();
-        this.reservationDate = reservation.getReservationSlot().getDate();
-        this.reservationTime = reservation.getReservationSlot().getTime();
-        this.reservationStatus = reservation.getReservationStatus();
+    @Schema(description = "식당 아이디", example = "1")
+    private Long restaurantId;
+
+    @Schema(description = "식당 이름", example = "골목식당")
+    private String restaurantName;
+
+    @Schema(description = "식당 주소", example = "서울특별시 강남구 강남대로")
+    private String restaurantAddress;
+
+    @Schema(description = "식당 썸네일", example = "url")
+    private String restaurantImage;
+
+
+    public static ReservationResponseDto create(Reservation reservation) {
+        return ReservationResponseDto.builder()
+                .id(reservation.getId())
+                .partySize(reservation.getPartySize())
+                .reservationDate(reservation.getReservationDateTime().toLocalDate())
+                .reservationTime(reservation.getReservationDateTime().toLocalTime())
+                .reservationStatus(reservation.getReservationStatus())
+                .restaurantId(reservation.getRestaurant().getId())
+                .restaurantAddress(reservation.getRestaurant().getAddress())
+                .restaurantName(reservation.getRestaurant().getName())
+                .restaurantImage(
+                        reservation.getRestaurant().getRestaurantImages().get(0) != null ? reservation.getRestaurant()
+                                .getRestaurantImages().get(0).getImageUrl() : null)
+                .build();
     }
 }

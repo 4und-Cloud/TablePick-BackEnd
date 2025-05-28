@@ -63,7 +63,7 @@ public class MemberServiceImpl implements MemberService {
         List<Reservation> reservationList = reservationRepository.findAllByMemberEmail(username);
 
         return reservationList.stream()
-                .map(ReservationResponseDto::new)
+                .map(ReservationResponseDto::create)
                 .collect(Collectors.toList());
     }
 
