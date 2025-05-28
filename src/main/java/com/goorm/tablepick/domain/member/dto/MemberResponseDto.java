@@ -3,6 +3,7 @@ package com.goorm.tablepick.domain.member.dto;
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.enums.Gender;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,6 +21,7 @@ public class MemberResponseDto {
     private String profileImage;
     private String provider;
     private String providerId;
+    private LocalDateTime createAt;
 
     public static MemberResponseDto toDto(Member member) {
         return MemberResponseDto.builder()
@@ -32,6 +34,7 @@ public class MemberResponseDto {
                 .profileImage(member.getProfileImage())
                 .provider(member.getProvider())
                 .providerId(member.getProviderId())
+                .createAt(member.getCreatedAt())
                 .build();
     }
 }
