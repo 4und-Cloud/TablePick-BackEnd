@@ -35,7 +35,7 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     public PagedRestaurantResponseDto searchRestaurants(@Valid RestaurantSearchRequestDto dto) {
-        Pageable pageable = PageRequest.of(dto.getPage() - 1, 6, Sort.by("name").ascending());
+        Pageable pageable = PageRequest.of(dto.getPage() - 1, 6);
 
         String keyword = dto.getKeyword();
         List<Long> tagIds = dto.getTagIds();
