@@ -21,43 +21,43 @@ public class NotificationTypesInitializer implements ApplicationRunner {
         // 항상 모든 알림 타입을 확인하고 필요한 경우 생성
         ensureNotificationTypeExists(
                 NotificationTypes.REGISTER_COMPLETED,
-                "회원가입 완료 알림",
-                "저희 테이블픽의 회원이 되신 것을 진심으로 환영합니다!",
+                "TablePick 테이블픽",
+                "테이블픽에 가입해 주셔서 감사합니다. 앞으로 다양한 혜택과 서비스를 이용해보세요.",
                 ""
         );
 
         ensureNotificationTypeExists(
                 NotificationTypes.RESERVATION_COMPLETED,
-                "예약 완료 알림",
-                "{restaurantName} 예약이 성공적으로 완료되었습니다!",
+                "TablePick 테이블픽",
+                "{restaurantName} 예약이 성공적으로 완료되었습니다.",
                 "/reservations/{id}"
         );
 
         ensureNotificationTypeExists(
                 NotificationTypes.RESERVATION_1DAY_BEFORE,
-                "예약 1일 전 알림",
-                "내일 이 시간에 {restaurantName} 예약이 있습니다!",
+                "TablePick 테이블픽",
+                "내일 이 시간에 {restaurantName} 예약이 예정되어 있습니다.",
                 "/reservations/{id}"
         );
 
         ensureNotificationTypeExists(
                 NotificationTypes.RESERVATION_3HOURS_BEFORE,
-                "예약 3시간 전 알림",
-                "3시간 뒤에 {restaurantName} 예약이 있습니다! 까먹지 않게 또 알려드릴게요!",
+                "TablePick 테이블픽",
+                "3시간 뒤 {restaurantName} 예약이 있습니다. 위치와 시간을 다시 한번 확인해 주세요.",
                 "/reservations/{id}"
         );
 
         ensureNotificationTypeExists(
                 NotificationTypes.RESERVATION_1HOUR_BEFORE,
-                "예약 1시간 전 알림",
-                "예약하신 {restaurantName}이 열심히 준비하고 있습니다! 1시간 뒤에 늦지 않게 입장해주세용~!",
+                "TablePick 테이블픽",
+                "{restaurantName} 예약이 1시간 남았습니다. 매장에서 고객님을 맞을 준비를 하고 있으니 여유 있게 출발해주세요.",
                 "/reservations/{id}"
         );
 
         ensureNotificationTypeExists(
                 NotificationTypes.RESERVATION_3HOURS_AFTER,
-                "예약 3시간 후 알림",
-                "{restaurantName} 식사는 어떠셨나요? 리뷰를 남겨주시면 다음 손님들에게 큰 도움이 됩니다!",
+                "TablePick 테이블픽",
+                "{restaurantName}에서의 식사는 만족스러우셨나요? 리뷰를 남겨주시면 큰 도움이 됩니다.",
                 "/reservations/{id}/review"
         );
 
