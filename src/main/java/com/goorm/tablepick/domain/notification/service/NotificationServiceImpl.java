@@ -306,10 +306,23 @@ public class NotificationServiceImpl implements NotificationService {
     // 알림 응답 DTO를 생성
     // 알림 큐 항목을 클라이언트에 반환할 응답 형식으로 변환
     private NotificationResponse createNotificationResponse(NotificationQueue queue) {
+        // 알림 로그에서 sentAt 정보 조회
+        LocalDateTime sentAt = null;
+        List<NotificationLog> logs = notificationLogRepository.findByNotificationQueueIdOrderBySentAtDesc(queue.getId());
+        if (!logs.isEmpty() && logs.get(0).getIsSuccess() != null && logs.get(0).getIsSuccess()) {
+            sentAt = logs.get(0).getSentAt();
+        }
+        
         return NotificationResponse.builder()
                 .id(queue.getId())
                 .status(queue.getStatus())
                 .scheduledAt(queue.getScheduledAt())
+                .sentAt(sentAt)
+                .memberId(queue.getMemberId())
+                .reservationId(queue.getReservationId())
+                .type(queue.getNotificationTypes() != null ? queue.getNotificationTypes().getType() : null)
+                .title(queue.getNotificationTypes() != null ? queue.getNotificationTypes().getTitle() : null)
+                .body(queue.getNotificationTypes() != null ? queue.getNotificationTypes().getBody() : null)
                 .build();
     }
 
