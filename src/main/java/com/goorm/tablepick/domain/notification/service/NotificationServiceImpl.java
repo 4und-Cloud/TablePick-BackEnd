@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -195,9 +196,8 @@ public class NotificationServiceImpl implements NotificationService {
             parameters.put("id", notification.getReservationId().toString());
 
             // reservation 객체가 있는 경우에만 레스토랑 이름 추가
-            if (reservation != null && reservation.getReservationSlot() != null &&
-                    reservation.getReservationSlot().getRestaurant() != null) {
-                parameters.put("restaurantName", reservation.getReservationSlot().getRestaurant().getName());
+            if (reservation != null) {
+                parameters.put("restaurantName", reservation.getRestaurantName());
             } else {
                 parameters.put("restaurantName", "알 수 없음");
             }
@@ -222,12 +222,21 @@ public class NotificationServiceImpl implements NotificationService {
     // 알림 데이터 생성
     private Map<String, String> createNotificationData(NotificationQueue notification, NotificationTypes type) {
         Map<String, String> data = new HashMap<>();
+
         // reservationId가 null이 아닌 경우에만 추가
         if (notification.getReservationId() != null) {
             data.put("reservationId", notification.getReservationId().toString());
+
+            // 레스토랑 이름 추가
+            Optional<Reservation> reservationOpt = reservationRepository.findById(notification.getReservationId());
+            if (reservationOpt.isPresent()) {
+                Reservation reservation = reservationOpt.get();
+                data.put("restaurantName", reservation.getRestaurantName());
+            }
         } else {
             data.put("reservationId", "0"); // 테스트용 기본값
         }
+
         data.put("type", type.getTitle());
         data.put("url", type.getUrl() != null ? type.getUrl() : "");
         return data;
@@ -308,11 +317,22 @@ public class NotificationServiceImpl implements NotificationService {
     private NotificationResponse createNotificationResponse(NotificationQueue queue) {
         // 알림 로그에서 sentAt 정보 조회
         LocalDateTime sentAt = null;
-        List<NotificationLog> logs = notificationLogRepository.findByNotificationQueueIdOrderBySentAtDesc(queue.getId());
+        List<NotificationLog> logs = notificationLogRepository.findByNotificationQueueIdOrderBySentAtDesc(
+                queue.getId());
         if (!logs.isEmpty() && logs.get(0).getIsSuccess() != null && logs.get(0).getIsSuccess()) {
             sentAt = logs.get(0).getSentAt();
         }
-        
+
+        String restaurantName = null;
+
+        // 예약 ID가 있는 경우 레스토랑 이름 조회
+        if (queue.getReservationId() != null) {
+            Optional<Reservation> reservationOpt = reservationRepository.findById(queue.getReservationId());
+            if (reservationOpt.isPresent()) {
+                restaurantName = reservationOpt.get().getRestaurantName();
+            }
+        }
+
         return NotificationResponse.builder()
                 .id(queue.getId())
                 .status(queue.getStatus())
@@ -323,6 +343,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .type(queue.getNotificationTypes() != null ? queue.getNotificationTypes().getType() : null)
                 .title(queue.getNotificationTypes() != null ? queue.getNotificationTypes().getTitle() : null)
                 .body(queue.getNotificationTypes() != null ? queue.getNotificationTypes().getBody() : null)
+                .restaurantName(restaurantName)
                 .build();
     }
 
