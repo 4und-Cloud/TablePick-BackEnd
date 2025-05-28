@@ -30,14 +30,13 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long>, R
                 r.restaurant_category_id,
                 r.restaurant_phone_number,
                 r.xcoordinate,
-                r.ycoordinate,
-                COUNT(DISTINCT bt.id) AS total_tag_count
+                r.ycoordinate
             FROM Restaurant r
-                LEFT JOIN board_tag bt ON bt.restaurant_id = r.id
+                JOIN board_tag bt ON bt.restaurant_id = r.id
             WHERE bt.tag_id IN (:tagIds)
             GROUP BY r.id
             HAVING COUNT(DISTINCT bt.tag_id) = :tagCount
-            ORDER BY total_tag_count DESC
+            ORDER BY COUNT(DISTINCT bt.id) DESC
             """, nativeQuery = true)
     Page<Restaurant> findAllByTags(@Param("tagIds") List<Long> tagIds, @Param("tagCount") int tagCount,
                                    Pageable pageable);
@@ -63,17 +62,15 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long>, R
                 r.restaurant_category_id,
                 r.restaurant_phone_number,
                 r.xcoordinate,
-                r.ycoordinate,
-                COUNT(DISTINCT bt_all.id) AS total_tag_count
+                r.ycoordinate
             FROM restaurant r
                 JOIN board_tag bt ON bt.restaurant_id = r.id
                 JOIN menu m ON r.id = m.restaurant_id
-                LEFT JOIN board_tag bt_all ON bt_all.restaurant_id = r.id
             WHERE bt.tag_id IN (:tagIds)
               AND (r.name LIKE %:keyword% OR m.name LIKE %:keyword% OR r.address LIKE %:keyword%)
             GROUP BY r.id
             HAVING COUNT(DISTINCT bt.tag_id) = :tagCount
-            ORDER BY total_tag_count DESC
+            ORDER BY COUNT(DISTINCT bt.id) DESC
             """,
             nativeQuery = true)
     Page<Restaurant> findAllByKeywordAndTags(
