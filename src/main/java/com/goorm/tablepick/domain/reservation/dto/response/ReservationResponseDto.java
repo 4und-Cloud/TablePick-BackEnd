@@ -45,7 +45,7 @@ public class ReservationResponseDto {
     private String restaurantImage;
 
 
-    public static ReservationResponseDto create(Reservation reservation) {
+    public static ReservationResponseDto toDto(Reservation reservation) {
         return ReservationResponseDto.builder()
                 .id(reservation.getId())
                 .partySize(reservation.getPartySize())
