@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface RestaurantRepository extends JpaRepository<Restaurant, Long>, RestaurantRepositoryCustom {
+public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     @Query(""" 
             SELECT DISTINCT r
