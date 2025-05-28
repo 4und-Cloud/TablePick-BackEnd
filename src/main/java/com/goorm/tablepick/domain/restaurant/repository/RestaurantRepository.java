@@ -10,7 +10,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
+public interface RestaurantRepository extends JpaRepository<Restaurant, Long>, RestaurantRepositoryCustom {
+
     @Query(""" 
             SELECT DISTINCT r
             FROM Restaurant r LEFT JOIN r.menus m
@@ -20,14 +21,26 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             """)
     Page<Restaurant> findAllByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
-    @Query("""
-            SELECT r FROM Restaurant r
-            LEFT JOIN r.restaurantTags rt
-            WHERE rt.tag.id IN :tagIds
+    @Query(value = """
+            SELECT
+                r.id,
+                r.address,
+                r.max_capacity,
+                r.name,
+                r.restaurant_category_id,
+                r.restaurant_phone_number,
+                r.xcoordinate,
+                r.ycoordinate,
+                COUNT(DISTINCT bt.id) AS total_tag_count
+            FROM Restaurant r
+                LEFT JOIN board_tag bt ON bt.restaurant_id = r.id
+            WHERE bt.tag_id IN (:tagIds)
             GROUP BY r.id
-            HAVING COUNT(DISTINCT rt.id) = :cnt
-            """)
-    Page<Restaurant> findAllByTags(@Param("tagIds") List<Long> tagIds, @Param("cnt") int cnt, Pageable pageable);
+            HAVING COUNT(DISTINCT bt.tag_id) = :tagCount
+            ORDER BY total_tag_count DESC
+            """, nativeQuery = true)
+    Page<Restaurant> findAllByTags(@Param("tagIds") List<Long> tagIds, @Param("tagCount") int tagCount,
+                                   Pageable pageable);
 
 
     @Query("""
@@ -41,21 +54,36 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             """)
     Page<Restaurant> findPopularRestaurants(Pageable pageable);
 
-    @Query("""
-            SELECT r FROM Restaurant r
-            JOIN BoardTag bt ON bt.restaurant.id = r.id
-            JOIN r.menus m
-            WHERE bt.tag.id IN :tagIds
-              AND (r.name LIKE %:keyword%
-                        OR m.name LIKE %:keyword%
-                   OR r.address LIKE %:keyword%)
+    @Query(value = """
+            SELECT
+                r.id,
+                r.address,
+                r.max_capacity,
+                r.name,
+                r.restaurant_category_id,
+                r.restaurant_phone_number,
+                r.xcoordinate,
+                r.ycoordinate,
+                COUNT(DISTINCT bt_all.id) AS total_tag_count
+            FROM restaurant r
+                JOIN board_tag bt ON bt.restaurant_id = r.id
+                JOIN menu m ON r.id = m.restaurant_id
+                LEFT JOIN board_tag bt_all ON bt_all.restaurant_id = r.id
+            WHERE bt.tag_id IN (:tagIds)
+              AND (r.name LIKE %:keyword% OR m.name LIKE %:keyword% OR r.address LIKE %:keyword%)
             GROUP BY r.id
-            HAVING COUNT(DISTINCT bt.tag.id) = :cnt
-            ORDER BY (SELECT COUNT(bt.tag.id) FROM BoardTag bt JOIN Restaurant r ON bt.restaurant.id = r.id WHERE bt.tag.id IN :tagIds)
-            """)
-    Page<Restaurant> findAllByKeywordAndTags(String keyword, List<Long> tagIds, int cnt, Pageable pageable);
+            HAVING COUNT(DISTINCT bt.tag_id) = :tagCount
+            ORDER BY total_tag_count DESC
+            """,
+            nativeQuery = true)
+    Page<Restaurant> findAllByKeywordAndTags(
+            @Param("keyword") String keyword,
+            @Param("tagIds") List<Long> tagIds,
+            @Param("tagCount") int tagCount,
+            Pageable pageable);
 
     @Query("SELECT r FROM Restaurant r ORDER BY r.name ASC")
     Page<Restaurant> findAllOrderByNameAsc(Pageable pageable);  // 가나다순 정렬
+
 
 }
