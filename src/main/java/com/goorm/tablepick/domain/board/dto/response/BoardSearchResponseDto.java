@@ -5,16 +5,14 @@ import com.goorm.tablepick.domain.board.entity.Board;
 import com.goorm.tablepick.domain.board.entity.BoardImage;
 import com.goorm.tablepick.domain.board.entity.BoardTag;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import java.time.LocalDateTime;
+import java.util.List;
 
 
 @Getter
-@Setter
 @Builder
 @AllArgsConstructor
 public class BoardSearchResponseDto {
@@ -38,8 +36,13 @@ public class BoardSearchResponseDto {
                 .id(board.getId())
                 .content(board.getContent())
                 .createdAt(board.getCreatedAt())
-                .restaurantName(board.getRestaurant().getName())
-                .boardThumbImages(!board.getBoardImages().isEmpty() ? board.getBoardImages().get(0) : null)
+
+                .restaurantName(board.getReservation().getRestaurant().getName())
+                .boardThumbImages(
+                        !board.getBoardImages().isEmpty()
+                                ? board.getBoardImages().get(0)
+                                : null
+                )
                 .boardTags(board.getBoardTags())
                 .build();
     }

@@ -16,14 +16,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Getter
@@ -51,12 +53,13 @@ public class Member {
 
     private Boolean isMemberDeleted;
 
+    @Setter
     @OneToOne
     @JoinColumn(name = "refresh_token_id")
     private RefreshToken refreshToken;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MemberTag> memberTags = new ArrayList<>();
+    private List<MemberTag> memberTags;
 
     @Enumerated(EnumType.STRING)
     private AccountRole roles;
@@ -64,6 +67,9 @@ public class Member {
     private String provider;
 
     private String providerId;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 
     // FCM 토큰 필드 추가
     @Column(length = 255)
@@ -74,13 +80,20 @@ public class Member {
         refreshToken.setMember(this);
     }
 
-    public Member updateMember(MemberUpdateRequestDto dto) {
+    public Member updateMember(MemberUpdateRequestDto dto, List<MemberTag> newMemberTags) {
         this.nickname = dto.getNickname();
         this.phoneNumber = dto.getPhoneNumber();
         this.gender = dto.getGender();
         this.birthdate = dto.getBirthdate();
-        this.profileImage = dto.getProfileImage();
-        this.memberTags = dto.getMemberTags();
+        if (this.memberTags == null) {
+            this.memberTags = new ArrayList<>();
+        } else {
+            this.memberTags.clear(); // 기존 값 제거 (orphanRemoval 작동)
+        }
+        for (MemberTag tag : newMemberTags) {
+            tag.setMember(this); // 양방향 연관관계 설정
+            this.memberTags.add(tag);
+        }
         return this;
     }
 
@@ -93,12 +106,22 @@ public class Member {
     public void removeFcmToken() {
         this.fcmToken = null;
     }
-  
-    public Member addMemberInfo(MemberAddtionalInfoRequestDto dto, List<MemberTag> memberTags) {
+
+    public void addMemberInfo(MemberAddtionalInfoRequestDto dto, List<MemberTag> newMemberTags) {
         this.phoneNumber = dto.getPhoneNumber();
         this.gender = dto.getGender();
         this.birthdate = dto.getBirthdate();
-        this.memberTags = memberTags;
-        return this;
+
+        if (this.memberTags == null) {
+            this.memberTags = new ArrayList<>();
+        } else {
+            this.memberTags.clear(); // 기존 값 제거 (orphanRemoval 작동)
+        }
+
+        for (MemberTag tag : newMemberTags) {
+            tag.setMember(this); // 양방향 연관관계 설정
+            this.memberTags.add(tag);
+        }
+
     }
 }

@@ -5,12 +5,13 @@ import com.goorm.tablepick.domain.board.entity.Board;
 import com.goorm.tablepick.domain.board.entity.BoardTag;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -47,11 +48,16 @@ public class MyBoardListResponseDto {
         this.content = board.getContent();
         this.createdAt = board.getCreatedAt();
         this.updatedAt = board.getUpdatedAt();
-        this.restaurant = board.getRestaurant();
+
+        this.restaurant = board.getReservation().getRestaurant(); // 수정됨. 수정: 직접 restaurant가 아닌 reservation → restaurant
+
         this.nickName = board.getMember().getNickname();
-        this.boardImage =
-                board.getBoardImages().get(0).getImageUrl() == null ? board.getBoardImages().get(0).getImageUrl()
-                        : null;
+
+        // 수정: 이미지 URL 처리 로직 수정
+        this.boardImage = board.getBoardImages() != null && !board.getBoardImages().isEmpty()
+                ? board.getBoardImages().get(0).getImageUrl() // 수정됨
+                : null;
+
         this.boardTags = board.getBoardTags();
     }
 }

@@ -36,4 +36,17 @@ out/
 ### VS Code ###
 .vscode/
 
-src/main/resources/firebase-service-account.json
+### env 파일 무시
+**/.env
+**/**/.env
+
+### firebase service account
+src/main/resources/fierbase-service-account.json
+**/firebase-service-account.json
+**/**/firebase-service-account.json
+**/**/**/firebase-service-account.json
+
+### firebase-messaging-sw.js
+src/main/resources/static/firebase-messaging-sw.js
+**/firebase-messaging-sw.js
+**/**/firebase-messaging-sw.js

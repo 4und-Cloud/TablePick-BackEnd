@@ -72,7 +72,7 @@ public class MemberController {
     }
 
     @PostMapping("/logout")
-    @Operation(summary = "사용자 로그아웃", description = "사용자 ID를 기준으로 로그아웃합니다. 쿠키에서 리프레쉬 토큰 삭제 필요합니다.")
+    @Operation(summary = "사용자 로그아웃", description = "사용자 ID를 기준으로 로그아웃합니다. 쿠키에서 리프레쉬 토큰 삭제됩니다.")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) throws Exception {
         //쿠키 무효화는 security config에서 설정
         Member member = memberService.getMember(getUserName());

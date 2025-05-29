@@ -56,6 +56,9 @@ jwt:
 server:
   port: 8080
 
+project:
+  upload:
+    board-image-path: C:/uploads/images/board
 
 kakao:
   admin:

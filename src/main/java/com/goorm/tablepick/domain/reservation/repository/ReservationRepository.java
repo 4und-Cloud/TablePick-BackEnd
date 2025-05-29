@@ -2,9 +2,9 @@ package com.goorm.tablepick.domain.reservation.repository;
 
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +15,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     List<Reservation> findByReservationSlot(ReservationSlot reservationSlot);
 
+    @Query("SELECT r FROM Reservation r WHERE r.reservationStatus != 'CANCELLED'")
     List<Reservation> findAllByMemberEmail(String username);
 
     // 특정 시간 범위 내의 예약을 조회하는 메서드 (알림 스케줄링용)
@@ -35,5 +36,14 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @Query("SELECT r FROM Reservation r WHERE r.id = :id")
     Reservation getReservationById(@Param("id") Long id);
 
-    Optional<Reservation> findByPaymentId(String paymentId);
+    // 특정 날짜 범위 내의 대기 중인 예약을 조회하는 메서드
+    @Query("SELECT r FROM Reservation r " +
+            "JOIN r.reservationSlot rs " +
+            "WHERE r.reservationStatus = 'PENDING' " +
+            "AND rs.date BETWEEN :startDate AND :endDate")
+    List<Reservation> findPendingReservationsBetweenDates(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
+
 }

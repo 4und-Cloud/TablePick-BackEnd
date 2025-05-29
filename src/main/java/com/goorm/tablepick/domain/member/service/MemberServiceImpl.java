@@ -8,12 +8,16 @@ import com.goorm.tablepick.domain.member.dto.MemberResponseDto;
 import com.goorm.tablepick.domain.member.dto.MemberUpdateRequestDto;
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.entity.MemberTag;
+import com.goorm.tablepick.domain.member.exception.MemberErrorCode;
+import com.goorm.tablepick.domain.member.exception.MemberException;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
 import com.goorm.tablepick.domain.member.repository.MemberTagRepository;
 import com.goorm.tablepick.domain.reservation.dto.response.ReservationResponseDto;
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.repository.ReservationRepository;
 import com.goorm.tablepick.domain.tag.entity.Tag;
+import com.goorm.tablepick.domain.tag.repository.TagRepository;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +31,12 @@ public class MemberServiceImpl implements MemberService {
     private final ReservationRepository reservationRepository;
     private final BoardRepository boardRepository;
     private final MemberTagRepository memberTagRepository;
+    private final TagRepository tagRepository;
 
     @Override
     public MemberResponseDto getMemberInfo(String username) {
         Member member = memberRepository.findByEmail(username)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
         return MemberResponseDto.toDto(member);
     }
 
@@ -39,9 +44,17 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     public void updateMemberInfo(String username, MemberUpdateRequestDto memberUpdateRequestDto) {
         Member member = memberRepository.findByEmail(username)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+        List<Tag> selectedTags = new ArrayList<>();
+        for (Long id : memberUpdateRequestDto.getMemberTagsId()) {
+            Tag tag = tagRepository.findById(id).orElseThrow(() -> new MemberException(MemberErrorCode.NO_SUCH_TAG));
+            selectedTags.add(tag);
+        }
 
-        Member updatedMember = member.updateMember(memberUpdateRequestDto);
+        List<MemberTag> newMemberTags = selectedTags.stream().map(tag -> MemberTag.create(member, tag))
+                .toList();
+
+        Member updatedMember = member.updateMember(memberUpdateRequestDto, newMemberTags);
         memberRepository.save(updatedMember);
     }
 
@@ -49,40 +62,43 @@ public class MemberServiceImpl implements MemberService {
     public List<ReservationResponseDto> getMemberReservationList(String username) {
         List<Reservation> reservationList = reservationRepository.findAllByMemberEmail(username);
 
-        List<ReservationResponseDto> list = reservationList.stream()
-                .map(ReservationResponseDto::new)
+        return reservationList.stream()
+                .map(ReservationResponseDto::toDto)
                 .collect(Collectors.toList());
-        return list;
     }
 
     @Override
     public List<MyBoardListResponseDto> getMemberBoardList(String username) {
         List<Board> boardList = boardRepository.findAllByMemberEmail(username);
 
-        List<MyBoardListResponseDto> list = boardList.stream()
+        return boardList.stream()
                 .map(MyBoardListResponseDto::new)
                 .collect(Collectors.toList());
-
-        return list;
-    }
-
-    @Override
-    @Transactional
-    public void addMemberInfo(String username, MemberAddtionalInfoRequestDto memberAddtionalInfoRequestDto) {
-        Member member = memberRepository.findByEmail(username)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
-
-        List<MemberTag> memberTagList = memberAddtionalInfoRequestDto.getMemberTags().stream()
-                .map(tag -> new MemberTag(member, new Tag(tag)))
-                .collect(Collectors.toList());
-
-        member.addMemberInfo(memberAddtionalInfoRequestDto, memberTagList);
-        memberTagRepository.saveAll(memberTagList);
-        memberRepository.save(member);
     }
 
     @Override
     public Member getMember(String email) {
         return memberRepository.findByEmail(email).get();
     }
+
+    @Override
+    @Transactional
+    public void addMemberInfo(String username, MemberAddtionalInfoRequestDto dto) {
+        Member member = memberRepository.findByEmail(username)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+
+        List<MemberTag> memberTagList = dto.getMemberTags().stream()
+                .map(tagId -> {
+                    Tag tag = tagRepository.findById(tagId)
+                            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다: " + tagId));
+                    return new MemberTag(member, tag);
+                })
+                .collect(Collectors.toList());
+
+        member.addMemberInfo(dto, memberTagList);
+
+        memberTagRepository.saveAll(memberTagList);
+        // memberRepository.save(member); → 변경 감지로 생략 가능
+    }
+
 }

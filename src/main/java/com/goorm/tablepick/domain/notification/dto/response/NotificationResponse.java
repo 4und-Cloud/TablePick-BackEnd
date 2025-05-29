@@ -37,4 +37,7 @@ public class NotificationResponse {
 
     @Schema(description = "알림 내용", example = "30분 후에 예약이 있습니다.")
     private String body;
+
+    @Schema(description = "레스토랑 이름", example = "고급 레스토랑")
+    private String restaurantName;
 }

@@ -1,17 +1,22 @@
 package com.goorm.tablepick.domain.restaurant.dto.request;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class RestaurantKeywordSearchRequestDto {
+@Builder
+public class RestaurantSearchRequestDto {
 
-    @Min(value = 2, message = "검색어는 최소 2글자 이상이어야 합니다")
-    @NotBlank(message = "검색어를 입력해주세요")
     private String keyword;
+
+    private List<Long> tagIds;
 
     @Min(value = 1, message = "페이지 번호는 1 이상이어야 합니다")
     private int page = 1;

@@ -1,202 +1,211 @@
 package com.goorm.tablepick.domain.board.service;
 
-import com.goorm.tablepick.domain.board.dto.request.BoardCategorySearchRequestDto;
+import com.goorm.tablepick.domain.board.dto.response.BoardCreateResponseDto;
 import com.goorm.tablepick.domain.board.dto.request.BoardRequestDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardDetailResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardListResponseDto;
-import com.goorm.tablepick.domain.board.dto.response.PagedBoardsResponseDto;
+import com.goorm.tablepick.domain.board.dto.response.PagedBoardListResponseDto;
 import com.goorm.tablepick.domain.board.entity.Board;
 import com.goorm.tablepick.domain.board.entity.BoardImage;
 import com.goorm.tablepick.domain.board.entity.BoardTag;
-import com.goorm.tablepick.domain.board.exception.BoardErrorCode;
+import com.goorm.tablepick.domain.board.repository.BoardImageRepository;
 import com.goorm.tablepick.domain.board.repository.BoardRepository;
 import com.goorm.tablepick.domain.board.repository.BoardTagRepository;
 import com.goorm.tablepick.domain.member.entity.Member;
+import com.goorm.tablepick.domain.reservation.entity.Reservation;
+import com.goorm.tablepick.domain.reservation.repository.ReservationRepository;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
-import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
-import com.goorm.tablepick.global.exception.BoardException;
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class BoardServiceImpl implements BoardService {
     private final BoardRepository boardRepository;
-    private final RestaurantRepository restaurantRepository;
-    private final TagRepository tagRepository;
+    private final ReservationRepository reservationRepository;
+    private final BoardImageRepository boardImageRepository;
     private final BoardTagRepository boardTagRepository;
+    private final TagRepository tagRepository;
+
+    @Value("${project.upload.board-image-path}")
+    private String boardImagePath;
 
     @Override
     public List<BoardListResponseDto> getBoardsForMainPage() {
-        Pageable pageable = PageRequest.of(0, 4, Sort.by("createdAt").descending());
-        Page<Board> boardPage = boardRepository.findAll(pageable);
+        Pageable pageable = PageRequest.of(0, 4);
+        Page<Board> boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
         return boardPage.getContent().stream()
                 .map(BoardListResponseDto::from)
                 .toList();
     }
 
     @Override
-    public PagedBoardsResponseDto getBoards(int page, int size) {
-        // page가 1보다 작으면 강제로 1로 설정 (or throw new IllegalArgumentException)
+    public PagedBoardListResponseDto getBoards(int page, int size) {
         if (page < 1) {
             page = 1;
         }
 
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
-        // 클라이언트는 1페이지부터 요청하므로 0-based page index로 변환
-        Page<Board> boardPage = boardRepository.findAll(pageable);
-        return new PagedBoardsResponseDto(boardPage);
-    }
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<Board> boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
 
-    @Override
-    @Transactional
-    public Long createBoard(BoardRequestDto dto, Member member) {
-        log.info("🙋‍♂️ member: {}", member); // 이 위치에서 로그를 찍으세요
-        if (member == null) {
-            throw new BoardException(BoardErrorCode.NO_PERMISSION); // 또는 적절한 인증 관련 에러코드 추가
-            //throw new IllegalArgumentException("인증되지 않은 사용자입니다.");
-        }
-        log.info("✅ [createBoard] 게시글 생성 요청 시작: {}", dto);
-
-        Restaurant restaurant = restaurantRepository.findById(dto.getRestaurantId())
-                .orElseThrow(() -> new IllegalArgumentException("식당이 존재하지 않습니다."));
-
-        Board board = Board.builder()
-                .restaurant(restaurant)
-                .member(member)
-                .content(dto.getContent())
-                .build();
-
-        log.info("✅ [createBoard] Board 객체 생성 완료");
-
-        // 이미지 처리
-        if (dto.getImages() != null && !dto.getImages().isEmpty()) {
-            log.info("✅ [createBoard] 이미지 개수: {}", dto.getImages().size());
-            for (MultipartFile file : dto.getImages()) {
-                if (!file.isEmpty()) {
-                    String storeFileName = convertToFile(file);
-                    String originalFileName = file.getOriginalFilename();
-                    BoardImage boardImage = new BoardImage(originalFileName, storeFileName);
-                    board.addImage(boardImage);
-                }
-            }
-        }
-
-        // 태그 처리
-        if (dto.getTagNames() != null) {
-            log.info("✅ [createBoard] 태그 개수: {}", dto.getTagNames().size());
-            for (String tagName : dto.getTagNames()) {
-                Tag tag = tagRepository.findByName(tagName)
-                        .orElseGet(() -> tagRepository.save(new Tag(tagName)));
-                board.addTag(new BoardTag(tag));
-            }
-        }
-
-        Board savedBoard = boardRepository.save(board);
-        log.info("✅ [createBoard] 게시글 저장 완료. 생성된 ID: {}", savedBoard.getId());
-        return savedBoard.getId();
+        Page<BoardListResponseDto> dtoPage = boardPage.map(BoardListResponseDto::from);
+        return new PagedBoardListResponseDto(dtoPage);
     }
 
     @Override
     public BoardDetailResponseDto getBoardDetail(Long boardId) {
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 게시글을 찾을 수 없습니다."));
-
-        List<String> imageUrls = board.getBoardImages().stream()
-                .map(BoardImage::getStoreFileName)
-                .collect(Collectors.toList());
-
-        List<String> tagNames = board.getBoardTags().stream()
-                .map(boardTag -> boardTag.getTag().getName())
-                .collect(Collectors.toList());
-
-        return BoardDetailResponseDto.builder()
-                .restaurantName(board.getRestaurant().getName())
-                .createdAt(board.getCreatedAt())
-                .imageUrls(imageUrls)
-                .tagNames(tagNames)
-                .content(board.getContent())
-                .memberNickname(board.getMember().getNickname())
-                .build();
+        return boardRepository.findById(boardId)
+                .map(BoardDetailResponseDto::from)
+                .orElseThrow(() -> new IllegalArgumentException("해당 리뷰를 찾을 수 없습니다."));
     }
-
-    // 예시: 파일 저장 로직 (단순화)
-    private String convertToFile(MultipartFile file) {
-        // 저장 로직 구현 필요 (예: S3, 로컬 등)
-        return java.util.UUID.randomUUID() + "_" + file.getOriginalFilename();
-    }
-
-    public List<BoardListResponseDto> getBoardList() {
-        List<Board> boards = boardRepository.findAllByOrderByCreatedAtDesc();
-
-        return boards.stream().map(board -> {
-            String imageUrl = board.getBoardImages().isEmpty()
-                    ? null
-                    : "/images/" + board.getBoardImages().get(0).getStoreFileName();
-
-            List<String> tagNames = board.getBoardTags().stream()
-                    .map(boardTag -> boardTag.getTag().getName())
-                    .collect(Collectors.toList());
-
-            return BoardListResponseDto.builder()
-                    .id(board.getId())
-                    .content(board.getContent())
-                    .restaurantName(board.getRestaurant().getName())
-                    .restaurantAddress(board.getRestaurant().getAddress())
-                    .imageUrl(imageUrl)
-                    .tagNames(tagNames)
-                    .build();
-        }).collect(Collectors.toList());
-    }
-
-
 
     @Override
     @Transactional
-    public void updateBoard(Long boardId, BoardRequestDto dto, Member member) {
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new BoardException(BoardErrorCode.NOT_FOUND));
+    public BoardCreateResponseDto createBoard(BoardRequestDto dto, List<MultipartFile> images, Member member) {
+        // 1. 예약 확인
+        Reservation reservation = reservationRepository.findById(dto.getReservationId())
+                .orElseThrow(() -> new IllegalArgumentException("해당 예약이 존재하지 않습니다."));
 
-        if (!board.getMember().getId().equals(member.getId())) {
-            throw new BoardException(BoardErrorCode.NO_PERMISSION);
+        if (!reservation.getMember().getId().equals(member.getId())) {
+            throw new AccessDeniedException("예약한 사용자만 리뷰을 작성할 수 있습니다.");
         }
 
-        board.updateFromDto(dto); // → Board 엔티티에 updateFromDto() 메서드가 있어야 함
+        // 2. Board 저장
+        Board board = Board.builder()
+                .content(dto.getContent())
+                .reservation(reservation)
+                .member(member)
+                .build();
         boardRepository.save(board);
+
+        // 3. 이미지 저장
+        if (images != null && !images.isEmpty()) {
+            for (MultipartFile image : images) {
+                String webPath = saveImage(image);
+                BoardImage boardImage = BoardImage.builder()
+                        .imageUrl(webPath)
+                        .board(board)
+                        .build();
+                board.addImage(boardImage);
+                boardImageRepository.save(boardImage);
+            }
+        }
+
+        // 4. 태그 저장
+        List<Long> tagIds = dto.getTagId();
+        if (tagIds == null || tagIds.isEmpty()) {
+            throw new IllegalArgumentException("태그는 최소 1개 이상 입력해야 합니다.");
+        }
+
+        for (Long tagId : tagIds) {
+            Tag tag = tagRepository.findById(tagId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다: " + tagId));
+
+            Restaurant restaurant = board.getReservation().getRestaurant();
+            BoardTag boardTag = BoardTag.builder()
+                    .board(board)
+                    .tag(tag)
+                    .restaurant(restaurant)
+                    .build();
+
+            board.addTag(boardTag);
+            boardTagRepository.save(boardTag);
+        }
+
+        return BoardCreateResponseDto.builder()
+                .boardId(board.getId())
+                .message("리뷰가 작성되었습니다.")
+                .build();
     }
 
     @Override
+    @Transactional
     public void deleteBoard(Long boardId, Member member) {
         Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new BoardException(BoardErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다."));
 
         if (!board.getMember().getId().equals(member.getId())) {
-            throw new BoardException(BoardErrorCode.NO_PERMISSION);
+            throw new AccessDeniedException("게시글 작성자만 삭제할 수 있습니다.");
         }
+
+        deletePhysicalImageFiles(board.getBoardImages());
 
         boardRepository.delete(board);
     }
 
-    @Override
-    public PagedBoardsResponseDto searchAllByCategory(@Valid BoardCategorySearchRequestDto boardSearchRequestDto) {
-        Pageable pageable = PageRequest.of(boardSearchRequestDto.getPage() - 1, 6,
-                Sort.by("createdAt").ascending()); //페이지는 0부터 시작 - 이게 맞나. 이게 맞는지?
-        Page<Board> boardList = boardRepository.findAllByCategory(boardSearchRequestDto.getCategoryId(), pageable);
 
-        return new PagedBoardsResponseDto(boardList);
+    // 이미지 저장 메서드
+    private String saveImage(MultipartFile image) {
+        String originalFileName = image.getOriginalFilename();
+        String extension = getFileExtension(originalFileName);
+        String storeFileName = UUID.randomUUID() + extension;
+        String uploadDir = boardImagePath;
+
+        try {
+            Path uploadPath = Paths.get(uploadDir);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            Path filePath = uploadPath.resolve(storeFileName);
+            Files.write(filePath, image.getBytes());
+
+            return storeFileName;
+
+        } catch (IOException e) {
+            throw new RuntimeException("이미지 저장 실패", e);
+        }
+    }
+
+    // 확장자 추출 메서드 추가
+    private String getFileExtension(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return "";
+        }
+
+        int lastDotIndex = fileName.lastIndexOf('.');
+        if (lastDotIndex == -1) {
+            return "";
+        }
+
+        return fileName.substring(lastDotIndex);
+    }
+
+    // 물리적 파일 삭제 메서드 추가
+    private void deletePhysicalImageFiles(List<BoardImage> boardImages) {
+        for (BoardImage boardImage : boardImages) {
+            try {
+                String fileName = boardImage.getImageUrl();
+                Path filePath = Paths.get(boardImagePath).resolve(fileName);
+
+                if (Files.exists(filePath)) {
+                    Files.delete(filePath);
+                    log.info("이미지 파일 삭제 성공: {}", fileName);
+                } else {
+                    log.warn("삭제할 이미지 파일이 존재하지 않음: {}", fileName);
+                }
+            } catch (IOException e) {
+                log.error("이미지 파일 삭제 실패: {}", boardImage.getImageUrl(), e);
+                // 파일 삭제 실패해도 DB 삭제는 계속 진행
+            }
+        }
     }
 }
