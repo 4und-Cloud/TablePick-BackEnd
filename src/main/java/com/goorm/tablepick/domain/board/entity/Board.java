@@ -62,11 +62,13 @@ public class Board {
     private List<BoardTag> boardTags = new ArrayList<>();
 
     @Builder
-    public Board(Reservation reservation, Member member, String content) {
+    public Board(Reservation reservation, Member member, String content, Long restaurantId) {
         this.reservation = reservation;
         this.member = member;
         this.content = content;
+        this.restaurantId = restaurantId;
     }
+
 
     public void addImage(BoardImage image) {
         boardImages.add(image);

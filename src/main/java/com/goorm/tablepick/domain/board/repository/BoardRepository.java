@@ -20,12 +20,11 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     @Query("SELECT DISTINCT b FROM Board b JOIN b.boardImages i WHERE i.imageUrl IS NOT NULL ORDER BY b.createdAt DESC")
     Page<Board> findBoardsWithImagesOrderByCreatedAtDesc(Pageable pageable);
 
+    // 식당별 게시글 리스트 조회
     @Query("SELECT DISTINCT b FROM Board b " +
            "JOIN b.boardImages i " +
-           "JOIN b.reservation r " +
-           "WHERE r.restaurant.id = :restaurantId " +
+           "WHERE b.restaurantId = :restaurantId " +
            "AND i.imageUrl IS NOT NULL " +
            "ORDER BY b.createdAt DESC")
     Page<Board> findBoardsWithImagesByRestaurantId(@Param("restaurantId") Long restaurantId, Pageable pageable);
-
 }
