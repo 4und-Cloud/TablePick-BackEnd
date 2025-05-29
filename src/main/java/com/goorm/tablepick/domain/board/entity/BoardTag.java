@@ -36,4 +36,9 @@ public class BoardTag {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant;
+
+
+    public String getTagName() {
+        return tag.getName();
+    }
 }

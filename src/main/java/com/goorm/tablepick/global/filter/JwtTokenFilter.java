@@ -41,7 +41,6 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         }
 
         String accessToken = getAccessTokenFromCookie(request);
-        log.info("🪪 [JwtTokenFilter] Authorization Header: {}", request.getHeader("Authorization"));
 
         log.info("🪪 [JwtTokenFilter] Extracted Access Token: {}", accessToken);
 
