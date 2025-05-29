@@ -9,7 +9,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -30,9 +29,9 @@ public class Restaurant {
 
     private String address;
 
-    private BigDecimal xcoordinate;
+    private Double xcoordinate;
 
-    private BigDecimal ycoordinate;
+    private Double ycoordinate;
 
     private Long maxCapacity;
 
@@ -44,6 +43,7 @@ public class Restaurant {
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     private List<RestaurantImage> restaurantImages = new ArrayList<>();
+
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     private List<RestaurantOperatingHour> restaurantOperatingHours = new ArrayList<>();
