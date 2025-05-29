@@ -38,7 +38,7 @@ public class RestaurantController {
     public PagedRestaurantResponseDto searchRestaurants(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) List<Long> tagIds,
-            @RequestParam(defaultValue = "1") int page) {
+            @RequestParam(defaultValue = "0") int page) {
         RestaurantSearchRequestDto requestDto = RestaurantSearchRequestDto.builder()
                 .keyword(keyword)
                 .tagIds(tagIds)
@@ -49,7 +49,7 @@ public class RestaurantController {
     @GetMapping("/list")
     @Operation(summary = "식당 목록", description = "식당 목록을 리뷰 많은 순으로 반환합니다.")
     public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(
-            @RequestParam(defaultValue = "1") int page) {
+            @RequestParam(defaultValue = "0") int page) {
         return restaurantService.getAllRestaurantsOrderedByBoardNum(page);
     }
 
