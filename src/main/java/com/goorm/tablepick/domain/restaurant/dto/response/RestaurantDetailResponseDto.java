@@ -60,12 +60,6 @@ public class RestaurantDetailResponseDto {
                                 .collect(Collectors.toList())
                                 : Collections.emptyList()
                 )
-                .restaurantTags(restaurant.getRestaurantTags() != null
-                        ? restaurant.getRestaurantTags().stream()
-                        .map(tag -> tag.getTag().getName())
-                        .collect(Collectors.toList())
-                        : Collections.emptyList()
-                )
                 .menus(restaurant.getMenus() != null
                         ? restaurant.getMenus().stream()
                         .map(menu -> new MenuResponseDto(menu.getName(), menu.getPrice()))

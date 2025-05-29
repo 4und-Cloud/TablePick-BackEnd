@@ -1,7 +1,6 @@
 package com.goorm.tablepick.domain.restaurant.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,9 +23,5 @@ public class RestaurantResponseDto {
 
     @Schema(description = "이미지 url", example = "https://lh3.googleusercontent.com")
     private String imageUrl;
-
-    @Schema(description = "식당 태그", example = "역이랑 가까워요")
-    private final List<String> restaurantTags;
-
 
 }
