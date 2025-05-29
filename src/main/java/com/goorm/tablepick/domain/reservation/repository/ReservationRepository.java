@@ -4,6 +4,7 @@ import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -33,4 +34,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     // 기본 findById는 Optional<Reservation>을 반환하므로 추가
     @Query("SELECT r FROM Reservation r WHERE r.id = :id")
     Reservation getReservationById(@Param("id") Long id);
+
+    Optional<Reservation> findByPaymentId(String paymentId);
 }

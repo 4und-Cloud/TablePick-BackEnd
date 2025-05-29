@@ -1,10 +1,8 @@
 package com.goorm.tablepick.domain.reservation.entity;
 
 import com.goorm.tablepick.domain.member.entity.Member;
-import com.goorm.tablepick.domain.payment.entity.Payment;
 import com.goorm.tablepick.domain.reservation.enums.ReservationStatus;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -14,7 +12,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -45,23 +42,27 @@ public class Reservation {
     private ReservationSlot reservationSlot;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "restaurant_id", nullable = false)
+    @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
 
-    @OneToOne(mappedBy = "reservation", cascade = CascadeType.ALL)
-    private Payment payment;
+    private String paymentId; // 결제 ID, 8082 포트에서 관리되는 Payment와 연결
+    private String paymentStatus; // PENDING, COMPLETED, FAILED, CANCELLED
 
     @Builder
     public Reservation(Long partySize,
                        ReservationStatus reservationStatus,
                        Member member,
                        ReservationSlot reservationSlot,
-                       Restaurant restaurant) {
+                       Restaurant restaurant,
+                       String paymentId,
+                       String paymentStatus) {
         this.partySize = partySize;
         this.reservationStatus = reservationStatus;
         this.member = member;
         this.reservationSlot = reservationSlot;
         this.restaurant = restaurant;
+        this.paymentId = paymentId;
+        this.paymentStatus = paymentStatus;
     }
 
     /**
@@ -80,5 +81,9 @@ public class Reservation {
      */
     public String getRestaurantName() {
         return this.restaurant != null ? this.restaurant.getName() : null;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
     }
 }
