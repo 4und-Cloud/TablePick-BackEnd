@@ -5,6 +5,7 @@ import com.goorm.tablepick.domain.board.dto.request.BoardRequestDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardDetailResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardListResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.PagedBoardListResponseDto;
+import com.goorm.tablepick.domain.board.dto.response.RestaurantBoardResponseDto;
 import com.goorm.tablepick.domain.board.entity.Board;
 import com.goorm.tablepick.domain.board.entity.BoardImage;
 import com.goorm.tablepick.domain.board.entity.BoardTag;
@@ -76,6 +77,17 @@ public class BoardServiceImpl implements BoardService {
                 .map(BoardDetailResponseDto::from)
                 .orElseThrow(() -> new IllegalArgumentException("해당 리뷰를 찾을 수 없습니다."));
     }
+
+    @Override
+    public List<RestaurantBoardResponseDto> getBoardsByRestaurant(Long restaurantId) {
+        Pageable pageable = PageRequest.of(0, 4);
+        Page<Board> boards = boardRepository.findBoardsWithImagesByRestaurantId(restaurantId, pageable);
+
+        return boards.getContent().stream()
+                .map(RestaurantBoardResponseDto::from)
+                .toList();
+    }
+
 
     @Override
     @Transactional
