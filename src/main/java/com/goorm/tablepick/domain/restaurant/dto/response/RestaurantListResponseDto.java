@@ -38,9 +38,10 @@ public class RestaurantListResponseDto {
                 .address(restaurant.getAddress())
                 .restaurantCategory(restaurant.getRestaurantCategory())
                 .restaurantImage(
-                        restaurant.getRestaurantImages().get(0) != null ? restaurant.getRestaurantImages().get(0)
-                                .getImageUrl()
-                                : null)
+                        restaurant.getRestaurantImages() != null && !restaurant.getRestaurantImages().isEmpty()
+                                ? restaurant.getRestaurantImages().get(0).getImageUrl()
+                                : null
+                )
                 .build();
     }
 
