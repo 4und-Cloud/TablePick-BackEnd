@@ -61,8 +61,4 @@ public class ReservationSlot {
         this.count = count;
     }
 
-    // 예약 가능 여부를 확인
-    public boolean isAvailable() {
-        return count > 0;
-    }
 }
