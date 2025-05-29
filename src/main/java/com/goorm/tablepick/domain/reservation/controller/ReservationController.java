@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -57,17 +56,17 @@ public class ReservationController {
                             content = @Content(
                                     mediaType = "application/json",
                                     array = @ArraySchema(
-                                            schema = @Schema(type = "string", format = "time", example = "21:00:00")
+                                            schema = @Schema(type = "string", format = "time", example = "21:00")
                                     )
                             )
                     )
             }
     )
-    public ResponseEntity<List<LocalTime>> getAvailableReservationTimes(
+    public ResponseEntity<List<String>> getAvailableReservationTimes(
             @RequestParam Long restaurantId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        List<LocalTime> availableTimes = reservationService.getAvailableReservationTimes(restaurantId, date);
+        List<String> availableTimes = reservationService.getAvailableReservationTimes(restaurantId, date);
         return ResponseEntity.ok(availableTimes);
     }
 }
