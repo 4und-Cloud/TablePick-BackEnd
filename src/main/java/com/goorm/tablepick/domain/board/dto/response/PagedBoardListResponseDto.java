@@ -18,16 +18,14 @@ public class PagedBoardListResponseDto {
     private long startNumber;
     private long endNumber;
 
-    public PagedBoardListResponseDto(Page<BoardListResponseDto> page) {
-        this.boardList = page.getContent().stream()
-                .filter(dto -> dto.getImageUrl() != null)
-                .toList();
+    public PagedBoardListResponseDto(List<BoardListResponseDto> boardList, Page<Object[]> page) {
+        this.boardList = boardList;
         this.pageNumber = page.getNumber();
         this.pageSize = page.getSize();
         this.totalElements = page.getTotalElements();
         this.totalPages = page.getTotalPages();
-        this.startNumber = (long) pageNumber * pageSize + 1;
-        this.endNumber = startNumber + page.getNumberOfElements() - 1;
+        this.startNumber = (long) page.getNumber() * page.getSize() + 1;
+        this.endNumber = Math.min(this.startNumber + page.getSize() - 1, (int) page.getTotalElements());
     }
 
 }
