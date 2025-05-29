@@ -11,19 +11,15 @@ import com.goorm.tablepick.domain.restaurant.exception.RestaurantErrorCode;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryRepository;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
-import com.goorm.tablepick.domain.restaurant.repository.RestaurantTagRepository;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +27,6 @@ import java.util.stream.Collectors;
 public class RestaurantServiceImpl implements RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final RestaurantCategoryRepository restaurantCategoryRepository;
-    private final RestaurantTagRepository restaurantTagRepository;
 
     @Override
     public PagedRestaurantResponseDto searchRestaurants(@Valid RestaurantSearchRequestDto dto) {
@@ -48,19 +43,19 @@ public class RestaurantServiceImpl implements RestaurantService {
         if (hasKeyword && hasTags) {
             restaurantList = restaurantRepository.findAllByKeywordAndTags(
                     keyword, tagIds, tagIds.size(), pageable);
-            log.info("둘다 검색 -> "+keyword + tagIds);
+            log.info("둘다 검색 -> " + keyword + tagIds);
             return new PagedRestaurantResponseDto(restaurantList);
         }
         //키워드 검색
         if (hasKeyword) {
             restaurantList = restaurantRepository.findAllByKeyword(keyword, pageable);
-            log.info("키워드로만 검색 -> " + keyword+ tagIds);
+            log.info("키워드로만 검색 -> " + keyword + tagIds);
             return new PagedRestaurantResponseDto(restaurantList);
         }
         //태그 검색
         if (hasTags) {
             restaurantList = restaurantRepository.findAllByTags(tagIds, tagIds.size(), pageable);
-            log.info("태그로만 검색 -> "+keyword+ tagIds);
+            log.info("태그로만 검색 -> " + keyword + tagIds);
             return new PagedRestaurantResponseDto(restaurantList);
         }
         //키워드, 태그 둘 다 없으면 인기순으로 식당 목록 조회
@@ -79,12 +74,8 @@ public class RestaurantServiceImpl implements RestaurantService {
                         restaurant.getRestaurantCategory().getName(),
                         restaurant.getAddress(),
                         restaurant.getRestaurantImages().isEmpty() ? null
-                                : restaurant.getRestaurantImages().get(0).getImageUrl(),
-                        restaurant.getRestaurantTags() != null
-                                ? restaurant.getRestaurantTags().stream()
-                                .map(tag -> tag.getTag().getName())
-                                .collect(Collectors.toList())
-                                : Collections.emptyList()
+                                : restaurant.getRestaurantImages().get(0).getImageUrl()
+
                 )
         );
         return dtoPage;

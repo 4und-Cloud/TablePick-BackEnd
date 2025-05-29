@@ -4,9 +4,7 @@ package com.goorm.tablepick.domain.restaurant.dto.response;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,13 +38,9 @@ public class RestaurantListResponseDto {
                 .address(restaurant.getAddress())
                 .restaurantCategory(restaurant.getRestaurantCategory())
                 .restaurantImage(
-                        restaurant.getRestaurantImages().get(0) != null ? restaurant.getRestaurantImages().get(0).getImageUrl()
+                        restaurant.getRestaurantImages().get(0) != null ? restaurant.getRestaurantImages().get(0)
+                                .getImageUrl()
                                 : null)
-                .restaurantTags(restaurant.getRestaurantTags() != null
-                        ? restaurant.getRestaurantTags().stream()
-                        .map(tag -> tag.getTag().getName())
-                        .collect(Collectors.toList())
-                        : Collections.emptyList())
                 .build();
     }
 
