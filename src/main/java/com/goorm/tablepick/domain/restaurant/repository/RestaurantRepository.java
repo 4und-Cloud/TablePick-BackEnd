@@ -31,7 +31,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                 r.restaurant_phone_number,
                 r.xcoordinate,
                 r.ycoordinate
-            FROM Restaurant r
+            FROM restaurant r
                 JOIN board_tag bt ON bt.restaurant_id = r.id
             WHERE bt.tag_id IN (:tagIds)
             GROUP BY r.id
