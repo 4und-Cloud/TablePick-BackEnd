@@ -3,12 +3,16 @@ package com.goorm.tablepick.domain.restaurant.dto.response;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.domain.Page;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@Builder
 public class PagedRestaurantResponseDto {
     private List<RestaurantListResponseDto> restaurants;
     private int pageNumber;
