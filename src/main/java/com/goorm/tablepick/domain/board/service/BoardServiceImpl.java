@@ -16,6 +16,7 @@ import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.repository.ReservationRepository;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
+import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
 import jakarta.transaction.Transactional;
@@ -42,6 +43,7 @@ import java.util.UUID;
 @Slf4j
 public class BoardServiceImpl implements BoardService {
     private final BoardRepository boardRepository;
+    private final RestaurantRepository restaurantRepository;
     private final ReservationRepository reservationRepository;
     private final BoardImageRepository boardImageRepository;
     private final BoardTagRepository boardTagRepository;
@@ -89,14 +91,18 @@ public class BoardServiceImpl implements BoardService {
 
     @Override
     public BoardDetailResponseDto getBoardDetail(Long boardId) {
-        return boardRepository.findById(boardId)
-                .map(BoardDetailResponseDto::from)
+        Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 리뷰를 찾을 수 없습니다."));
+
+        Restaurant restaurant = restaurantRepository.findById(board.getRestaurantId())
+                .orElseThrow(() -> new IllegalArgumentException("해당 식당을 찾을 수 없습니다."));
+
+        return BoardDetailResponseDto.from(board, restaurant);
     }
 
     @Override
     public List<BoardListResponseDto> getBoardsByRestaurant(Long restaurantId) {
-        Pageable pageable = PageRequest.of(0, 4);
+        Pageable pageable = PageRequest.of(0, 6);
         Page<Object[]> boardPage = boardRepository.findBoardsWithImagesByRestaurantId(restaurantId, pageable);
 
         return boardPage.getContent().stream()
