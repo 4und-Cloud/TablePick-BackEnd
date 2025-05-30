@@ -5,7 +5,6 @@ import com.goorm.tablepick.domain.board.dto.request.BoardRequestDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardDetailResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardListResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.PagedBoardListResponseDto;
-import com.goorm.tablepick.domain.board.dto.response.RestaurantBoardResponseDto;
 import com.goorm.tablepick.domain.board.entity.Board;
 import com.goorm.tablepick.domain.board.entity.BoardImage;
 import com.goorm.tablepick.domain.board.entity.BoardTag;
@@ -20,6 +19,7 @@ import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
 import jakarta.transaction.Transactional;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -95,12 +95,17 @@ public class BoardServiceImpl implements BoardService {
     }
 
     @Override
-    public List<RestaurantBoardResponseDto> getBoardsByRestaurant(Long restaurantId) {
+    public List<BoardListResponseDto> getBoardsByRestaurant(Long restaurantId) {
         Pageable pageable = PageRequest.of(0, 4);
-        Page<Board> boards = boardRepository.findBoardsWithImagesByRestaurantId(restaurantId, pageable);
+        Page<Object[]> boardPage = boardRepository.findBoardsWithImagesByRestaurantId(restaurantId, pageable);
 
-        return boards.getContent().stream()
-                .map(RestaurantBoardResponseDto::from)
+        return boardPage.getContent().stream()
+                .map(objects -> {
+                    Board board = (Board) objects[0];
+                    Restaurant restaurant = (Restaurant) objects[1];
+                    RestaurantCategory category = (RestaurantCategory) objects[2];
+                    return BoardListResponseDto.from(board, restaurant, category);
+                })
                 .toList();
     }
 
