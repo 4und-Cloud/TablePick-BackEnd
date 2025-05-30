@@ -1,5 +1,6 @@
 package com.goorm.tablepick.domain.restaurant.entity;
 
+import com.goorm.tablepick.domain.board.entity.BoardTag;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -44,6 +45,8 @@ public class Restaurant {
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     private List<RestaurantImage> restaurantImages = new ArrayList<>();
 
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
+    private List<BoardTag> boardTags = new ArrayList<>();
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     private List<RestaurantOperatingHour> restaurantOperatingHours = new ArrayList<>();

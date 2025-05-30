@@ -48,7 +48,7 @@ public class RestaurantDetailResponseDto {
     private final Double yCoordinate;
 
 
-    public static RestaurantDetailResponseDto fromEntity(Restaurant restaurant) {
+    public static RestaurantDetailResponseDto fromEntity(Restaurant restaurant, List<String> topTags) {
         return RestaurantDetailResponseDto.builder()
                 .id(restaurant.getId())
                 .name(restaurant.getName())
@@ -67,6 +67,7 @@ public class RestaurantDetailResponseDto {
                                 .collect(Collectors.toList())
                                 : Collections.emptyList()
                 )
+                .restaurantTags(topTags != null ? topTags : Collections.emptyList())
                 .menus(restaurant.getMenus() != null
                         ? restaurant.getMenus().stream()
                         .map(menu -> new MenuResponseDto(menu.getName(), menu.getPrice()))

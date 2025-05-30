@@ -1,5 +1,6 @@
 package com.goorm.tablepick.domain.restaurant.service;
 
+import com.goorm.tablepick.domain.board.repository.BoardTagRepository;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantSearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.CategoryResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
@@ -12,7 +13,6 @@ import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryRepository;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import jakarta.validation.Valid;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RestaurantServiceImpl implements RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final RestaurantCategoryRepository restaurantCategoryRepository;
+    private final BoardTagRepository boardTagRepository;
 
     @Override
     public PagedRestaurantResponseDto searchRestaurants(@Valid RestaurantSearchRequestDto dto) {
@@ -79,17 +80,21 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     public Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable) {
         Page<Restaurant> restaurantPage = restaurantRepository.findPopularRestaurants(pageable);
-        Page<RestaurantResponseDto> dtoPage = restaurantPage.map(restaurant ->
-                new RestaurantResponseDto(
-                        restaurant.getId(),
-                        restaurant.getName(),
-                        restaurant.getRestaurantCategory().getName(),
-                        restaurant.getAddress(),
-                        restaurant.getRestaurantImages().isEmpty() ? null
-                                : restaurant.getRestaurantImages().get(0).getImageUrl()
 
-                )
-        );
+        Page<RestaurantResponseDto> dtoPage = restaurantPage.map(restaurant -> {
+            List<String> topTags = boardTagRepository.findTopTagsByRestaurantIdNative(restaurant.getId());
+            return new RestaurantResponseDto(
+                    restaurant.getId(),
+                    restaurant.getName(),
+                    restaurant.getRestaurantCategory().getName(),
+                    topTags,
+                    restaurant.getAddress(),
+                    restaurant.getRestaurantImages().isEmpty() ? null
+                            : restaurant.getRestaurantImages().get(0).getImageUrl()
+
+            );
+        });
+
         return dtoPage;
     }
 
@@ -104,7 +109,10 @@ public class RestaurantServiceImpl implements RestaurantService {
     public RestaurantDetailResponseDto getRestaurantDetail(Long id) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new RestaurantException(RestaurantErrorCode.NOT_FOUND));
-        return RestaurantDetailResponseDto.fromEntity(restaurant);
+
+        List<String> topTags = boardTagRepository.findTopTagsByRestaurantIdNative(restaurant.getId());
+
+        return RestaurantDetailResponseDto.fromEntity(restaurant, topTags);
     }
 
     @Override
