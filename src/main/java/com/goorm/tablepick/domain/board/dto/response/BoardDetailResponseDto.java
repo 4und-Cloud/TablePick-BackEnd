@@ -27,17 +27,13 @@ public class BoardDetailResponseDto {
     private List<String> imageUrls;
     private String createdAt;
 
-    public static BoardDetailResponseDto from(Board board) {
-        // Reservation과 Restaurant null 체크
-        Reservation reservation = board.getReservation();
-        Restaurant restaurant = reservation != null ? reservation.getRestaurant() : null;
-
+    public static BoardDetailResponseDto from(Board board, Restaurant restaurant) {
         Member member = board.getMember();
 
         List<String> imageUrls = board.getBoardImages().stream()
                 .map(BoardImage::getImageUrl)
                 .filter(Objects::nonNull)
-                .limit(3) // 최대 3장으로 제한
+                .limit(3)
                 .toList();
 
         List<String> tagNames = board.getBoardTags().stream()
@@ -45,15 +41,14 @@ public class BoardDetailResponseDto {
                 .filter(Objects::nonNull)
                 .toList();
 
-        // NullPointer 방지
+        // Restaurant fields from the passed Restaurant entity
         String restaurantCategoryName = (restaurant != null && restaurant.getRestaurantCategory() != null)
                 ? restaurant.getRestaurantCategory().getName()
                 : null;
-
         String restaurantName = restaurant != null ? restaurant.getName() : null;
         String restaurantAddress = restaurant != null ? restaurant.getAddress() : null;
 
-        // 작성일 null 방지 + 포맷
+        // Format createdAt
         String createdAtStr = board.getCreatedAt() != null
                 ? board.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss"))
                 : null;
