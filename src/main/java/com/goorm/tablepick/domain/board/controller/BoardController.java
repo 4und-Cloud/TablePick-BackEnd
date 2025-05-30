@@ -64,10 +64,9 @@ public class BoardController {
             @ApiResponse(responseCode = "200", description = "식당별 게시글 목록 반환"),
             @ApiResponse(responseCode = "404", description = "식당을 찾을 수 없음")
     })
-    public ResponseEntity<List<RestaurantBoardResponseDto>> getBoardsByRestaurant(
+    public ResponseEntity<List<BoardListResponseDto>> getBoardsByRestaurant(
             @PathVariable @Parameter(description = "식당 ID") Long restaurantId) {
-
-        List<RestaurantBoardResponseDto> boards = boardService.getBoardsByRestaurant(restaurantId);
+        List<BoardListResponseDto> boards = boardService.getBoardsByRestaurant(restaurantId);
         return ResponseEntity.ok(boards);
     }
 

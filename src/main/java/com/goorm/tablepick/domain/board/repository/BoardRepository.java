@@ -1,6 +1,7 @@
 package com.goorm.tablepick.domain.board.repository;
 
 import com.goorm.tablepick.domain.board.entity.Board;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,20 +17,27 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     // 특정 회원 이메일로 게시글 조회
     List<Board> findAllByMemberEmail(String memberEmail);
 
-    // BoardImage가 존재하고 imageUrl이 null이 아닌 게시글만 조회
+    // BoardImage가 존재하고 imageUrl이 null이 아닌 게시글만 조회 (컨텐츠 길이 + 태그 수 + 최신순)
     @Query("SELECT DISTINCT b, r, c FROM Board b " +
             "JOIN Restaurant r ON b.restaurantId = r.id " +
             "JOIN RestaurantCategory c ON r.restaurantCategory.id = c.id " +
             "JOIN b.boardImages i " +
             "WHERE i.imageUrl IS NOT NULL " +
-            "ORDER BY b.createdAt DESC")
+            "ORDER BY LENGTH(b.content) DESC, " +
+            "(SELECT COUNT(bt) FROM BoardTag bt WHERE bt.board = b) DESC, " +
+            "b.createdAt DESC")
     Page<Object[]> findBoardsWithImagesOrderByCreatedAtDesc(Pageable pageable);
 
-    // 식당별 게시글 리스트 조회
-    @Query("SELECT DISTINCT b FROM Board b " +
-           "JOIN b.boardImages i " +
-           "WHERE b.restaurantId = :restaurantId " +
-           "AND i.imageUrl IS NOT NULL " +
-           "ORDER BY b.createdAt DESC")
-    Page<Board> findBoardsWithImagesByRestaurantId(@Param("restaurantId") Long restaurantId, Pageable pageable);
+    // 식당별 게시글 리스트 조회 (컨텐츠 길이 + 태그 수 + 최신순)
+    @Query("SELECT DISTINCT b, r, c FROM Board b " +
+            "JOIN Restaurant r ON b.restaurantId = r.id " +
+            "JOIN RestaurantCategory c ON r.restaurantCategory.id = c.id " +
+            "JOIN b.boardImages i " +
+            "WHERE b.restaurantId = :restaurantId " +
+            "AND i.imageUrl IS NOT NULL " +
+            "ORDER BY LENGTH(b.content) DESC, " +
+            "(SELECT COUNT(bt) FROM BoardTag bt WHERE bt.board = b) DESC, " +
+            "b.createdAt DESC")
+    Page<Object[]> findBoardsWithImagesByRestaurantId(@Param("restaurantId") Long restaurantId, Pageable pageable);
+
 }

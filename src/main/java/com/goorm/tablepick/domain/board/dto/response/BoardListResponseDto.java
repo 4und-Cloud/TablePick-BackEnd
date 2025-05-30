@@ -16,7 +16,7 @@ import java.util.Objects;
 @Getter
 @Builder
 @NoArgsConstructor
-@AllArgsConstructor  // 이 어노테이션 추가
+@AllArgsConstructor
 public class BoardListResponseDto {
     private Long id;
     private String content;
@@ -25,7 +25,7 @@ public class BoardListResponseDto {
     private String restaurantCategoryName;
     private String memberNickname;
     private String memberProfileImage;
-    private LocalDateTime createdAt;  // 이 필드가 누락되어 있었음
+    private LocalDateTime createdAt;
 
     @ArraySchema(schema = @Schema(type = "string"))
     private List<String> tagNames;
