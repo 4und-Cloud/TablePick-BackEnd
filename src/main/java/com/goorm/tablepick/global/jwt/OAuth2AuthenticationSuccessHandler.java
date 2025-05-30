@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -74,22 +75,21 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
     private RefreshToken issueAndSaveRefreshToken(Member member) {
         LocalDateTime expiredAt = LocalDateTime.now().plusDays(7);
-        //기존에 만료된 토큰이 있다면 삭제하고 다시 생성
-        if (member.getRefreshToken() != null) {
-            refreshTokenRepository.delete(member.getRefreshToken());
-        }
+        RefreshToken refreshToken = refreshTokenRepository.findByMember(member).orElse(null);
+
         String newRefreshToken = jwtProvider.createRefreshToken(member.getId(), member.getEmail());
 
-        RefreshToken refreshToken = RefreshToken.builder()
-                .token(newRefreshToken)
-                .expiredAt(expiredAt)
-                .member(member)
-                .build();
-
-        member.setRefreshToken(refreshToken);
-        refreshTokenRepository.save(refreshToken);
-
-        return refreshToken;
+        if (refreshToken != null) {
+            refreshToken.updateToken(newRefreshToken, expiredAt);
+            return refreshToken;
+        } else {
+            RefreshToken createdRefreshToken = RefreshToken.builder()
+                    .token(newRefreshToken)
+                    .expiredAt(expiredAt)
+                    .member(member)
+                    .build();
+            return refreshTokenRepository.save(createdRefreshToken);
+        }
     }
 
 

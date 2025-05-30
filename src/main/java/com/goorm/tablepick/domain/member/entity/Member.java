@@ -53,11 +53,6 @@ public class Member {
 
     private Boolean isMemberDeleted;
 
-    @Setter
-    @OneToOne
-    @JoinColumn(name = "refresh_token_id")
-    private RefreshToken refreshToken;
-
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MemberTag> memberTags;
 
@@ -74,11 +69,6 @@ public class Member {
     // FCM 토큰 필드 추가
     @Column(length = 255)
     private String fcmToken;
-
-    public void updateRefreshToken(RefreshToken refreshToken) {
-        this.refreshToken = refreshToken;
-        refreshToken.setMember(this);
-    }
 
     public Member updateMember(MemberUpdateRequestDto dto, List<MemberTag> newMemberTags) {
         this.nickname = dto.getNickname();
