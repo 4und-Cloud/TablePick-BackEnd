@@ -39,13 +39,12 @@ public class BoardController {
 
     @GetMapping("/list")
     public PagedBoardListResponseDto getPagedBoards(
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "6") int size
 
     ) {
         return boardService.getBoards(page, size);
     }
-
 
     @GetMapping("/{boardId}")
     @Operation(summary = "게시글 상세 조회", description = "게시글 ID로 게시글 상세 정보를 조회합니다.")
@@ -59,6 +58,17 @@ public class BoardController {
         return ResponseEntity.ok(boardService.getBoardDetail(boardId));
     }
 
+    @GetMapping("/restaurant/{restaurantId}")
+    @Operation(summary = "식당별 게시글 조회", description = "특정 식당의 이미지가 있는 게시글 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "식당별 게시글 목록 반환"),
+            @ApiResponse(responseCode = "404", description = "식당을 찾을 수 없음")
+    })
+    public ResponseEntity<List<BoardListResponseDto>> getBoardsByRestaurant(
+            @PathVariable @Parameter(description = "식당 ID") Long restaurantId) {
+        List<BoardListResponseDto> boards = boardService.getBoardsByRestaurant(restaurantId);
+        return ResponseEntity.ok(boards);
+    }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(

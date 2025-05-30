@@ -41,7 +41,14 @@ public class RestaurantDetailResponseDto {
     @Schema(description = "메뉴 리스트")
     private final List<MenuResponseDto> menus;
 
-    public static RestaurantDetailResponseDto fromEntity(Restaurant restaurant) {
+    @Schema(description = "x좌표", example = "127.093457")
+    private final Double xCoordinate;
+
+    @Schema(description = "y좌표", example = "37.085547")
+    private final Double yCoordinate;
+
+
+    public static RestaurantDetailResponseDto fromEntity(Restaurant restaurant, List<String> topTags) {
         return RestaurantDetailResponseDto.builder()
                 .id(restaurant.getId())
                 .name(restaurant.getName())
@@ -60,17 +67,14 @@ public class RestaurantDetailResponseDto {
                                 .collect(Collectors.toList())
                                 : Collections.emptyList()
                 )
-                .restaurantTags(restaurant.getRestaurantTags() != null
-                        ? restaurant.getRestaurantTags().stream()
-                        .map(tag -> tag.getTag().getName())
-                        .collect(Collectors.toList())
-                        : Collections.emptyList()
-                )
+                .restaurantTags(topTags != null ? topTags : Collections.emptyList())
                 .menus(restaurant.getMenus() != null
                         ? restaurant.getMenus().stream()
                         .map(menu -> new MenuResponseDto(menu.getName(), menu.getPrice()))
                         .collect(Collectors.toList())
                         : Collections.emptyList())
+                .xCoordinate(restaurant.getXcoordinate())
+                .yCoordinate(restaurant.getYcoordinate())
                 .build();
     }
 

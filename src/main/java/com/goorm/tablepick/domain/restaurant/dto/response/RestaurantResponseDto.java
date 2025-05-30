@@ -19,14 +19,13 @@ public class RestaurantResponseDto {
     @Schema(description = "식당 카테고리 이름", example = "한식")
     private String categoryName;
 
+    @Schema(description = "식당 태그", example = "맛있어요")
+    private List<String> boardTags;
+
     @Schema(description = "식당 주소", example = "서울특별시 강남구 강남대로 11")
     private String address;
 
     @Schema(description = "이미지 url", example = "https://lh3.googleusercontent.com")
     private String imageUrl;
-
-    @Schema(description = "식당 태그", example = "역이랑 가까워요")
-    private final List<String> restaurantTags;
-
 
 }

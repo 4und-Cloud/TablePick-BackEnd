@@ -4,9 +4,7 @@ package com.goorm.tablepick.domain.restaurant.dto.response;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -29,8 +27,6 @@ public class RestaurantListResponseDto {
     private RestaurantCategory restaurantCategory;
     @Schema(description = "식당 이미지", example = "url")
     private String restaurantImage;
-    @Schema(description = "식당 운영 시간", example = "12:00-24:00")
-    private List<RestaurantOperatingHourResponseDto> restaurantOperatingHours;
     @Schema(description = "식당 태그", example = "역이랑 가까워요")
     private List<String> restaurantTags;
 
@@ -42,19 +38,10 @@ public class RestaurantListResponseDto {
                 .address(restaurant.getAddress())
                 .restaurantCategory(restaurant.getRestaurantCategory())
                 .restaurantImage(
-                        restaurant.getRestaurantImages().get(0) != null ? restaurant.getRestaurantImages().get(0).getImageUrl()
-                                : null)
-                .restaurantOperatingHours(
-                        restaurant.getRestaurantOperatingHours() != null
-                                ? restaurant.getRestaurantOperatingHours().stream()
-                                .map(RestaurantOperatingHourResponseDto::from)
-                                .collect(Collectors.toList())
-                                : Collections.emptyList())
-                .restaurantTags(restaurant.getRestaurantTags() != null
-                        ? restaurant.getRestaurantTags().stream()
-                        .map(tag -> tag.getTag().getName())
-                        .collect(Collectors.toList())
-                        : Collections.emptyList())
+                        restaurant.getRestaurantImages() != null && !restaurant.getRestaurantImages().isEmpty()
+                                ? restaurant.getRestaurantImages().get(0).getImageUrl()
+                                : null
+                )
                 .build();
     }
 

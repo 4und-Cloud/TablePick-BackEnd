@@ -1,5 +1,6 @@
 package com.goorm.tablepick.domain.restaurant.service;
 
+import com.goorm.tablepick.domain.board.repository.BoardTagRepository;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantSearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.CategoryResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
@@ -11,31 +12,29 @@ import com.goorm.tablepick.domain.restaurant.exception.RestaurantErrorCode;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryRepository;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
-import com.goorm.tablepick.domain.restaurant.repository.RestaurantTagRepository;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class RestaurantServiceImpl implements RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final RestaurantCategoryRepository restaurantCategoryRepository;
-    private final RestaurantTagRepository restaurantTagRepository;
+    private final BoardTagRepository boardTagRepository;
 
     @Override
     public PagedRestaurantResponseDto searchRestaurants(@Valid RestaurantSearchRequestDto dto) {
-        Pageable pageable = PageRequest.of(dto.getPage() - 1, 6);
+        Pageable pageable = PageRequest.of(dto.getPage(), 6);
 
         String keyword = dto.getKeyword();
         List<Long> tagIds = dto.getTagIds();
@@ -48,19 +47,28 @@ public class RestaurantServiceImpl implements RestaurantService {
         if (hasKeyword && hasTags) {
             restaurantList = restaurantRepository.findAllByKeywordAndTags(
                     keyword, tagIds, tagIds.size(), pageable);
-            log.info("둘다 검색 -> "+keyword + tagIds);
+            log.info("둘다 검색 -> " + keyword + tagIds);
+            if (restaurantList == null || restaurantList.isEmpty()) {
+                return new PagedRestaurantResponseDto(Page.empty(pageable));
+            }
             return new PagedRestaurantResponseDto(restaurantList);
         }
         //키워드 검색
         if (hasKeyword) {
             restaurantList = restaurantRepository.findAllByKeyword(keyword, pageable);
-            log.info("키워드로만 검색 -> " + keyword+ tagIds);
+            log.info("키워드로만 검색 -> " + keyword + tagIds);
+            if (restaurantList == null || restaurantList.isEmpty()) {
+                return new PagedRestaurantResponseDto(Page.empty(pageable));
+            }
             return new PagedRestaurantResponseDto(restaurantList);
         }
         //태그 검색
         if (hasTags) {
             restaurantList = restaurantRepository.findAllByTags(tagIds, tagIds.size(), pageable);
-            log.info("태그로만 검색 -> "+keyword+ tagIds);
+            log.info("태그로만 검색 -> " + keyword + tagIds);
+            if (restaurantList == null || restaurantList.isEmpty()) {
+                return new PagedRestaurantResponseDto(Page.empty(pageable));
+            }
             return new PagedRestaurantResponseDto(restaurantList);
         }
         //키워드, 태그 둘 다 없으면 인기순으로 식당 목록 조회
@@ -72,27 +80,27 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     public Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable) {
         Page<Restaurant> restaurantPage = restaurantRepository.findPopularRestaurants(pageable);
-        Page<RestaurantResponseDto> dtoPage = restaurantPage.map(restaurant ->
-                new RestaurantResponseDto(
-                        restaurant.getId(),
-                        restaurant.getName(),
-                        restaurant.getRestaurantCategory().getName(),
-                        restaurant.getAddress(),
-                        restaurant.getRestaurantImages().isEmpty() ? null
-                                : restaurant.getRestaurantImages().get(0).getImageUrl(),
-                        restaurant.getRestaurantTags() != null
-                                ? restaurant.getRestaurantTags().stream()
-                                .map(tag -> tag.getTag().getName())
-                                .collect(Collectors.toList())
-                                : Collections.emptyList()
-                )
-        );
+
+        Page<RestaurantResponseDto> dtoPage = restaurantPage.map(restaurant -> {
+            List<String> topTags = boardTagRepository.findTopTagsByRestaurantIdNative(restaurant.getId());
+            return new RestaurantResponseDto(
+                    restaurant.getId(),
+                    restaurant.getName(),
+                    restaurant.getRestaurantCategory().getName(),
+                    topTags,
+                    restaurant.getAddress(),
+                    restaurant.getRestaurantImages().isEmpty() ? null
+                            : restaurant.getRestaurantImages().get(0).getImageUrl()
+
+            );
+        });
+
         return dtoPage;
     }
 
     @Override
     public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page) {
-        Pageable pageable = PageRequest.of(page - 1, 6);
+        Pageable pageable = PageRequest.of(page, 6);
         Page<Restaurant> restaurantList = restaurantRepository.findAllOrderByNameAsc(pageable);
         return new PagedRestaurantResponseDto(restaurantList);
     }
@@ -101,7 +109,10 @@ public class RestaurantServiceImpl implements RestaurantService {
     public RestaurantDetailResponseDto getRestaurantDetail(Long id) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new RestaurantException(RestaurantErrorCode.NOT_FOUND));
-        return RestaurantDetailResponseDto.fromEntity(restaurant);
+
+        List<String> topTags = boardTagRepository.findTopTagsByRestaurantIdNative(restaurant.getId());
+
+        return RestaurantDetailResponseDto.fromEntity(restaurant, topTags);
     }
 
     @Override

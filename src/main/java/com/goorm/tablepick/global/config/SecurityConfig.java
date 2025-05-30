@@ -36,7 +36,7 @@ public class SecurityConfig {
                                 "/api/boards/main", "/api/tags", "/api/restaurants/search",
                                 "/api/restaurants/list", "/api/reservation/available-times", "/api/board-tags/",
                                 "/api/boards/list", "api/boards", "/api/boards/{boardId}",
-                                "/images/**"
+                                "/api/boards/restaurant/{restaurantId}", "/images/**"
                         ).permitAll()
 
                         // 🔧 권한 검사 조건

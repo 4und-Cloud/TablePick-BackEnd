@@ -15,9 +15,12 @@ import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.repository.ReservationRepository;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
+import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
+import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
 import jakarta.transaction.Transactional;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +43,7 @@ import java.util.UUID;
 @Slf4j
 public class BoardServiceImpl implements BoardService {
     private final BoardRepository boardRepository;
+    private final RestaurantRepository restaurantRepository;
     private final ReservationRepository reservationRepository;
     private final BoardImageRepository boardImageRepository;
     private final BoardTagRepository boardTagRepository;
@@ -51,31 +55,66 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public List<BoardListResponseDto> getBoardsForMainPage() {
         Pageable pageable = PageRequest.of(0, 4);
-        Page<Board> boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
+        Page<Object[]> boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
+
         return boardPage.getContent().stream()
-                .map(BoardListResponseDto::from)
+                .map(objects -> {
+                    Board board = (Board) objects[0];
+                    Restaurant restaurant = (Restaurant) objects[1];
+                    RestaurantCategory category = (RestaurantCategory) objects[2];
+                    return BoardListResponseDto.from(board, restaurant, category);
+                })
                 .toList();
     }
 
     @Override
     public PagedBoardListResponseDto getBoards(int page, int size) {
-        if (page < 1) {
-            page = 1;
+        if (page < 0) {
+            page = 0;
         }
 
-        Pageable pageable = PageRequest.of(page - 1, size);
-        Page<Board> boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
 
-        Page<BoardListResponseDto> dtoPage = boardPage.map(BoardListResponseDto::from);
-        return new PagedBoardListResponseDto(dtoPage);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Object[]> boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
+
+        List<BoardListResponseDto> dtoList = boardPage.getContent().stream()
+                .map(objects -> {
+                    Board board = (Board) objects[0];
+                    Restaurant restaurant = (Restaurant) objects[1];
+                    RestaurantCategory category = (RestaurantCategory) objects[2];
+                    return BoardListResponseDto.from(board, restaurant, category);
+                })
+                .toList();
+
+        return new PagedBoardListResponseDto(dtoList, boardPage);
     }
 
     @Override
     public BoardDetailResponseDto getBoardDetail(Long boardId) {
-        return boardRepository.findById(boardId)
-                .map(BoardDetailResponseDto::from)
+        Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 리뷰를 찾을 수 없습니다."));
+
+        Restaurant restaurant = restaurantRepository.findById(board.getRestaurantId())
+                .orElseThrow(() -> new IllegalArgumentException("해당 식당을 찾을 수 없습니다."));
+
+        return BoardDetailResponseDto.from(board, restaurant);
     }
+
+    @Override
+    public List<BoardListResponseDto> getBoardsByRestaurant(Long restaurantId) {
+        Pageable pageable = PageRequest.of(0, 6);
+        Page<Object[]> boardPage = boardRepository.findBoardsWithImagesByRestaurantId(restaurantId, pageable);
+
+        return boardPage.getContent().stream()
+                .map(objects -> {
+                    Board board = (Board) objects[0];
+                    Restaurant restaurant = (Restaurant) objects[1];
+                    RestaurantCategory category = (RestaurantCategory) objects[2];
+                    return BoardListResponseDto.from(board, restaurant, category);
+                })
+                .toList();
+    }
+
 
     @Override
     @Transactional
@@ -88,11 +127,12 @@ public class BoardServiceImpl implements BoardService {
             throw new AccessDeniedException("예약한 사용자만 리뷰을 작성할 수 있습니다.");
         }
 
-        // 2. Board 저장
+        // 2. Board 저장 (restaurantId 추가)
         Board board = Board.builder()
                 .content(dto.getContent())
                 .reservation(reservation)
                 .member(member)
+                .restaurantId(reservation.getRestaurant().getId())
                 .build();
         boardRepository.save(board);
 

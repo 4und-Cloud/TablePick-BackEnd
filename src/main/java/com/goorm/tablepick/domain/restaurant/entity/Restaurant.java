@@ -1,5 +1,6 @@
 package com.goorm.tablepick.domain.restaurant.entity;
 
+import com.goorm.tablepick.domain.board.entity.BoardTag;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -9,13 +10,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.checkerframework.checker.units.qual.A;
 
 @Entity
 @Getter
@@ -32,9 +30,9 @@ public class Restaurant {
 
     private String address;
 
-    private BigDecimal xcoordinate;
+    private Double xcoordinate;
 
-    private BigDecimal ycoordinate;
+    private Double ycoordinate;
 
     private Long maxCapacity;
 
@@ -48,7 +46,7 @@ public class Restaurant {
     private List<RestaurantImage> restaurantImages = new ArrayList<>();
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
-    private List<RestaurantTag> restaurantTags = new ArrayList<>();
+    private List<BoardTag> boardTags = new ArrayList<>();
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     private List<RestaurantOperatingHour> restaurantOperatingHours = new ArrayList<>();

@@ -74,7 +74,7 @@ public class MemberServiceImpl implements MemberService {
         List<Board> boardList = boardRepository.findAllByMemberEmail(username);
 
         return boardList.stream()
-                .map(MyBoardListResponseDto::new)
+                .map(MyBoardListResponseDto::toDto)
                 .collect(Collectors.toList());
     }
 

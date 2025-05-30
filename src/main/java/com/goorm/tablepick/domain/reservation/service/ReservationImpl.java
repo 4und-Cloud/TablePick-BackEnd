@@ -22,11 +22,15 @@ import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -36,59 +40,61 @@ public class ReservationImpl implements ReservationService {
     private final MemberRepository memberRepository;
     private final ReservationSlotRepository reservationSlotRepository;
     private final RestaurantRepository restaurantRepository;
-    private final RestaurantOperatingHourRepository restaurantOperatingHourRepository;
+    private final RestTemplate restTemplate;
+    private final ApplicationEventPublisher eventPublisher;
     private final NotificationService notificationService;
     private final NotificationTypesRepository notificationTypesRepository;
     private final ReservationNotificationScheduler reservationNotificationScheduler;
 
     @Override
     @Transactional
-    public void createReservation(String username, ReservationRequestDto request) {
+    public String createReservation(String username, ReservationRequestDto request) {
         // 식당 검증
         Restaurant restaurant = restaurantRepository.findById(request.getRestaurantId())
                 .orElseThrow(() -> new RestaurantException(RestaurantErrorCode.NOT_FOUND));
 
-        // 멤버 검증 (임시 로그인용)
+        // 멤버 검증
         Member member = memberRepository.findByEmail(username)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
-        // 예약 가능 시간 조회
+        // 예약 가능 시간 확인
         ReservationSlot reservationSlot = reservationSlotRepository.findByRestaurantIdAndDateAndTime(
                         request.getRestaurantId(), request.getReservationDate(), request.getReservationTime())
                 .orElseThrow(() -> new ReservationException(ReservationErrorCode.NO_RESERVATION_SLOT));
 
-        // 중복 예약 검증
-        List<Reservation> reservations = reservationRepository.findByReservationSlot(reservationSlot);
-
-        boolean hasDuplicate = reservations.stream()
-                .anyMatch(r -> r.getMember().equals(member));
-
+        // 중복 예약 확인
+        boolean hasDuplicate = reservationRepository.findByReservationSlot(reservationSlot).stream()
+                .anyMatch(r -> r.getMember().equals(member) && r.getReservationStatus() != ReservationStatus.CANCELLED);
         if (hasDuplicate) {
             throw new ReservationException(ReservationErrorCode.DUPLICATE_RESERVATION);
         }
 
-        // 예약 총 횟수가 max_capacity 미만인지 검증
+        // 슬롯 카운트 검증
         Long count = reservationSlot.getCount();
         Long maxCapacity = restaurant.getMaxCapacity();
-
         if (count >= maxCapacity) {
             throw new ReservationException(ReservationErrorCode.EXCEED_RESERVATION_LIMIT);
         }
 
-        // 예약 시간 count 증가
-        reservationSlot.setCount(reservationSlot.getCount() + 1);
-        reservationSlotRepository.save(reservationSlot);
-
-        // 예약 생성
+        // 예약 생성 (PENDING)
+        String paymentId = UUID.randomUUID().toString();
         Reservation reservation = Reservation.builder()
                 .member(member)
                 .reservationSlot(reservationSlot)
                 .partySize(request.getPartySize())
                 .reservationStatus(ReservationStatus.CONFIRMED)
-                .restaurant(restaurant) // 레스토랑 정보 추가
+                .restaurant(restaurant)
+                .paymentId(paymentId)
+                .paymentStatus("PENDING")
                 .build();
 
         Reservation savedReservation = reservationRepository.save(reservation);
+        // 슬롯 카운트 증가
+        reservationSlot.setCount(count + 1);
+        reservationSlotRepository.save(reservationSlot);
+
+        // 비동기 결제 요청
+        // requestPaymentAsync(paymentId, request, member, restaurant);
 
         // 예약 완료 알림 및 예약 시간 기준 알림 예약
         try {
@@ -106,16 +112,42 @@ public class ReservationImpl implements ReservationService {
             log.error("예약 알림 스케줄링 중 오류 발생: {}", e.getMessage(), e);
             // 알림 예약 실패해도 예약 자체는 성공으로 처리
         }
+
+        return paymentId;
     }
+
+//    @Async
+//    public void requestPaymentAsync(String paymentId, ReservationRequestDto request, Member member,
+//                                    Restaurant restaurant) {
+//        PaymentRequestDto paymentRequest = PaymentRequestDto.builder()
+//                .paymentId(paymentId)
+//                .restaurantId(request.getRestaurantId())
+//                .memberId(member.getId())
+//                .amount(calculateAmount(request.getPartySize(), restaurant))
+//                .status("REQUEST")
+//                .build();
+//
+//        try {
+//            PaymentResultDto result = restTemplate.postForObject(
+//                    "http://localhost:8082/api/payments/process",
+//                    paymentRequest,
+//                    PaymentResultDto.class);
+//
+//            // 결제 결과 이벤트 발행
+//            eventPublisher.publishEvent(new PaymentResultEvent(this, paymentId, result.getStatus()));
+//        } catch (Exception e) {
+//            // 결제 실패 이벤트 발행
+//            eventPublisher.publishEvent(new PaymentResultEvent(this, paymentId, "FAILED"));
+//        }
+//    }
+
 
     @Override
     @Transactional
     public void cancelReservation(String username, Long reservationId) {
-        // 예약 조회
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ReservationException(ReservationErrorCode.NOT_FOUND));
 
-        // 멤버 검증 (임시 로그인용)
         Member member = memberRepository.findByEmail(username)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
@@ -123,40 +155,50 @@ public class ReservationImpl implements ReservationService {
             throw new ReservationException(ReservationErrorCode.UNAUTHORIZED_CANCEL);
         }
 
-        // 이미 취소된 예약인지 확인
         if (reservation.getReservationStatus() == ReservationStatus.CANCELLED) {
             throw new ReservationException(ReservationErrorCode.ALREADY_CANCELLED);
         }
 
-        // 예약 상태 변경
+        // 예약 및 결제 상태 변경
         reservation.setReservationStatus(ReservationStatus.CANCELLED);
+        reservation.setPaymentStatus("CANCELLED");
         reservationRepository.save(reservation);
 
         ReservationSlot reservationSlot = reservationSlotRepository.findById(reservation.getReservationSlot().getId())
                 .orElseThrow(() -> new ReservationException(ReservationErrorCode.NO_RESERVATION_SLOT));
-
-        // 예약 슬롯 count 감소 (최소 0)
-        long currentCount = reservationSlot.getCount();
-        reservationSlot.setCount(Math.max(0, currentCount - 1));
+        reservationSlot.setCount(Math.max(0, reservationSlot.getCount() - 1));
         reservationSlotRepository.save(reservationSlot);
+
+//        PaymentRequestDto cancelRequest = PaymentRequestDto.builder()
+//                .paymentId(reservation.getPaymentId())
+//                .status("CANCEL")
+//                .build();
+//        try {
+//            restTemplate.postForObject(
+//                    "http://localhost:8082/api/payments/process",
+//                    cancelRequest,
+//                    PaymentResultDto.class);
+//        } catch (Exception e) {
+//            throw new RuntimeException("결제 취소 실패");
+//        }
     }
 
-    @Override
-    @Transactional
-    public List<LocalTime> getAvailableReservationTimes(Long restaurantId, LocalDate date) {
-        //해당 식당 확인
+    public List<String> getAvailableReservationTimes(Long restaurantId, LocalDate date) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RestaurantException(RestaurantErrorCode.NOT_FOUND));
 
-        //해당 날짜의 예약 슬롯 확인
         List<ReservationSlot> reservationTimes = reservationSlotRepository.findAvailableTimes(restaurantId, date);
 
-        //LocalTime만 추출
-        List<LocalTime> availableTimes = reservationTimes.stream()
-                .map(ReservationSlot::getTime)
+        return reservationTimes.stream()
+                .map(slot -> slot.getTime().truncatedTo(ChronoUnit.MINUTES))
+                .distinct()
+                .sorted()
+                .map(time -> time.format(DateTimeFormatter.ofPattern("HH:mm"))) // 문자열 변환
                 .toList();
+    }
 
-        return availableTimes;
+    private Long calculateAmount(Long partySize, Restaurant restaurant) {
+        return partySize * 5000L; // 인원당 5,000원
     }
 
     /**
@@ -257,4 +299,5 @@ public class ReservationImpl implements ReservationService {
             log.error("알림 예약 중 오류 발생: {}, 알림 타입: {}", e.getMessage(), notificationTypeStr, e);
         }
     }
+
 }
