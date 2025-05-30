@@ -1,6 +1,7 @@
 package com.goorm.tablepick.domain.restaurant.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,6 +18,9 @@ public class RestaurantResponseDto {
 
     @Schema(description = "식당 카테고리 이름", example = "한식")
     private String categoryName;
+
+    @Schema(description = "식당 태그", example = "맛있어요")
+    private List<String> boardTags;
 
     @Schema(description = "식당 주소", example = "서울특별시 강남구 강남대로 11")
     private String address;
