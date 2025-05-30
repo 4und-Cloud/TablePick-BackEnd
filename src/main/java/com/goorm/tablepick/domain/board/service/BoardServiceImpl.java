@@ -67,11 +67,12 @@ public class BoardServiceImpl implements BoardService {
 
     @Override
     public PagedBoardListResponseDto getBoards(int page, int size) {
-        if (page < 1) {
-            page = 1;
+        if (page < 0) {
+            page = 0;
         }
 
-        Pageable pageable = PageRequest.of(page - 1, size);
+
+        Pageable pageable = PageRequest.of(page, size);
         Page<Object[]> boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
 
         List<BoardListResponseDto> dtoList = boardPage.getContent().stream()

@@ -18,7 +18,6 @@ public class RestaurantSearchRequestDto {
 
     private List<Long> tagIds;
 
-    @Min(value = 1, message = "페이지 번호는 1 이상이어야 합니다")
-    private int page = 1;
+    private int page;
 
 }

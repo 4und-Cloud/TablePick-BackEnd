@@ -33,7 +33,7 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     public PagedRestaurantResponseDto searchRestaurants(@Valid RestaurantSearchRequestDto dto) {
-        Pageable pageable = PageRequest.of(dto.getPage() - 1, 6);
+        Pageable pageable = PageRequest.of(dto.getPage(), 6);
 
         String keyword = dto.getKeyword();
         List<Long> tagIds = dto.getTagIds();
@@ -95,7 +95,7 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page) {
-        Pageable pageable = PageRequest.of(page - 1, 6);
+        Pageable pageable = PageRequest.of(page, 6);
         Page<Restaurant> restaurantList = restaurantRepository.findAllOrderByNameAsc(pageable);
         return new PagedRestaurantResponseDto(restaurantList);
     }

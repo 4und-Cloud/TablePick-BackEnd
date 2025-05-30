@@ -39,7 +39,7 @@ public class BoardController {
 
     @GetMapping("/list")
     public PagedBoardListResponseDto getPagedBoards(
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "6") int size
 
     ) {
