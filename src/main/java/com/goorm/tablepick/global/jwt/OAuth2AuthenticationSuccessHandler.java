@@ -35,34 +35,24 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
         DefaultOAuth2User oAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
-        Map<String, Object> attributes = oAuth2User.getAttributes();
-        String accessToken = getAccessTokenFromCookie(request);
-        String refreshToken = getRefreshTokenFromCookie(request);
-        String email = extractEmail(attributes);
-        // 사용자 정보 조회
+        String email = extractEmail(oAuth2User.getAttributes());
+
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("인증 후 사용자 정보가 없습니다."));
-        //인증된 객체로 저장
+
+        // 인증 객체 등록
         authenticateUser(member);
-        //저장된 리프레쉬 토큰이 있는지 있으면 불러오고 없으면 null
-        if (refreshToken == null) {
-            refreshToken = member.getRefreshToken() != null ? member.getRefreshToken().getToken() : null;
-        }
-        // 액세스 토큰 유효성 검사 및 재발급
-        if (accessToken == null || !jwtProvider.validateToken(accessToken)) {
-            accessToken = jwtProvider.createAccessToken(member.getId(), email);
-            // 리프레시 토큰 유효성 검사 및 재발급
-            if (member.getRefreshToken() == null || !jwtProvider.validateToken(refreshToken)) {
-                refreshToken = issueAndSaveRefreshToken(member).getToken();
-            }
-        }
-        //토큰을 쿠키에 설정
+
+        // 항상 access/refresh 토큰 재발급
+        String accessToken = jwtProvider.createAccessToken(member.getId(), email);
+        String refreshToken = issueAndSaveRefreshToken(member).getToken();
+
+        // 쿠키 설정
         response.addCookie(createAccessCookie(accessToken));
         response.addCookie(createRefreshCookie(refreshToken));
 
-        //리다이렉션
-        String redirectUrl = "http://localhost:5173/oauth2/success";
-        response.sendRedirect(redirectUrl);
+        // 리다이렉션
+        response.sendRedirect("http://localhost:5173/oauth2/success");
     }
 
     private String extractEmail(Map<String, Object> attributes) {
@@ -102,35 +92,12 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         return refreshToken;
     }
 
-    private String getAccessTokenFromCookie(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ("access_token".equals(cookie.getName())) {
-                    return cookie.getValue();
-                }
-            }
-        }
-        return null;
-    }
-
-    private String getRefreshTokenFromCookie(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ("refresh_token".equals(cookie.getName())) {
-                    return cookie.getValue();
-                }
-            }
-        }
-        return null;
-    }
 
     private Cookie createAccessCookie(String accessToken) {
         Cookie accessCookie = new Cookie("access_token", accessToken);
         accessCookie.setHttpOnly(true);
         accessCookie.setPath("/");
-        accessCookie.setMaxAge(60 * 60); // 1시간
+        accessCookie.setMaxAge(24 * 60 * 60); // 24시간
 
         return accessCookie;
     }
