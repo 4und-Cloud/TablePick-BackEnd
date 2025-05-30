@@ -21,11 +21,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final ReservationRepository reservationRepository;
@@ -99,6 +101,9 @@ public class MemberServiceImpl implements MemberService {
 
         memberTagRepository.saveAll(memberTagList);
         // memberRepository.save(member); → 변경 감지로 생략 가능
+        
+        // 회원가입 축하 알림은 이미 OAuth2 로그인 시 전송되었으므로 여기서는 전송하지 않음
+        log.info("회원 추가 정보 입력 완료: {}, ID: {}", member.getEmail(), member.getId());
     }
 
 }

@@ -8,7 +8,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
@@ -74,6 +74,5 @@ logging:
     root: info  # 전체 로그 레벨 (info 이상 출력)
     com.goorm.tablepick: debug  # 너의 패키지에 debug 로그까지 출력
     org.springframework.web: info
-    org.hibernate.SQL: debug  # Hibernate 실행 쿼리
-    org.hibernate.type.descriptor.sql: trace  # 바인딩되는 실제 파라미터까지
-
+    org.hibernate.SQL: info  # Hibernate 실행 쿼리를 info 레벨로 변경 (debug에서 info로)
+    org.hibernate.type.descriptor.sql: info  # 바인딩되는 실제 파라미터도 info로 변경 (trace에서 info로)
