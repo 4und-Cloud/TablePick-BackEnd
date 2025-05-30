@@ -17,8 +17,13 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     List<Board> findAllByMemberEmail(String memberEmail);
 
     // BoardImage가 존재하고 imageUrl이 null이 아닌 게시글만 조회
-    @Query("SELECT DISTINCT b FROM Board b JOIN b.boardImages i WHERE i.imageUrl IS NOT NULL ORDER BY b.createdAt DESC")
-    Page<Board> findBoardsWithImagesOrderByCreatedAtDesc(Pageable pageable);
+    @Query("SELECT DISTINCT b, r, c FROM Board b " +
+            "JOIN Restaurant r ON b.restaurantId = r.id " +
+            "JOIN RestaurantCategory c ON r.restaurantCategory.id = c.id " +
+            "JOIN b.boardImages i " +
+            "WHERE i.imageUrl IS NOT NULL " +
+            "ORDER BY b.createdAt DESC")
+    Page<Object[]> findBoardsWithImagesOrderByCreatedAtDesc(Pageable pageable);
 
     // 식당별 게시글 리스트 조회
     @Query("SELECT DISTINCT b FROM Board b " +

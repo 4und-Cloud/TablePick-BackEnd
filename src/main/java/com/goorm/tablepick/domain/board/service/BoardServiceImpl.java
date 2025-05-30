@@ -16,6 +16,7 @@ import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.repository.ReservationRepository;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
+import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
 import jakarta.transaction.Transactional;
@@ -52,9 +53,15 @@ public class BoardServiceImpl implements BoardService {
     @Override
     public List<BoardListResponseDto> getBoardsForMainPage() {
         Pageable pageable = PageRequest.of(0, 4);
-        Page<Board> boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
+        Page<Object[]> boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
+
         return boardPage.getContent().stream()
-                .map(BoardListResponseDto::from)
+                .map(objects -> {
+                    Board board = (Board) objects[0];
+                    Restaurant restaurant = (Restaurant) objects[1];
+                    RestaurantCategory category = (RestaurantCategory) objects[2];
+                    return BoardListResponseDto.from(board, restaurant, category);
+                })
                 .toList();
     }
 
@@ -64,11 +71,20 @@ public class BoardServiceImpl implements BoardService {
             page = 0;
         }
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Board> boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
 
-        Page<BoardListResponseDto> dtoPage = boardPage.map(BoardListResponseDto::from);
-        return new PagedBoardListResponseDto(dtoPage);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Object[]> boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
+
+        List<BoardListResponseDto> dtoList = boardPage.getContent().stream()
+                .map(objects -> {
+                    Board board = (Board) objects[0];
+                    Restaurant restaurant = (Restaurant) objects[1];
+                    RestaurantCategory category = (RestaurantCategory) objects[2];
+                    return BoardListResponseDto.from(board, restaurant, category);
+                })
+                .toList();
+
+        return new PagedBoardListResponseDto(dtoList, boardPage);
     }
 
     @Override
