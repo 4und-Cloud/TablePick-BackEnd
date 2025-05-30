@@ -40,8 +40,8 @@ public class NotificationServiceImpl implements NotificationService {
     // 최대 재시도 횟수 = 3번
     private static final int MAX_RETRY_COUNT = 3;
 
-    // 재시도 간격 (분) = 2분
-    private static final int RETRY_DELAY_MINUTES = 2;
+    // 재시도 간격 (초) = 1초
+    private static final int RETRY_DELAY_SECONDS = 1;
 
     // 알림 예약
     // 지정된 시간에 알림이 전송되도록 큐에 등록
@@ -52,33 +52,42 @@ public class NotificationServiceImpl implements NotificationService {
 
         // 현재 시간을 createdAt로 설정
         LocalDateTime now = LocalDateTime.now();
+        
+        // 예약 시간이 현재 시간보다 이전이면 현재 시간으로 설정
+        LocalDateTime scheduledAt = request.getScheduledAt();
+        if (scheduledAt == null || scheduledAt.isBefore(now)) {
+            scheduledAt = now;
+            log.warn("예약 시간이 현재 시간보다 이전이거나 null입니다. 현재 시간으로 설정합니다.");
+        }
 
         NotificationQueue queue = NotificationQueue.builder()
                 .notificationTypes(type)
                 .memberId(request.getMemberId())
                 .reservationId(request.getReservationId()) // reservationId는 null일 수 있음
-                .scheduledAt(request.getScheduledAt()) // 알림이 발송되어야 할 시간
+                .scheduledAt(scheduledAt) // 알림이 발송되어야 할 시간
                 .status(NotificationStatus.PENDING.name())
                 .createdAt(now) // 알림이 생성된 시간
                 .build();
 
         NotificationQueue savedQueue = notificationQueueRepository.save(queue);
-        log.info("알림이 예약되었습니다. ID: {}, 타입: {}, 예약 시간: {}, 생성 시간: {}",
-                savedQueue.getId(), type.getType(), savedQueue.getScheduledAt(), savedQueue.getCreatedAt());
+        log.info("알림이 예약되었습니다. ID: {}, 타입: {}, 예약 시간: {}, 생성 시간: {}, 딜레이: {} 초",
+                savedQueue.getId(), type.getType(), savedQueue.getScheduledAt(), savedQueue.getCreatedAt(),
+                java.time.Duration.between(now, savedQueue.getScheduledAt()).getSeconds());
 
         return createNotificationResponse(savedQueue);
     }
 
-    // 1분마다 실행되며 현재 시간 이전에 예약된 PENDING 상태의 알림을 처리
+    // 1초마다 실행되며 현재 시간 이전에 예약된 PENDING 상태의 알림을 처리
     @Override
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 1000)
     public void processNotificationQueue() {
-        log.info("Starting to process notification queue at {}", LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+//        log.info("알림큐 스케줄링 중... {}", now);
 
         List<NotificationQueue> pendingNotifications = notificationQueueRepository
-                .findByStatusAndScheduledAtBefore(NotificationStatus.PENDING.name(), LocalDateTime.now());
+                .findByStatusAndScheduledAtBefore(NotificationStatus.PENDING.name(), now);
 
-        log.info("Found {} pending notifications to process", pendingNotifications.size());
+//        log.info("{}개 찾아서 알림 진행 중...", pendingNotifications.size());
 
         // 모든 대기 알림의 ID와 예약 시간 출력
         pendingNotifications.forEach(n ->
@@ -260,10 +269,10 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     // 알림 재시도 설정
-    // 재시도 횟수 증가시키고, 다음 재시도 시간 설정
+    // 재시도 횟수 증가시키고, 다음 재시도 시간 설정 (5초 후)
     private void retryNotification(NotificationQueue notification) {
         notification.incrementRetryCount();
-        notification.setScheduledAt(LocalDateTime.now().plusMinutes(RETRY_DELAY_MINUTES));
+        notification.setScheduledAt(LocalDateTime.now().plusSeconds(RETRY_DELAY_SECONDS));
         notificationQueueRepository.save(notification);
         saveNotificationLog(notification, false, "재시도된 스케줄링 #" + notification.getRetryCount());
     }

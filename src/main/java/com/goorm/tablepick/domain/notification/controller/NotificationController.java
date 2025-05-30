@@ -3,6 +3,7 @@ package com.goorm.tablepick.domain.notification.controller;
 import com.goorm.tablepick.domain.notification.dto.request.FCMTokenRequest;
 import com.goorm.tablepick.domain.notification.dto.request.NotificationRequest;
 import com.goorm.tablepick.domain.notification.dto.response.NotificationResponse;
+import com.goorm.tablepick.domain.notification.repository.NotificationTypesRepository;
 import com.goorm.tablepick.domain.notification.service.FCMTokenService;
 import com.goorm.tablepick.domain.notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,8 +15,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,9 +33,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
 @Tag(name = "알림 API", description = "알림 예약, 조회 및 FCM 토큰 관리를 위한 API")
+@Slf4j
 public class NotificationController {
     private final NotificationService notificationService;
     private final FCMTokenService fcmTokenService;
+    private final NotificationTypesRepository notificationTypesRepository;
 
     @Operation(
             summary = "알림 예약",
@@ -189,6 +194,45 @@ public class NotificationController {
     public ResponseEntity<Void> removeFcmToken(@RequestParam Long memberId) {
         fcmTokenService.updateFcmTokenToNull(memberId);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+            summary = "테스트용 알림 전송",
+            description = "테스트 목적으로 특정 회원에게 지정된 알림 타입 ID로 알림을 즉시 전송합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "테스트 알림 전송 성공",
+                    content = @Content(schema = @Schema(implementation = NotificationResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "알림 타입을 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    @PostMapping("/test")
+    public ResponseEntity<NotificationResponse> sendTestNotification(
+            @Parameter(description = "회원 ID", example = "1", required = true)
+            @RequestParam Long memberId,
+            @Parameter(description = "알림 타입 ID (1~6)", example = "1", required = true)
+            @RequestParam Long notificationTypeId) {
+
+        log.info("테스트 알림 요청 - 회원 ID: {}, 알림 타입 ID: {}", memberId, notificationTypeId);
+
+        // 알림 요청 생성 (10초 후 발송)
+        NotificationRequest notificationRequest = NotificationRequest.builder()
+                .memberId(memberId)
+                .notificationTypeId(notificationTypeId)
+                .scheduledAt(LocalDateTime.now())
+                .build();
+
+        // 알림 예약
+        NotificationResponse response = notificationService.scheduleNotification(notificationRequest);
+        log.info("테스트 알림 예약 완료 - 알림 ID: {}", response.getId());
+
+        return ResponseEntity.ok(response);
     }
 
 

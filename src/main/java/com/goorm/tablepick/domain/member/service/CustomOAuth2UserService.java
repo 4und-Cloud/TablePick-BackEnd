@@ -5,11 +5,13 @@ import com.goorm.tablepick.domain.member.dto.KakaoInfo;
 import com.goorm.tablepick.domain.member.dto.OAuthInfo;
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
+import com.goorm.tablepick.domain.notification.service.RegisterNotificationService;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -22,9 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private final MemberRepository memberRepository;
+    private final RegisterNotificationService registerNotificationService;
 
     @Override
     @Transactional
@@ -37,15 +41,29 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         OAuthInfo oAuthInfo = createOAuthInfo(registrationId, attributes);
         //사용자 정보를 멤버로 변환
         Member member = oAuthInfo.toEntity();
+        
         //멤버가 원래 가입이 되어있으면 로그인 없으면 회원가입
-        memberRepository.findByEmail(member.getEmail())
-                .orElseGet(() -> memberRepository.save(member));
+        Member savedMember = memberRepository.findByEmail(member.getEmail())
+                .orElseGet(() -> {
+                    Member newMember = memberRepository.save(member);
+                    log.info("New member registered: {}", newMember.getEmail());
+                    
+                    // 회원가입 축하 알림 전송 (10초 후)
+                    try {
+                        registerNotificationService.sendWelcomeNotification(newMember);
+                        log.info("회원가입 축하 알림이 10초 후 발송되도록 예약되었습니다. 회원 ID: {}", newMember.getId());
+                    } catch (Exception e) {
+                        log.error("Failed to send welcome notification: {}", e.getMessage(), e);
+                    }
+                    
+                    return newMember;
+                });
 
         return new DefaultOAuth2User(
                 Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
                 Map.of(
-                        "email", member.getEmail(),
-                        "id", member.getProviderId()
+                        "email", savedMember.getEmail(),
+                        "id", savedMember.getProviderId()
                 ),
                 "email"
         );
@@ -85,4 +103,3 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         );
     }
 }
-
