@@ -25,7 +25,7 @@ public class RefreshToken {
     private Long id;
 
     @Setter
-    @OneToOne(mappedBy = "refreshToken")
+    @OneToOne
     @JoinColumn(name="member_id", unique = true)
     private Member member;
 

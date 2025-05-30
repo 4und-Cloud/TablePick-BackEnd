@@ -10,6 +10,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,9 +20,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.Collections;
 
 @Component
 @RequiredArgsConstructor
@@ -81,6 +80,14 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 path.contains("/v3/api-docs") ||
                 path.equals("/oauth2/success") ||
                 path.equals("/login") ||
+                path.equals("/api/boards/list") ||
+                path.equals("/api/boards/main") ||
+                path.equals("/api/boards/{boardId}") ||
+                path.equals("/api/tags") ||
+                path.equals("/favicon") ||
+                path.startsWith("/api/restaurants/") ||
+                path.startsWith("/api/boards/") ||
+                path.startsWith("/api/boards/restaurant/") ||
                 path.startsWith("/oauth2/") ||               // 카카오, 구글 로그인 인증 중간 경로
                 path.startsWith("/login/oauth2/code/");
     }
@@ -105,8 +112,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     private String getCookieValue(HttpServletRequest request, String name) {
         Cookie[] cookies = request.getCookies();
-        if (cookies == null)
+        if (cookies == null) {
             return null;
+        }
         for (Cookie cookie : cookies) {
             if (name.equals(cookie.getName())) {
                 return cookie.getValue();
