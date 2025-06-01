@@ -542,7 +542,7 @@ public class RestaurantDataImporter {
 
         String sqlBoard = "INSERT INTO board (restaurant_id, member_id, content, created_at) VALUES (?, ?, ?, ?)";
         String sqlBoardImage = "INSERT INTO board_image (board_id, image_url) VALUES (?, ?)";
-        String sqlBoardKeyword = "INSERT INTO board_keyword (board_id, keyword) VALUES (?, ?)";
+        String sqlBoardKeyword = "INSERT INTO board_keyword (board_id, board_keyword_category_id) VALUES (?, ?)";
         String sqlBoardTag = "INSERT INTO board_tag (board_id, tag_id, restaurant_id) VALUES (?, ?, ?)";
         try (PreparedStatement pstmtBoard = conn.prepareStatement(sqlBoard, Statement.RETURN_GENERATED_KEYS);
              PreparedStatement pstmtBoardImage = conn.prepareStatement(sqlBoardImage);
@@ -602,14 +602,27 @@ public class RestaurantDataImporter {
                     }
 
                     for (int j = 0; j < keywords.length(); j++) {
-                        String keyword = keywords.optString(j, "");
-                        if (keyword.isEmpty()) {
-                            continue;
+                        Long keywordCategoryId = null;
+                        String keywordEntry = keywords.optString(j, "").trim();
+                        if (keywordEntry.isEmpty()) continue;
+
+                        String[] keywordParts = keywordEntry.split(",");
+                        for (String rawKeyword : keywordParts) {
+                            String keyword = rawKeyword.trim();
+                            if (keyword.isEmpty()) continue;
+
+                            keywordCategoryId = getOrCreateKeywordCategoryId(conn, keyword);
+                            if (keywordCategoryId == null) {
+                                System.err.println("키워드 카테고리 ID 생성 실패: keyword=" + keyword + ", restaurant_id=" + restaurantId);
+                                continue;
+                            }
+
+                            pstmtBoardKeyword.setLong(1, boardId);
+                            pstmtBoardKeyword.setLong(2, keywordCategoryId);
+                            pstmtBoardKeyword.executeUpdate();
+
+                            System.out.println("보드 키워드 카테고리 삽입: board_id=" + boardId + ", keyword_category_id=" + keywordCategoryId);
                         }
-                        pstmtBoardKeyword.setLong(1, boardId);
-                        pstmtBoardKeyword.setString(2, keyword);
-                        pstmtBoardKeyword.executeUpdate();
-                        System.out.println("보드 키워드 삽입: board_id=" + boardId + ", keyword=" + keyword);
                     }
 
                     for (int j = 0; j < tags.length(); j++) {
@@ -688,4 +701,34 @@ public class RestaurantDataImporter {
 
         throw new SQLException("익명 멤버 생성 또는 조회 실패");
     }
+
+    private static Long getOrCreateKeywordCategoryId(Connection conn, String keyword) throws SQLException {
+        if (keyword == null || keyword.trim().isEmpty()) return null;
+
+        keyword = keyword.trim();
+
+        String selectSql = "SELECT id FROM board_keyword_category WHERE keyword = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(selectSql)) {
+            stmt.setString(1, keyword);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("id");
+                }
+            }
+        }
+
+        String insertSql = "INSERT INTO board_keyword_category (keyword) VALUES (?)";
+        try (PreparedStatement stmt = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setString(1, keyword);
+            stmt.executeUpdate();
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                }
+            }
+        }
+
+        return null;
+    }
+
 }
