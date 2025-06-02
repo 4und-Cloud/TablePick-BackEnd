@@ -30,35 +30,35 @@ public class NotificationTypesInitializer implements ApplicationRunner {
                 NotificationTypes.RESERVATION_COMPLETED,
                 "식당 예약 완료",
                 "{restaurantName} 예약이 성공적으로 완료되었습니다.",
-                "/reservations/{id}"
+                "/reservation-check"
         );
 
         ensureNotificationTypeExists(
                 NotificationTypes.RESERVATION_1DAY_BEFORE,
                 "식당 예약날 1일 전",
                 "내일 이 시간에 {restaurantName} 예약이 예정되어 있습니다.",
-                "/reservations/{id}"
+                "/reservation-check"
         );
 
         ensureNotificationTypeExists(
                 NotificationTypes.RESERVATION_3HOURS_BEFORE,
                 "식당 예약시간 3시간 전",
                 "3시간 뒤 {restaurantName} 예약이 있습니다. 위치와 시간을 다시 한번 확인해 주세요.",
-                "/reservations/{id}"
+                "/reservation-check"
         );
 
         ensureNotificationTypeExists(
                 NotificationTypes.RESERVATION_1HOUR_BEFORE,
                 "식당 예약시간 1시간 전",
                 "{restaurantName} 예약이 1시간 남았습니다. 매장에서 고객님을 맞을 준비를 하고 있으니 여유 있게 출발해주세요.",
-                "/reservations/{id}"
+                "/reservation-check"
         );
 
         ensureNotificationTypeExists(
                 NotificationTypes.RESERVATION_3HOURS_AFTER,
                 "식당 리뷰 요청",
                 "{restaurantName}에서의 식사는 만족스러우셨나요? 리뷰를 남겨주시면 큰 도움이 됩니다.",
-                "/reservations/{id}/review"
+                "/reservation-check"
         );
 
         log.info("알림 타입 초기화 완료");
