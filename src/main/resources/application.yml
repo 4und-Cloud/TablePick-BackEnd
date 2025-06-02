@@ -55,6 +55,7 @@ jwt:
 
 server:
   port: 8080
+  domain: ${SERVER_DOMAIN:http://localhost:8080}
 
 project:
   upload:
