@@ -21,7 +21,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class RestaurantDataImporter {
+public class RestaurantDataImporter_Window {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/tablepickdb";
     private static final String DB_USER = "tablepick";
     private static final String DB_PASSWORD = "tablepick";
@@ -118,10 +118,27 @@ public class RestaurantDataImporter {
     }
 
     private static String[] parseCsvLine(String line) {
-        line = line.replaceAll(",\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", "\t");
-        String[] cols = line.split("\t");
+        // 복잡한 lookahead 대신, 큰따옴표 내부가 아닌 쉼표만 탭으로 대체 (단순화 버전)
+        StringBuilder sb = new StringBuilder();
+        boolean inQuotes = false;
+        for (char c : line.toCharArray()) {
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            }
+            if (c == ',' && !inQuotes) {
+                sb.append('\t');
+            } else {
+                sb.append(c);
+            }
+        }
+
+        String[] cols = sb.toString().split("\t");
+
         for (int i = 0; i < cols.length; i++) {
-            cols[i] = cols[i].replaceAll("^\"|\"$", "").replaceAll("^'|'$", "");
+            cols[i] = cols[i]
+                    .replaceAll("^\"|\"$", "")
+                    .replaceAll("^'|'$", "")
+                    .trim(); // 공백도 제거
         }
         return cols;
     }

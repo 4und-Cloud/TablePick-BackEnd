@@ -36,10 +36,10 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @Query("SELECT r FROM Reservation r WHERE r.id = :id")
     Reservation getReservationById(@Param("id") Long id);
 
-    // 특정 날짜 범위 내의 대기 중인 예약을 조회하는 메서드
+    // 특정 날짜 범위 내의 대기 중인 예약을 조회하는 메서드 (pending or null)
     @Query("SELECT r FROM Reservation r " +
             "JOIN r.reservationSlot rs " +
-            "WHERE r.reservationStatus = 'PENDING' " +
+            "WHERE (r.reservationStatus = 'PENDING' OR r.reservationStatus IS NULL) " +
             "AND rs.date BETWEEN :startDate AND :endDate")
     List<Reservation> findPendingReservationsBetweenDates(
             @Param("startDate") LocalDate startDate,
