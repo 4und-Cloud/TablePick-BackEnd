@@ -23,7 +23,9 @@ public class BoardKeyword {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String keyword;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="board_keyword_category_id")
+    private BoardKeywordCategory keywordCategory;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)

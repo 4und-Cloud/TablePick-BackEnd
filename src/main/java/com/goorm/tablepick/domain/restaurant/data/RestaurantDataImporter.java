@@ -21,7 +21,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class RestaurantDataImporter_Window {
+public class RestaurantDataImporter {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/tablepickdb";
     private static final String DB_USER = "tablepick";
     private static final String DB_PASSWORD = "tablepick";
