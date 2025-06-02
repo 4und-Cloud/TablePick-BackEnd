@@ -31,12 +31,7 @@ public class RegisterNotificationServiceImpl implements RegisterNotificationServ
     // 재시도 간격 (초)
     private static final int RETRY_DELAY_SECONDS = 1;
 
-    /**
-     * 회원가입 축하 알림을 보내는 메서드
-     * 회원의 createdAt 시간이 현재 시간과 1분 이내인 경우에만 알림을 보냄
-     *
-     * @param member 회원 정보
-     */
+    // 회원가입 축하 알림
     @Override
     @Transactional
     public void sendWelcomeNotification(Member member) {
@@ -64,15 +59,9 @@ public class RegisterNotificationServiceImpl implements RegisterNotificationServ
         // FCM 토큰 확인 및 알림 예약 시도
         tryScheduleWelcomeNotification(member.getId(), notificationType.getId(), 0);
     }
-    
-    /**
-     * FCM 토큰을 확인하고 알림 예약을 시도하는 메서드
-     * 토큰이 없으면 최대 5번까지 1초 간격으로 재시도
-     *
-     * @param memberId 회원 ID
-     * @param notificationTypeId 알림 타입 ID
-     * @param retryCount 현재 재시도 횟수
-     */
+
+    // FCM 토큰을 확인하고 알림 예약을 시도하는 메서드
+    // 토큰이 없으면 최대 5번까지 1초 간격으로 재시도
     @Async
     public void tryScheduleWelcomeNotification(Long memberId, Long notificationTypeId, int retryCount) {
         log.info("Trying to schedule welcome notification for member ID: {}, retry count: {}", memberId, retryCount);
@@ -103,12 +92,7 @@ public class RegisterNotificationServiceImpl implements RegisterNotificationServ
         }
     }
     
-    /**
-     * 회원가입 축하 알림을 예약하는 메서드
-     *
-     * @param memberId 회원 ID
-     * @param notificationTypeId 알림 타입 ID
-     */
+    // 회원가입 축하 알림 예약
     @Transactional
     public void scheduleWelcomeNotification(Long memberId, Long notificationTypeId) {
         // 알림 요청 생성 (즉시 발송)
