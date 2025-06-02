@@ -50,7 +50,7 @@ public class ReservationNotificationSchedulerImpl implements ReservationNotifica
         // 확정된 예약만 조회
         List<Reservation> upcomingReservations = reservationRepository.findPendingReservationsBetweenDates(
                 today, twoDaysLater);
-        log.info("Found {} upcoming confirmed reservations for notification scheduling", upcomingReservations.size());
+        log.info("Found {} upcoming reservations (PENDING or NULL) for notification scheduling", upcomingReservations.size());
 
         for (Reservation reservation : upcomingReservations) {
             try {
