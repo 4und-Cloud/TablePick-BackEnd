@@ -13,7 +13,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -97,23 +102,21 @@ public class MemberController {
     }
 
     private void callKakaoUnlink(String kakaoUserId) throws Exception {
-        URL url = new URL("https://kapi.kakao.com/v1/user/unlink");
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("POST");
-        conn.setRequestProperty("Authorization", "KakaoAK " + kakaoAdminKey);
-        conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-        conn.setDoOutput(true);
+        HttpClient client = HttpClient.newHttpClient();
 
-        String params = "target_id_type=user_id&target_id=" + kakaoUserId;
-        try (OutputStream os = conn.getOutputStream()) {
-            os.write(params.getBytes(StandardCharsets.UTF_8));
-            os.flush();
-        }
+        String params = "target_id_type=user_id&target_id=" + URLEncoder.encode(kakaoUserId, StandardCharsets.UTF_8);
 
-        int responseCode = conn.getResponseCode();
-        if (responseCode != 200) {
-            throw new RuntimeException("Kakao unlink failed with response code: " + responseCode);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("https://kapi.kakao.com/v1/user/unlink"))
+                .header("Authorization", "KakaoAK " + kakaoAdminKey)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(params))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Kakao unlink failed with response code: " + response.statusCode());
         }
-        conn.disconnect();
     }
 }
