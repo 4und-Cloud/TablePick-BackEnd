@@ -1,6 +1,7 @@
 package com.goorm.tablepick.domain.reservation.repository;
 
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
+import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -21,4 +22,6 @@ public interface ReservationSlotRepository extends JpaRepository<ReservationSlot
 
     Optional<ReservationSlot> findByRestaurantIdAndDateAndTime(Long restaurantId, LocalDate reservationDate,
                                                                LocalTime reservationTime);
+
+    boolean existsByRestaurantAndDateAndTime(Restaurant restaurant, LocalDate date, LocalTime time);
 }
