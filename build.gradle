@@ -32,6 +32,7 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'com.mysql:mysql-connector-j'
@@ -51,6 +52,8 @@ dependencies {
     implementation 'org.json:json:20240303'
     // Firebase Admin SDK
     implementation 'com.google.firebase:firebase-admin:9.4.3'
+    // Batch 나눌 때 사용
+    implementation 'com.google.guava:guava:33.1.0-jre'
 
     // Querydsl (Jakarta 버전)
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
