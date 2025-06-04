@@ -48,7 +48,7 @@ public class MemberServiceImpl implements MemberService {
         Member member = memberRepository.findByEmail(username)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
         List<Tag> selectedTags = new ArrayList<>();
-        for (Long id : memberUpdateRequestDto.getMemberTagsId()) {
+        for (Long id : memberUpdateRequestDto.getMemberTags()) {
             Tag tag = tagRepository.findById(id).orElseThrow(() -> new MemberException(MemberErrorCode.NO_SUCH_TAG));
             selectedTags.add(tag);
         }
