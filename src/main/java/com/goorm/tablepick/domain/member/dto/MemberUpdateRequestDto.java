@@ -32,6 +32,6 @@ public class MemberUpdateRequestDto {
     private String phoneNumber;
 
     @Schema(description = "사용자 선호 태그")
-    private List<Long> memberTagsId;
+    private List<Long> memberTags;
 
 }
