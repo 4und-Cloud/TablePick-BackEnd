@@ -86,6 +86,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         );
     }
 
+    @SuppressWarnings("unchecked")
     private KakaoInfo createKakaoInfo(Map<String, Object> attributes) {
         Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
         Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");

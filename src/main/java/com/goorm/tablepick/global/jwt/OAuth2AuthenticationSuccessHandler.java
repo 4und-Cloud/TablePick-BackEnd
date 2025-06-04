@@ -56,6 +56,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         response.sendRedirect("http://localhost:5173/oauth2/success");
     }
 
+    @SuppressWarnings("unchecked")
     private String extractEmail(Map<String, Object> attributes) {
         if (attributes.containsKey("kakao_account")) {
             Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");

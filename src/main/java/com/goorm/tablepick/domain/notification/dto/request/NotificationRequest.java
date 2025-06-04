@@ -13,15 +13,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @Schema(description = "알림 예약 요청")
 public class NotificationRequest {
-    @Schema(description = "회원 ID", example = "1", required = true)
+    @Schema(description = "회원 ID", example = "1")
     private Long memberId;
 
-    @Schema(description = "알림 타입 ID", example = "1", required = true)
+    @Schema(description = "알림 타입 ID", example = "1")
     private Long notificationTypeId;
 
-    @Schema(description = "예약 ID", example = "100", required = false)
+    @Schema(description = "예약 ID", example = "100")
     private Long reservationId;
 
-    @Schema(description = "예약 시간 (ISO-8601 형식)", example = "2025-05-14T19:30:00", required = true)
+    @Schema(description = "예약 시간 (ISO-8601 형식)", example = "2025-05-14T19:30:00")
     private LocalDateTime scheduledAt;
 }

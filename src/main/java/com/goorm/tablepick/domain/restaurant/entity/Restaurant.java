@@ -12,12 +12,16 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Restaurant {
 
     @Id
@@ -36,22 +40,29 @@ public class Restaurant {
 
     private Long maxCapacity;
 
+    @Builder.Default
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     private List<ReservationSlot> reservationSlots = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     private List<Menu> menus = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     private List<RestaurantImage> restaurantImages = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     private List<BoardTag> boardTags = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     private List<RestaurantOperatingHour> restaurantOperatingHours = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "restaurant_category_id")
     private RestaurantCategory restaurantCategory;
+
+
 }

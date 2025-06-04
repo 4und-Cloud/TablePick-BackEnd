@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.5'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco' //jacoco
 }
 
 group = 'com.groom'
@@ -11,6 +12,11 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+}
+//jacoco
+jacoco {
+    toolVersion = "0.8.13"
+    reportsDirectory = layout.buildDirectory.dir('customJacocoReportDir')
 }
 
 configurations {
@@ -30,7 +36,6 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-security'
@@ -47,16 +52,104 @@ dependencies {
     // Firebase Admin SDK
     implementation 'com.google.firebase:firebase-admin:9.4.3'
 
+    // Querydsl (Jakarta 버전)
+    implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+    annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
+    annotationProcessor 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+    annotationProcessor 'jakarta.annotation:jakarta.annotation-api:2.1.1'
+
     // 테스트코드
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
-    testRuntimeOnly 'com.h2database:h2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.4'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.4'
+    testRuntimeOnly 'com.h2database:h2' //test용
 }
-
-tasks.named('test') {
-    useJUnitPlatform()
-}
-
+//Data parser
 tasks.register('importRestaurantData', JavaExec) {
     mainClass = 'com.goorm.tablepick.domain.restaurant.data.RestaurantDataImporter'
     classpath = sourceSets.main.runtimeClasspath
+}
+//QueryDsl
+def generated = layout.buildDirectory.dir("generated/querydsl").get().asFile
+
+sourceSets {
+    main {
+        java {
+            srcDirs += [generated]
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += "-Xlint:deprecation"
+}
+
+clean {
+    delete file(generated)
+}
+
+//jacoco
+jacocoTestReport {
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('jacoco/report')
+    }
+    //제외 하고 싶은 클래스 명시하여 제외 가능
+    getClassDirectories().setFrom(
+            files(classDirectories.files.collect {
+                fileTree(
+                        dir: it,
+                        exclude: [
+                                '**/dto/*.class',
+                                '**/data/*.class'
+                        ]
+                )
+            }
+            )
+    )
+}
+
+// jacoco 커버리지 검증 설정
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            enabled = true // 커버리지 적용 여부
+            element = 'CLASS' // 커버리지 적용 단위
+
+            // 라인 커버리지 설정
+            // 적용 대상 전체 소스 코드들을 한줄 한줄 따졌을 때 테스트 코드가 작성되어 있는 줄의 빈도
+            // 테스트 코드가 작성되어 있는 비율이 90% 이상이어야 함
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.90
+            }
+
+            // 브랜치 커버리지 설정
+            // if-else 등을 활용하여 발생되는 분기들 중 테스트 코드가 작성되어 있는 빈도
+            // 테스트 코드가 작성되어 있는 비율이 90% 이상이어야 함
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.90
+            }
+
+            // 라인 최대 갯수 설정
+            // 빈 줄을 제외하고 하나의 자바 파일에서 작성될 수 있는 최대 라인 갯수
+            // 한 파일에 최대 500줄까지 작성되어야 함
+            limit {
+                counter = 'LINE'
+                value = 'TOTALCOUNT'
+                maximum = 500
+            }
+        }
+    }
+}
+
+//test
+test {
+    useJUnitPlatform()
+    finalizedBy 'jacocoTestReport'
 }
