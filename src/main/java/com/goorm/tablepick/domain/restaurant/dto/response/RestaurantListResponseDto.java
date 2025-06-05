@@ -24,7 +24,7 @@ public class RestaurantListResponseDto {
     @Schema(description = "식당 번호", example = "023456789")
     private String restaurantPhoneNumber;
     @Schema(description = "식당 카테고리", example = "한식")
-    private RestaurantCategory restaurantCategory;
+    private String restaurantCategory;
     @Schema(description = "식당 이미지", example = "url")
     private String restaurantImage;
     @Schema(description = "식당 태그", example = "역이랑 가까워요")
@@ -36,7 +36,7 @@ public class RestaurantListResponseDto {
                 .name(restaurant.getName())
                 .restaurantPhoneNumber(restaurant.getRestaurantPhoneNumber())
                 .address(restaurant.getAddress())
-                .restaurantCategory(restaurant.getRestaurantCategory())
+                .restaurantCategory(restaurant.getRestaurantCategory().getName())
                 .restaurantImage(
                         restaurant.getRestaurantImages() != null && !restaurant.getRestaurantImages().isEmpty()
                                 ? restaurant.getRestaurantImages().get(0).getImageUrl()

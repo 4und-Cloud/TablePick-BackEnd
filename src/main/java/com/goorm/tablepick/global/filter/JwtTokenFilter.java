@@ -85,7 +85,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 path.equals("/api/boards/{boardId}") ||
                 path.equals("/api/tags") ||
                 path.equals("/favicon") ||
-                path.startsWith("/api/restaurants/") ||
+                path.equals("/api/members/logout") ||
+                path.startsWith("/api/restaurants/search/") ||
+                path.startsWith("/api/restaurants/v1/search/") ||
                 path.startsWith("/api/boards/") ||
                 path.startsWith("/api/boards/restaurant/") ||
                 path.startsWith("/oauth2/") ||               // 카카오, 구글 로그인 인증 중간 경로

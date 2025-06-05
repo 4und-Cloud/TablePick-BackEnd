@@ -34,4 +34,18 @@ public class PagedRestaurantResponseDto {
         this.endNumber = startNumber + page.getNumberOfElements() - 1;
     }
 
+    public static PagedRestaurantResponseDto create(Page<Restaurant> page) {
+        return PagedRestaurantResponseDto.builder()
+                .restaurants(page.getContent().stream().map(RestaurantListResponseDto::toDto).collect(Collectors.toList()))
+                .pageNumber(page.getNumber())
+                .pageSize(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .startNumber((long) page.getNumber() * page.getSize()+1)
+                .endNumber((long) page.getNumber() * page.getSize()-1)
+                .build();
+    }
+
+
+
 }

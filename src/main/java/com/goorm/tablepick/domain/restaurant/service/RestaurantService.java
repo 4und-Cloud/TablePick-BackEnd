@@ -6,6 +6,8 @@ import com.goorm.tablepick.domain.restaurant.dto.response.CategoryResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantDetailResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantSearchResponseDto;
+import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -21,4 +23,6 @@ public interface RestaurantService {
     RestaurantDetailResponseDto getRestaurantDetail(Long id);
 
     List<CategoryResponseDto> getCategoryList();
+
+    List<RestaurantSearchResponseDto> searchRestaurantsV1(RestaurantSearchRequestDto requestDto);
 }
