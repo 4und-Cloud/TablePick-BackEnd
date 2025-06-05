@@ -44,7 +44,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
 
         BooleanBuilder where = new BooleanBuilder();
 
-        // ✅ 1. 키워드 조건 (EXISTS 사용)
+        // 1. 키워드 조건 (EXISTS 사용)
         if (hasKeyword) {
             keyword = keyword.toLowerCase().trim();
 
@@ -68,7 +68,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
             where.and(keywordCond);
         }
 
-        // ✅ 2. 태그 필터 사전 추출
+        // 2. 태그 필터 사전 추출
         List<Long> filteredRestaurantIds = null;
         if (hasTags) {
             filteredRestaurantIds = queryFactory
@@ -84,7 +84,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
             where.and(restaurant.id.in(filteredRestaurantIds));
         }
 
-        // ✅ 3. 메인 쿼리
+        // 3. 메인 쿼리
         List<RestaurantSearchResponseDto> dtos = queryFactory
                 .select(Projections.fields(
                         RestaurantSearchResponseDto.class,
@@ -99,14 +99,14 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        // ✅ 4. ID 리스트 추출
+        // 4. ID 리스트 추출
         List<Long> ids = dtos.stream()
                 .map(RestaurantSearchResponseDto::getId)
                 .toList();
 
         if (ids.isEmpty()) return List.of();
 
-        // ✅ 5. 이미지 맵핑 (최초 이미지만)
+        // 5. 이미지 맵핑 (최초 이미지만)
         Map<Long, String> imageMap = queryFactory
                 .select(image.restaurant.id, image.imageUrl)
                 .from(image)
@@ -120,7 +120,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
                         (first, second) -> first
                 ));
 
-        // ✅ 6. 태그 맵핑
+        // 6. 태그 맵핑
         Map<Long, List<String>> tagMap = queryFactory
                 .selectDistinct(boardTag.restaurant.id, boardTag.tag.name)
                 .from(boardTag)
@@ -135,7 +135,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
                         )
                 ));
 
-        // ✅ 7. 결과 매핑
+        // 7. 결과 매핑
         dtos.forEach(dto -> {
             dto.setRestaurantImage(imageMap.get(dto.getId()));
             dto.setBoardTags(tagMap.getOrDefault(dto.getId(), List.of()));
