@@ -7,6 +7,7 @@ import com.goorm.tablepick.domain.notification.repository.NotificationTypesRepos
 import com.goorm.tablepick.domain.notification.service.NotificationService;
 import com.goorm.tablepick.domain.notification.service.ReservationNotificationScheduler;
 import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
+import com.goorm.tablepick.domain.reservation.dto.response.CreateReservationResponseDto;
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
 import com.goorm.tablepick.domain.reservation.enums.ReservationStatus;
@@ -17,7 +18,6 @@ import com.goorm.tablepick.domain.reservation.repository.ReservationSlotReposito
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantErrorCode;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
-import com.goorm.tablepick.domain.restaurant.repository.RestaurantOperatingHourRepository;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
@@ -48,7 +48,7 @@ public class ReservationImpl implements ReservationService {
 
     @Override
     @Transactional
-    public String createReservation(String username, ReservationRequestDto request) {
+    public CreateReservationResponseDto createReservation(String username, ReservationRequestDto request) {
         // 식당 검증
         Restaurant restaurant = restaurantRepository.findById(request.getRestaurantId())
                 .orElseThrow(() -> new RestaurantException(RestaurantErrorCode.NOT_FOUND));
@@ -113,7 +113,11 @@ public class ReservationImpl implements ReservationService {
             // 알림 예약 실패해도 예약 자체는 성공으로 처리
         }
 
-        return paymentId;
+        CreateReservationResponseDto dto = CreateReservationResponseDto.builder()
+                .reservationId(savedReservation.getId())
+                .build();
+
+        return dto;
     }
 
 //    @Async

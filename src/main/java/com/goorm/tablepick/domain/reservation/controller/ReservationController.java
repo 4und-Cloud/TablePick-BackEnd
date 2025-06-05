@@ -1,6 +1,7 @@
 package com.goorm.tablepick.domain.reservation.controller;
 
 import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
+import com.goorm.tablepick.domain.reservation.dto.response.CreateReservationResponseDto;
 import com.goorm.tablepick.domain.reservation.service.ReservationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,10 +34,11 @@ public class ReservationController {
 
     @PostMapping
     @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
-    public ResponseEntity<Void> createReservation(@AuthenticationPrincipal UserDetails userDetails,
-                                                  @RequestBody @Valid ReservationRequestDto request) {
-        reservationService.createReservation(userDetails.getUsername(), request);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<CreateReservationResponseDto> createReservation(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody @Valid ReservationRequestDto request) {
+        CreateReservationResponseDto dto = reservationService.createReservation(userDetails.getUsername(), request);
+        return ResponseEntity.ok(dto);
     }
 
     @DeleteMapping("/{reservationId}")
