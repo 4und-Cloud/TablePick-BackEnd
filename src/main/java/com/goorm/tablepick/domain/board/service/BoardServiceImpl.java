@@ -20,15 +20,20 @@ import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
 import jakarta.transaction.Transactional;
-import java.util.Optional;
+import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -48,46 +53,46 @@ public class BoardServiceImpl implements BoardService {
     private final BoardImageRepository boardImageRepository;
     private final BoardTagRepository boardTagRepository;
     private final TagRepository tagRepository;
+    private final RestTemplate restTemplate;
+
 
     @Value("${project.upload.board-image-path}")
     private String boardImagePath;
 
     @Override
-    public List<BoardListResponseDto> getBoardsForMainPage() {
-        Pageable pageable = PageRequest.of(0, 4);
-        Page<Object[]> boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
-
-        return boardPage.getContent().stream()
-                .map(objects -> {
-                    Board board = (Board) objects[0];
-                    Restaurant restaurant = (Restaurant) objects[1];
-                    RestaurantCategory category = (RestaurantCategory) objects[2];
-                    return BoardListResponseDto.from(board, restaurant, category);
-                })
-                .toList();
-    }
-
-    @Override
-    public PagedBoardListResponseDto getBoards(int page, int size) {
+    public PagedBoardListResponseDto getBoards(int page, int size, Member member) {
         if (page < 0) {
             page = 0;
         }
-
-
         Pageable pageable = PageRequest.of(page, size);
-        Page<Object[]> boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
+        Page<Object[]> boardPage;
+        if (member != null) {
+            System.out.println("if");
+            long userId = member.getId();
 
+            // 1. AI 서버에 userId로 추천 board_id 리스트 요청
+            List<Long> recommendedBoardIds = getRecommendedBoardIds(userId, page, size);
+
+            // 2. 추천 board_id 리스트로 DB에서 게시글 정보 조회 (순서 보장 필요시 IN절 + FIELD 함수 등 활용)
+            boardPage = boardRepository.findBoardsByIdsInOrder(recommendedBoardIds, pageable);
+
+        } else {
+            System.out.println("else");
+            boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
+        }
         List<BoardListResponseDto> dtoList = boardPage.getContent().stream()
-                .map(objects -> {
-                    Board board = (Board) objects[0];
-                    Restaurant restaurant = (Restaurant) objects[1];
-                    RestaurantCategory category = (RestaurantCategory) objects[2];
-                    return BoardListResponseDto.from(board, restaurant, category);
-                })
-                .toList();
+                    .map(objects -> {
+                        Board board = (Board) objects[0];
+                        Restaurant restaurant = (Restaurant) objects[1];
+                        RestaurantCategory category = (RestaurantCategory) objects[2];
+                        return BoardListResponseDto.from(board, restaurant, category);
+                    })
+                    .toList();
 
-        return new PagedBoardListResponseDto(dtoList, boardPage);
+            return new PagedBoardListResponseDto(dtoList, boardPage);
+
     }
+
 
     @Override
     public BoardDetailResponseDto getBoardDetail(Long boardId) {
@@ -246,6 +251,27 @@ public class BoardServiceImpl implements BoardService {
                 log.error("이미지 파일 삭제 실패: {}", boardImage.getImageUrl(), e);
                 // 파일 삭제 실패해도 DB 삭제는 계속 진행
             }
+        }
+    }
+    // 추천 AI API 연결
+    public List<Long> getRecommendedBoardIds(Long userId, int page, int size) {
+        String url = String.format("http://localhost:8000/post/recommend-for-user/%d?page=%d&size=%d", userId, page, size);
+        try {
+            ResponseEntity<List<Long>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<Long>>() {}
+            );
+            List<Long> boardIds = response.getBody();
+            System.out.println("boardIds: " + boardIds);
+            return (boardIds != null) ? boardIds : Collections.emptyList();
+        } catch (HttpClientErrorException e) {
+            log.error("AI 서버 요청 실패: userId={}, status={}, response={}", userId, e.getStatusCode(), e.getResponseBodyAsString());
+            return Collections.emptyList();
+        } catch (Exception e) {
+            log.error("AI 서버에서 추천 게시글 ID를 가져오지 못했습니다. userId={}", userId, e);
+            return Collections.emptyList();
         }
     }
 }
