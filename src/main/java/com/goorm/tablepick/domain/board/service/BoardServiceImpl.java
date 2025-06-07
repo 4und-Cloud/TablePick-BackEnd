@@ -67,17 +67,15 @@ public class BoardServiceImpl implements BoardService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Object[]> boardPage;
         if (member != null) {
-            System.out.println("if");
             long userId = member.getId();
 
             // 1. AI 서버에 userId로 추천 board_id 리스트 요청
-            List<Long> recommendedBoardIds = getRecommendedBoardIds(userId, page, size);
+            List<Long> recommendedBoardIds = getRecommendedBoardIds(userId, page, 30);
 
             // 2. 추천 board_id 리스트로 DB에서 게시글 정보 조회 (순서 보장 필요시 IN절 + FIELD 함수 등 활용)
             boardPage = boardRepository.findBoardsByIdsInOrder(recommendedBoardIds, pageable);
 
         } else {
-            System.out.println("else");
             boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
         }
         List<BoardListResponseDto> dtoList = boardPage.getContent().stream()
