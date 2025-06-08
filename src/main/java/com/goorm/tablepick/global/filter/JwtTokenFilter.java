@@ -86,7 +86,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 path.equals("/api/tags") ||
                 path.equals("/favicon") ||
                 path.equals("/api/members/logout") ||
-                path.startsWith("/api/restaurants/search/") ||
+                path.startsWith("/api/restaurants") ||
                 path.startsWith("/api/restaurants/v1/search/") ||
                 path.startsWith("/api/boards/") ||
                 path.startsWith("/api/boards/restaurant/") ||
