@@ -5,32 +5,36 @@ import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantSearchRequest
 import com.goorm.tablepick.domain.restaurant.dto.response.CategoryResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantDetailResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantListResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantSearchResponseDto;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantErrorCode;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryRepository;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
+import com.goorm.tablepick.domain.tag.repository.TagRepository;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional(readOnly = true)
+@Primary
 public class RestaurantServiceImpl implements RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final RestaurantCategoryRepository restaurantCategoryRepository;
     private final BoardTagRepository boardTagRepository;
+    private final TagRepository tagRepository;
 
     @Override
     public PagedRestaurantResponseDto searchRestaurants(@Valid RestaurantSearchRequestDto dto) {
@@ -41,7 +45,13 @@ public class RestaurantServiceImpl implements RestaurantService {
 
         boolean hasKeyword = keyword != null && !keyword.isEmpty();
         boolean hasTags = tagIds != null && !tagIds.isEmpty();
+        if (keyword != null && keyword.length() > 20) {
+            throw new RestaurantException(RestaurantErrorCode.TOO_LONG_KEYWORD);
+        }
 
+        if (tagIds != null && !tagIds.isEmpty() && tagIds.size() > 3) {
+            throw new RestaurantException(RestaurantErrorCode.TOO_MANY_TAGS);
+        }
         Page<Restaurant> restaurantList;
         //키워드, 태그 검색
         if (hasKeyword && hasTags) {
@@ -51,6 +61,7 @@ public class RestaurantServiceImpl implements RestaurantService {
             if (restaurantList == null || restaurantList.isEmpty()) {
                 return new PagedRestaurantResponseDto(Page.empty(pageable));
             }
+
             return new PagedRestaurantResponseDto(restaurantList);
         }
         //키워드 검색
@@ -91,7 +102,6 @@ public class RestaurantServiceImpl implements RestaurantService {
                     restaurant.getAddress(),
                     restaurant.getRestaurantImages().isEmpty() ? null
                             : restaurant.getRestaurantImages().get(0).getImageUrl()
-
             );
         });
 
@@ -121,5 +131,23 @@ public class RestaurantServiceImpl implements RestaurantService {
         return categoryList.stream()
                 .map(CategoryResponseDto::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<RestaurantSearchResponseDto> searchRestaurantsV1(RestaurantSearchRequestDto requestDto) {
+        Pageable pageable = PageRequest.of(requestDto.getPage(), 6);
+        String keyword = requestDto.getKeyword();
+        List<Long> tagIds = requestDto.getTagIds();
+
+        if (keyword != null && keyword.length() > 20) {
+            throw new RestaurantException(RestaurantErrorCode.TOO_LONG_KEYWORD);
+        }
+
+        if (tagIds != null && !tagIds.isEmpty() && tagIds.size() > 3) {
+            throw new RestaurantException(RestaurantErrorCode.TOO_MANY_TAGS);
+        }
+
+        return restaurantRepository.searchRestaurantResult(keyword,
+            tagIds, pageable);
     }
 }
