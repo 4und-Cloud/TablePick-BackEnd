@@ -40,4 +40,13 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
             "b.createdAt DESC")
     Page<Object[]> findBoardsWithImagesByRestaurantId(@Param("restaurantId") Long restaurantId, Pageable pageable);
 
+    @Query("SELECT b, r, c, i FROM Board b " +
+            "JOIN Restaurant r ON b.restaurantId = r.id " +
+            "JOIN RestaurantCategory c ON r.restaurantCategory.id = c.id " +
+            "LEFT JOIN b.boardImages i " +
+            "WHERE b.id IN (:ids) AND (i.id IS NULL OR i.id = (" +
+            "SELECT MIN(i2.id) FROM BoardImage i2 WHERE i2.board = b)) " +
+            "ORDER BY b.createdAt DESC")
+    Page<Object[]> findBoardsByIdsInOrder(@Param("ids") List<Long> ids, Pageable pageable);
+
 }

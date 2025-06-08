@@ -30,20 +30,15 @@ public class BoardController {
 
     private final BoardService boardService;
 
-
-    @GetMapping("/main")
-    public List<BoardListResponseDto> getMainBoards() {
-        return boardService.getBoardsForMainPage();
-    }
-
-
     @GetMapping("/list")
     public PagedBoardListResponseDto getPagedBoards(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size
-
+            @RequestParam(defaultValue = "6") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        return boardService.getBoards(page, size);
+        Member member = (userDetails != null) ? userDetails.getMember() : null;
+
+        return boardService.getBoards(page, size, member);
     }
 
     @GetMapping("/{boardId}")
@@ -84,6 +79,7 @@ public class BoardController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Member member = userDetails.getMember();
+        System.out.println(member);
 
         BoardCreateResponseDto response = boardService.createBoard(boardRequestDto, boardRequestDto.getImages(), member);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
