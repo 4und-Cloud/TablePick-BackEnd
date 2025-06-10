@@ -7,6 +7,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface RestaurantRepositoryCustom {
-    List<RestaurantSearchResponseDto> searchRestaurantResult(
+    Page<RestaurantSearchResponseDto> searchRestaurantResult(
             String keyword, List<Long> tagIds, Pageable pageable);
 }
