@@ -1,6 +1,7 @@
 package com.goorm.tablepick.global.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.goorm.tablepick.domain.reservation.config.QueryCountInterceptor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -10,7 +11,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * 웹 관련 설정을 위한 구성 클래스
  */
 @Configuration
+@RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
+
+    private QueryCountInterceptor queryCountInterceptor;
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
@@ -29,6 +33,11 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations("classpath:/static/")
                 .setCachePeriod(0);  // 캐싱 비활성화
     }
+
+//    @Override
+//    public void addInterceptors(InterceptorRegistry registry) {
+//        registry.addInterceptor(queryCountInterceptor).addPathPatterns("/**");
+//    }
 
     // Firebase 서비스 워커를 위한 필터 빈 추가
 //    @Bean
