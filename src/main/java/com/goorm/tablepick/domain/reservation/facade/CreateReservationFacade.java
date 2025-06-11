@@ -37,7 +37,7 @@ public class CreateReservationFacade {
         ).orElseThrow(() -> new ReservationException(ReservationErrorCode.NO_RESERVATION_SLOT));
 
         // 1. 내부 트랜잭션으로 예약 생성
-        Reservation reservation = reservationExternalUpdateService.createReservationWithTransaction(
+        Reservation reservation = reservationExternalUpdateService.createReservationWithOptimisticTransaction(
                 member.getId(),
                 reservationSlot.getId(),
                 request.getPartySize()

@@ -18,12 +18,21 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReservationTestController {
     private final CreateReservationTestFacade createReservationTestFacade;
 
-    @PostMapping("/test/{memberId}")
+    @PostMapping("/test/optimistic/{memberId}")
     @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
-    public ResponseEntity<Void> createReservationCurrent(@PathVariable Long memberId,
-                                                         @RequestBody @Valid ReservationRequestDto request) {
+    public ResponseEntity<Void> createReservationOptimistic(@PathVariable Long memberId,
+                                                            @RequestBody @Valid ReservationRequestDto request) {
 
-        createReservationTestFacade.createReservation(memberId, request);
+        createReservationTestFacade.createReservationOptimistic(memberId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/test/pessimistic/{memberId}")
+    @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
+    public ResponseEntity<Void> createReservationPessimistic(@PathVariable Long memberId,
+                                                             @RequestBody @Valid ReservationRequestDto request) {
+
+        createReservationTestFacade.createReservationPessimistic(memberId, request);
         return ResponseEntity.ok().build();
     }
 

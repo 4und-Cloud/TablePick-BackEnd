@@ -26,7 +26,7 @@ public class ReservationExternalUpdateService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public Reservation createReservationWithTransaction(Long memberId, Long slotId, Long partySize) {
+    public Reservation createReservationWithOptimisticTransaction(Long memberId, Long slotId, Long partySize) {
         // 1. 회원 및 예약 슬롯 조회
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
@@ -49,6 +49,38 @@ public class ReservationExternalUpdateService {
                 .partySize(partySize)
                 .reservationStatus(ReservationStatus.PENDING)
                 .paymentStatus("PENDING")
+                //.restaurant(reservationSlot.getRestaurant())
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        return reservationRepository.save(reservation);
+    }
+
+    @Transactional
+    public Reservation createReservationWithPessimisticTransaction(Long memberId, Long slotId, Long partySize) {
+        // 1. 회원 및 예약 슬롯 조회
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+
+        ReservationSlot reservationSlot = reservationSlotRepository.findByIdWithPessimisticLock(slotId)
+                .orElseThrow(() -> new ReservationException(ReservationErrorCode.NO_RESERVATION_SLOT));
+
+        // 2. 예약 슬롯 용량 검증 및 카운트 증가
+        if (reservationSlot.getCount() >= reservationSlot.getRestaurant().getMaxCapacity()) {
+            throw new ReservationException(ReservationErrorCode.EXCEED_RESERVATION_LIMIT);
+        }
+
+        reservationSlot.setCount(reservationSlot.getCount() + 1);
+        reservationSlotRepository.save(reservationSlot);
+
+        // 3. 예약 생성
+        Reservation reservation = Reservation.builder()
+                .member(member)
+                .reservationSlot(reservationSlot)
+                .partySize(partySize)
+                .reservationStatus(ReservationStatus.PENDING)
+                .paymentStatus("PENDING")
+                .restaurant(reservationSlot.getRestaurant())
                 .createdAt(LocalDateTime.now())
                 .build();
 

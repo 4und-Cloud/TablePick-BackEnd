@@ -13,7 +13,7 @@ export const options = {
     scenarios: {
         reservation_scenario: {
             executor: 'per-vu-iterations',
-            vus: 10000,
+            vus: 100000,
             iterations: 1,
         },
     },
@@ -40,7 +40,7 @@ export default function () {
         timeout: '10s',
     };
 
-    const res = http.post(`${BASE_URL}/api/reservations/test/optimistic/${userId}`, payload, params);
+    const res = http.post(`${BASE_URL}/api/reservations/test/pessimistic/${userId}`, payload, params);
     console.log(`User ${userId} - Status: ${res.status}, Body: ${res.body || 'No body'}, Error: ${res.error || 'No error'}, Error Code: ${res.error_code || 'No error code'}`);
 
     check(res, {
