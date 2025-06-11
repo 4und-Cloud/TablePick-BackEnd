@@ -15,10 +15,8 @@ public class ReservationSlotService {
     private final ReservationSlotRepository slotRepository;
 
     @Transactional
-    public List<ReservationSlot> generateAndPersistSlots() {
-        List<ReservationSlot> slots = slotGenerator.generateSlotsForWeek();
-        slotRepository.saveAll(slots);
-        return slots;
+    public void bulkInsert(List<ReservationSlot> reservationSlots) {
+        slotRepository.saveAll(reservationSlots);
     }
 
     @Transactional
