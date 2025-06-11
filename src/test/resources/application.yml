@@ -22,10 +22,11 @@ spring:
     password:
     driver-class-name: org.h2.Driver
 
+  
   h2:
     console:
       enabled: true
-      enabled: true
+
 
   task:
     execution:

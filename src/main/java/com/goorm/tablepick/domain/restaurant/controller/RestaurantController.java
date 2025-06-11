@@ -1,9 +1,8 @@
 package com.goorm.tablepick.domain.restaurant.controller;
 
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantSearchRequestDto;
-import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
-import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantDetailResponseDto;
-import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.*;
+import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.service.RestaurantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -12,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,5 +58,17 @@ public class RestaurantController {
     public RestaurantDetailResponseDto getRestaurantDetail(
             @PathVariable @Parameter(description = "식당 ID", example = "1") Long restaurantId) {
         return restaurantService.getRestaurantDetail(restaurantId);
+    }
+
+    @GetMapping("/v1/search")
+    public PagedRestaurantSearchResponseDto searchRestaurantsV1(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) List<Long> tagIds,
+            @RequestParam(defaultValue = "0") int page) {
+        RestaurantSearchRequestDto requestDto = RestaurantSearchRequestDto.builder()
+                .keyword(keyword)
+                .tagIds(tagIds)
+                .page(page).build();
+        return restaurantService.searchRestaurantsV1(requestDto);
     }
 }

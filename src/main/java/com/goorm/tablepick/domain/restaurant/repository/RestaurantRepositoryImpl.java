@@ -1,0 +1,165 @@
+package com.goorm.tablepick.domain.restaurant.repository;
+
+import com.goorm.tablepick.domain.board.entity.QBoardTag;
+import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantSearchResponseDto;
+import com.goorm.tablepick.domain.restaurant.entity.QMenu;
+import com.goorm.tablepick.domain.restaurant.entity.QRestaurant;
+import com.goorm.tablepick.domain.restaurant.entity.QRestaurantImage;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.JPAExpressions;
+import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+
+import jakarta.persistence.EntityManager;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
+    private final JPAQueryFactory queryFactory;
+
+    public RestaurantRepositoryImpl(EntityManager em) {
+        this.queryFactory = new JPAQueryFactory(em);
+    }
+
+    @Override
+    public Page<RestaurantSearchResponseDto> searchRestaurantResult(
+            String keyword,
+            List<Long> tagIds,
+            Pageable pageable
+    ) {
+        QRestaurant restaurant = QRestaurant.restaurant;
+        QBoardTag boardTag = QBoardTag.boardTag;
+        QRestaurantImage image = QRestaurantImage.restaurantImage;
+
+        boolean hasKeyword = (keyword != null && !keyword.isBlank());
+        boolean hasTags = (tagIds != null && !tagIds.isEmpty());
+        int tagCount = hasTags ? tagIds.size() : 0;
+
+        BooleanBuilder where = new BooleanBuilder();
+
+        if (hasKeyword) {
+            keyword = keyword.toLowerCase().trim();
+
+            BooleanBuilder keywordCond = new BooleanBuilder();
+            keywordCond.or(restaurant.name.like("%" + keyword + "%"));
+            keywordCond.or(restaurant.address.like("%" + keyword + "%"));
+
+            QMenu menu = QMenu.menu;
+
+            keywordCond.or(
+                    JPAExpressions.selectOne()
+                            .from(menu)
+                            .where(
+                                    menu.restaurant.id.eq(restaurant.id)
+                                            .and(menu.name.like("%" + keyword + "%"))
+                            )
+                            .exists()
+            );
+
+            where.and(keywordCond);
+        }
+
+        List<Long> filteredRestaurantIds = null;
+        if (hasTags) {
+            filteredRestaurantIds = queryFactory
+                    .select(boardTag.restaurant.id)
+                    .from(boardTag)
+                    .where(boardTag.tag.id.in(tagIds))
+                    .groupBy(boardTag.restaurant.id)
+                    .having(boardTag.tag.id.countDistinct().eq((long) tagCount))
+                    .fetch();
+
+            if (filteredRestaurantIds.isEmpty()) return Page.empty(pageable);
+
+            where.and(restaurant.id.in(filteredRestaurantIds));
+        }
+
+        // 3. 메인 쿼리 (태그 개수로 정렬 추가)
+        JPAQuery<RestaurantSearchResponseDto> query = queryFactory
+                .select(Projections.fields(
+                        RestaurantSearchResponseDto.class,
+                        restaurant.id,
+                        restaurant.name,
+                        restaurant.address,
+                        restaurant.restaurantCategory.name.as("restaurantCategory")
+                ))
+                .from(restaurant)
+                .where(where);
+
+        // 태그 개수로 정렬하는 서브쿼리 추가
+        if (hasTags) {
+            query.leftJoin(boardTag).on(boardTag.restaurant.id.eq(restaurant.id))
+                    .groupBy(restaurant.id, restaurant.name, restaurant.address, restaurant.restaurantCategory.name)
+                    .orderBy(boardTag.countDistinct().desc());
+        }
+
+        // 페이징 적용
+        List<RestaurantSearchResponseDto> dtos = query
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        if (dtos.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // 2. fetch total count
+        Long totalCount = queryFactory
+                .select(restaurant.count())
+                .from(restaurant)
+                .where(where)
+                .fetchOne();
+
+        // 3. extract ids
+        List<Long> ids = dtos.stream()
+                .map(RestaurantSearchResponseDto::getId)
+                .toList();
+
+        // 4. 이미지 맵핑
+        Map<Long, String> imageMap = queryFactory
+                .select(image.restaurant.id, image.imageUrl)
+                .from(image)
+                .where(image.restaurant.id.in(ids))
+                .orderBy(image.id.asc())
+                .fetch()
+                .stream()
+                .collect(Collectors.toMap(
+                        tuple -> tuple.get(image.restaurant.id),
+                        tuple -> tuple.get(image.imageUrl),
+                        (first, second) -> first
+                ));
+
+        // 5. 태그 맵핑
+        Map<Long, List<String>> tagMap = queryFactory
+                .selectDistinct(boardTag.restaurant.id, boardTag.tag.name)
+                .from(boardTag)
+                .where(boardTag.restaurant.id.in(ids))
+                .fetch()
+                .stream()
+                .collect(Collectors.groupingBy(
+                        tuple -> tuple.get(boardTag.restaurant.id),
+                        Collectors.mapping(
+                                tuple -> tuple.get(boardTag.tag.name),
+                                Collectors.toList()
+                        )
+                ));
+
+        // 6. 최종 매핑
+        dtos.forEach(dto -> {
+            dto.setRestaurantImage(imageMap.get(dto.getId()));
+            dto.setBoardTags(tagMap.getOrDefault(dto.getId(), List.of()));
+        });
+
+        // 7. Page로 감싸서 반환
+        return new PageImpl<>(dtos, pageable, totalCount != null ? totalCount : 0);
+    }
+
+}

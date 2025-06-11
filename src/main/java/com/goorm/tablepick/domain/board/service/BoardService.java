@@ -11,8 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface BoardService {
-    List<BoardListResponseDto> getBoardsForMainPage();
-    PagedBoardListResponseDto getBoards(int page, int size);
+    PagedBoardListResponseDto getBoards(int page, int size, Member member);
     BoardDetailResponseDto getBoardDetail(Long boardId);
     List<BoardListResponseDto> getBoardsByRestaurant(Long restaurantId);
 
