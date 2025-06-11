@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -98,7 +97,6 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         Cookie accessCookie = new Cookie("access_token", accessToken);
         accessCookie.setHttpOnly(true);
         accessCookie.setPath("/");
-        accessCookie.setMaxAge(24 * 60 * 60); // 24시간
 
         return accessCookie;
     }
@@ -108,7 +106,6 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         refreshCookie.setHttpOnly(true);
 //        refreshCookie.setSecure(true); // HTTPS에서만 전송
         refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(7 * 24 * 60 * 60); // 7일
 
         return refreshCookie;
     }
