@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
@@ -28,7 +30,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
     }
 
     @Override
-    public List<RestaurantSearchResponseDto> searchRestaurantResult(
+    public Page<RestaurantSearchResponseDto> searchRestaurantResult(
             String keyword,
             List<Long> tagIds,
             Pageable pageable
@@ -43,7 +45,6 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
 
         BooleanBuilder where = new BooleanBuilder();
 
-        // 1. 키워드 조건 (EXISTS 사용)
         if (hasKeyword) {
             keyword = keyword.toLowerCase().trim();
 
@@ -53,7 +54,6 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
 
             QMenu menu = QMenu.menu;
 
-            // EXISTS 서브쿼리로 대체
             keywordCond.or(
                     JPAExpressions.selectOne()
                             .from(menu)
@@ -67,7 +67,6 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
             where.and(keywordCond);
         }
 
-        // 2. 태그 필터 사전 추출
         List<Long> filteredRestaurantIds = null;
         if (hasTags) {
             filteredRestaurantIds = queryFactory
@@ -78,7 +77,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
                     .having(boardTag.tag.id.countDistinct().eq((long) tagCount))
                     .fetch();
 
-            if (filteredRestaurantIds.isEmpty()) return List.of();
+            if (filteredRestaurantIds.isEmpty()) return Page.empty(pageable);
 
             where.and(restaurant.id.in(filteredRestaurantIds));
         }
@@ -108,14 +107,23 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        // 4. ID 리스트 추출
+        if (dtos.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // 2. fetch total count
+        Long totalCount = queryFactory
+                .select(restaurant.count())
+                .from(restaurant)
+                .where(where)
+                .fetchOne();
+
+        // 3. extract ids
         List<Long> ids = dtos.stream()
                 .map(RestaurantSearchResponseDto::getId)
                 .toList();
 
-        if (ids.isEmpty()) return List.of();
-
-        // 5. 이미지 맵핑 (최초 이미지만)
+        // 4. 이미지 맵핑
         Map<Long, String> imageMap = queryFactory
                 .select(image.restaurant.id, image.imageUrl)
                 .from(image)
@@ -129,7 +137,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
                         (first, second) -> first
                 ));
 
-        // 6. 태그 맵핑
+        // 5. 태그 맵핑
         Map<Long, List<String>> tagMap = queryFactory
                 .selectDistinct(boardTag.restaurant.id, boardTag.tag.name)
                 .from(boardTag)
@@ -144,12 +152,14 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
                         )
                 ));
 
-        // 7. 결과 매핑
+        // 6. 최종 매핑
         dtos.forEach(dto -> {
             dto.setRestaurantImage(imageMap.get(dto.getId()));
             dto.setBoardTags(tagMap.getOrDefault(dto.getId(), List.of()));
         });
 
-        return dtos;
+        // 7. Page로 감싸서 반환
+        return new PageImpl<>(dtos, pageable, totalCount != null ? totalCount : 0);
     }
+
 }

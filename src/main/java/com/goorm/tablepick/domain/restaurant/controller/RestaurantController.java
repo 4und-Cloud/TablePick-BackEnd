@@ -1,10 +1,7 @@
 package com.goorm.tablepick.domain.restaurant.controller;
 
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantSearchRequestDto;
-import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
-import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantDetailResponseDto;
-import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantResponseDto;
-import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantSearchResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.*;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.service.RestaurantService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -64,7 +61,7 @@ public class RestaurantController {
     }
 
     @GetMapping("/v1/search")
-    public List<RestaurantSearchResponseDto> searchRestaurantsV1(
+    public PagedRestaurantSearchResponseDto searchRestaurantsV1(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) List<Long> tagIds,
             @RequestParam(defaultValue = "0") int page) {

@@ -1,6 +1,7 @@
 package com.goorm.tablepick.domain.restaurant.dto.response;
 
 import com.goorm.tablepick.domain.board.entity.BoardTag;
+import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
 import com.goorm.tablepick.domain.restaurant.entity.RestaurantImage;
 import io.swagger.v3.oas.annotations.media.Schema;

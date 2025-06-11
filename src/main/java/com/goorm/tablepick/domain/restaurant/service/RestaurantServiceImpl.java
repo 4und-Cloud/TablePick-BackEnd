@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +33,6 @@ public class RestaurantServiceImpl implements RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final RestaurantCategoryRepository restaurantCategoryRepository;
     private final BoardTagRepository boardTagRepository;
-    private final TagRepository tagRepository;
 
     @Override
     public PagedRestaurantResponseDto searchRestaurants(@Valid RestaurantSearchRequestDto dto) {
@@ -132,7 +132,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
-    public List<RestaurantSearchResponseDto> searchRestaurantsV1(RestaurantSearchRequestDto requestDto) {
+    public PagedRestaurantSearchResponseDto searchRestaurantsV1(RestaurantSearchRequestDto requestDto) {
         Pageable pageable = PageRequest.of(requestDto.getPage(), 6);
         String keyword = requestDto.getKeyword();
         List<Long> tagIds = requestDto.getTagIds();
@@ -144,8 +144,8 @@ public class RestaurantServiceImpl implements RestaurantService {
         if (tagIds != null && !tagIds.isEmpty() && tagIds.size() > 3) {
             throw new RestaurantException(RestaurantErrorCode.TOO_MANY_TAGS);
         }
-
-        return restaurantRepository.searchRestaurantResult(keyword,
-            tagIds, pageable);
+        PagedRestaurantSearchResponseDto pagedRestaurantSearchResponseDto = PagedRestaurantSearchResponseDto.create(restaurantRepository.searchRestaurantResult(keyword,
+                tagIds, pageable));
+        return pagedRestaurantSearchResponseDto;
     }
 }
