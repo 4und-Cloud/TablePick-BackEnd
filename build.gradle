@@ -33,6 +33,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'com.mysql:mysql-connector-j'
@@ -54,6 +55,16 @@ dependencies {
     implementation 'com.google.firebase:firebase-admin:9.4.3'
     // Batch 나눌 때 사용
     implementation 'com.google.guava:guava:33.1.0-jre'
+    // 모니터링
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+    // Micrometer core (기본 메트릭용)
+    implementation 'io.micrometer:micrometer-core'
+
+    // 간단한 테스트용 registry
+    testImplementation 'io.micrometer:micrometer-registry-simple'
+
+    // (운영 시 Prometheus 사용 시)
+    // implementation 'io.micrometer:micrometer-registry-prometheus'
 
     // Querydsl (Jakarta 버전)
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
@@ -67,6 +78,14 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.4'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.4'
     testRuntimeOnly 'com.h2database:h2' //test용
+
+    // 테스트용
+    testImplementation 'org.testcontainers:testcontainers:1.19.6'
+    testImplementation 'org.testcontainers:junit-jupiter:1.19.6'
+    testImplementation 'org.testcontainers:mysql:1.19.6'
+    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+
 }
 //Data parser
 tasks.register('importRestaurantData', JavaExec) {
