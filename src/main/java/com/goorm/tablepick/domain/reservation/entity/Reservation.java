@@ -3,6 +3,7 @@ package com.goorm.tablepick.domain.reservation.entity;
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.reservation.enums.ReservationStatus;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -18,6 +19,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
 
 @Entity
 @Getter
@@ -48,6 +50,10 @@ public class Reservation {
     private String paymentId; // 결제 ID, 8082 포트에서 관리되는 Payment와 연결
     private String paymentStatus; // PENDING, COMPLETED, FAILED, CANCELLED
 
+    @Column
+    @CreatedDate
+    private LocalDateTime createdAt;
+
     @Builder
     public Reservation(Long partySize,
                        ReservationStatus reservationStatus,
@@ -55,7 +61,8 @@ public class Reservation {
                        ReservationSlot reservationSlot,
                        Restaurant restaurant,
                        String paymentId,
-                       String paymentStatus) {
+                       String paymentStatus,
+                       LocalDateTime createdAt) {
         this.partySize = partySize;
         this.reservationStatus = reservationStatus;
         this.member = member;
@@ -63,6 +70,7 @@ public class Reservation {
         this.restaurant = restaurant;
         this.paymentId = paymentId;
         this.paymentStatus = paymentStatus;
+        this.createdAt = createdAt;
     }
 
     /**
@@ -85,5 +93,9 @@ public class Reservation {
 
     public void setPaymentStatus(String paymentStatus) {
         this.paymentStatus = paymentStatus;
+    }
+
+    public void setPaymentId(String paymentId) {
+        this.paymentId = paymentId;
     }
 }

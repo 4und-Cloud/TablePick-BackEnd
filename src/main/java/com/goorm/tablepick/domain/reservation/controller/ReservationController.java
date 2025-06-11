@@ -1,8 +1,13 @@
 package com.goorm.tablepick.domain.reservation.controller;
 
 import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
-import com.goorm.tablepick.domain.reservation.dto.response.CreateReservationResponseDto;
+import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
+import com.goorm.tablepick.domain.reservation.facade.CreateReservationFacade;
+import com.goorm.tablepick.domain.reservation.facade.OptimisticLockFacade;
+import com.goorm.tablepick.domain.reservation.service.ImprovedReservationService.ReservationServiceV2;
+import com.goorm.tablepick.domain.reservation.service.ImprovedReservationSlotService.ReservationSlotServiceV2;
 import com.goorm.tablepick.domain.reservation.service.ReservationService;
+import com.goorm.tablepick.domain.reservation.service.ReservationSlotGenerator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -27,10 +32,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("api/reservations")
+@RequestMapping("/api/reservations")
 @RequiredArgsConstructor
 public class ReservationController {
     private final ReservationService reservationService;
+    private final CreateReservationFacade createReservationFacade;
+    private final OptimisticLockFacade optimisticLockFacade;
+    private final ReservationServiceV2 reservationServiceV2;
+    private final ReservationSlotGenerator reservationSlotGenerator;
+    private final ReservationSlotServiceV2 reservationSlotServiceV2;
 
     @PostMapping
     @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
@@ -40,6 +50,38 @@ public class ReservationController {
         CreateReservationResponseDto dto = reservationService.createReservation(userDetails.getUsername(), request);
         return ResponseEntity.ok(dto);
     }
+
+    @PostMapping("/pessimistic")
+    @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
+    public ResponseEntity<Void> createReservationPessimistic(@AuthenticationPrincipal UserDetails userDetails,
+                                                             @RequestBody @Valid ReservationRequestDto request) {
+        reservationServiceV2.createReservationPessimistic(userDetails.getUsername(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/optimistic")
+    @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
+    public ResponseEntity<Void> createReservationOptimistic(@AuthenticationPrincipal UserDetails userDetails,
+                                                            @RequestBody @Valid ReservationRequestDto request) {
+        try {
+            optimisticLockFacade.createReservationWithOptimisticLock(userDetails.getUsername(), request);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // 인터럽트 상태 복원
+            throw new RuntimeException();
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/current")
+    @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
+    public ResponseEntity<Void> createReservationCurrent(@AuthenticationPrincipal UserDetails userDetails,
+                                                         @RequestBody @Valid ReservationRequestDto request) {
+
+        createReservationFacade.createReservation(userDetails.getUsername(), request);
+        return ResponseEntity.ok().build();
+    }
+
 
     @DeleteMapping("/{reservationId}")
     @Operation(summary = "예약 취소", description = "예약 ID를 기반으로 예약을 취소합니다.")
@@ -94,6 +136,13 @@ public class ReservationController {
     ) {
         List<String> availableTimes = reservationService.getAvailableReservationTimes(restaurantId, date);
         return ResponseEntity.ok(availableTimes);
+    }
+
+    @PostMapping("/generate-slots")
+    public ResponseEntity<Void> generateAndPersistSlots() {
+        List<ReservationSlot> slots = reservationSlotGenerator.generateSlotsForWeek();
+        reservationSlotServiceV2.bulkInsert(slots);
+        return ResponseEntity.ok().build();
     }
 
 }

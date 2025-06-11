@@ -29,7 +29,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/dev/**", "/api/notifications/schedule/**",
+                                "/api/reservations/test/**", "/api/dev/**", "/api/notifications/schedule/**",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
                                 "/auth/**", "/oauth2/**", "/swagger-ui.html/**",
                                 "/api/restaurants/all", "/api/restaurants/{id}",
@@ -55,7 +55,8 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/")  // 로그아웃 성공 후 이동할 URL
                         .invalidateHttpSession(true)  // 세션 무효화
                         .deleteCookies("JSESSIONID", "access_token", "refresh_token")
-                );
+                )
+        ;
 
         return http.build();
     }
