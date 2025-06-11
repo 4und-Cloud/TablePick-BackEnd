@@ -45,7 +45,6 @@ public class FCMServiceImpl implements FCMService {
             log.info("내용: {}", body);
             log.info("데이터: {}", data);
             log.info("응답: {}", response);
-            log.info("메시지 타입: 데이터 메시지 (서비스 워커에서 처리)");
             log.info("=======================================");
 
             // 브라우저 콘솔에서도 확인할 수 있도록 System.out으로도 출력
@@ -53,12 +52,11 @@ public class FCMServiceImpl implements FCMService {
             System.out.println("제목: " + title);
             System.out.println("내용: " + body);
             System.out.println("데이터: " + data);
-            System.out.println("메시지 타입: 데이터 메시지 (서비스 워커에서 처리)");
             System.out.println("=======================================\n");
 
             return response;
         } catch (FirebaseMessagingException e) {
-            log.error("FCM 메시지 전송에 실패했어용 ㅠㅠ: {}", e.getMessage());
+            log.error("FCM 메시지 전송에 실패했습니다: {}", e.getMessage());
 
             if (e.getMessagingErrorCode() == com.google.firebase.messaging.MessagingErrorCode.INVALID_ARGUMENT ||
                     e.getMessagingErrorCode() == com.google.firebase.messaging.MessagingErrorCode.UNREGISTERED) {
