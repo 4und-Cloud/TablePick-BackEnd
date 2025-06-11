@@ -1,6 +1,7 @@
 package com.goorm.tablepick.domain.reservation.controller;
 
 import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
+import com.goorm.tablepick.domain.reservation.dto.response.CreateReservationResponseDto;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
 import com.goorm.tablepick.domain.reservation.facade.CreateReservationFacade;
 import com.goorm.tablepick.domain.reservation.facade.OptimisticLockFacade;
