@@ -21,20 +21,18 @@ spring:
     username: sa
     password:
     driver-class-name: org.h2.Driver
-
   
   h2:
     console:
       enabled: true
-
-
+      
   task:
     execution:
       pool:
         core-size: 10
         max-size: 50
         queue-capacity: 100
-
+        
   security:
     oauth2:
       client:
@@ -57,7 +55,7 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
-
+            
   jackson:
     serialization:
       write-dates-as-timestamps: false
