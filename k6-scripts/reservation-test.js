@@ -11,7 +11,7 @@ export const options = {
     scenarios: {
         reservation_scenario: {
             executor: 'per-vu-iterations',
-            vus: 100,
+            vus: 10000,
             iterations: 1,
         },
     },
@@ -44,7 +44,8 @@ export default function () {
     check(res, {
         'status is 200': (r) => r.status === 200,
         'no conflict': (r) => r.status !== 409,
-        'response exists': (r) => r.status === 200,
+        'response exists': (r) => r.status === 200 && !r.body.includes('Login with OAuth 2.0'),
+        'not exceed limit': (r) => r.status !== 400 || !r.body.includes('EXCEED_RESERVATION_LIMIT'),
     });
 
     sleep(0.1);
