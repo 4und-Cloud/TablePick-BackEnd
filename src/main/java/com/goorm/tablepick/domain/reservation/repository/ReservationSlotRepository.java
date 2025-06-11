@@ -18,6 +18,10 @@ public interface ReservationSlotRepository extends JpaRepository<ReservationSlot
     @Query("SELECT rs FROM ReservationSlot rs WHERE rs.restaurant.id = :restaurantId AND rs.date = :date AND rs.time = :time")
     Optional<ReservationSlot> findWithPessimisticLock(Long restaurantId, LocalDate date, LocalTime time);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT rs FROM ReservationSlot rs WHERE rs.id = :slotId")
+    Optional<ReservationSlot> findByIdWithPessimisticLock(Long slotId);
+
     @Lock(LockModeType.OPTIMISTIC)
     @Query("SELECT rs FROM ReservationSlot rs WHERE rs.id = :slotId")
     Optional<ReservationSlot> findByIdWithOptimisticLock(Long slotId);
