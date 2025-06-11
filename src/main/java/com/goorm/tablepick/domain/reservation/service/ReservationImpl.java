@@ -86,6 +86,7 @@ public class ReservationImpl implements ReservationService {
                 .restaurant(restaurant)
                 .paymentId(paymentId)
                 .paymentStatus("PENDING")
+                .createdAt(LocalDateTime.now())
                 .build();
 
         Reservation savedReservation = reservationRepository.save(reservation);
@@ -97,21 +98,21 @@ public class ReservationImpl implements ReservationService {
         // requestPaymentAsync(paymentId, request, member, restaurant);
 
         // 예약 완료 알림 및 예약 시간 기준 알림 예약
-        try {
-            // 예약 완료 알림 즉시 전송
-            scheduleReservationCompletedNotification(savedReservation);
-
-            // 예약 시간 기준 알림 예약 (1일 전, 3시간 전, 1시간 전, 3시간 후)
-            scheduleAllReservationNotifications(savedReservation);
-
-            // ReservationNotificationScheduler 인터페이스 사용
-            reservationNotificationScheduler.scheduleReservationNotifications(savedReservation);
-
-            log.info("예약 ID: {}에 대한 모든 알림이 성공적으로 예약되었습니다.", savedReservation.getId());
-        } catch (Exception e) {
-            log.error("예약 알림 스케줄링 중 오류 발생: {}", e.getMessage(), e);
-            // 알림 예약 실패해도 예약 자체는 성공으로 처리
-        }
+//        try {
+//            // 예약 완료 알림 즉시 전송
+//            scheduleReservationCompletedNotification(savedReservation);
+//
+//            // 예약 시간 기준 알림 예약 (1일 전, 3시간 전, 1시간 전, 3시간 후)
+//            scheduleAllReservationNotifications(savedReservation);
+//
+//            // ReservationNotificationScheduler 인터페이스 사용
+//            reservationNotificationScheduler.scheduleReservationNotifications(savedReservation);
+//
+//            log.info("예약 ID: {}에 대한 모든 알림이 성공적으로 예약되었습니다.", savedReservation.getId());
+//        } catch (Exception e) {
+//            log.error("예약 알림 스케줄링 중 오류 발생: {}", e.getMessage(), e);
+//            // 알림 예약 실패해도 예약 자체는 성공으로 처리
+//        }
 
         CreateReservationResponseDto dto = CreateReservationResponseDto.builder()
                 .reservationId(savedReservation.getId())

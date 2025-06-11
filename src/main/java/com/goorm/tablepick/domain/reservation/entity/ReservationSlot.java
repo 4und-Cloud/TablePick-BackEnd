@@ -36,7 +36,7 @@ public class ReservationSlot {
     private Long count;
 
     @Version
-    private Long version;
+    private long version;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id", nullable = false)
