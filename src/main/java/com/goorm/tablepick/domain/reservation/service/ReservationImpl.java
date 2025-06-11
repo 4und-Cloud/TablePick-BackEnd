@@ -17,7 +17,6 @@ import com.goorm.tablepick.domain.reservation.repository.ReservationSlotReposito
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantErrorCode;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
-import com.goorm.tablepick.domain.restaurant.repository.RestaurantOperatingHourRepository;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import jakarta.transaction.Transactional;
 import java.time.LocalDate;
