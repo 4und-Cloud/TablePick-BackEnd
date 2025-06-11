@@ -1,6 +1,5 @@
-package com.goorm.tablepick.domain.reservation.service.v1;
+package com.goorm.tablepick.domain.reservation.service.ImprovedReservationSlotService;
 
-import com.google.common.collect.Lists;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
 import com.goorm.tablepick.domain.reservation.repository.ReservationSlotRepository;
 import com.goorm.tablepick.domain.reservation.service.ReservationSlotGenerator;
@@ -23,48 +22,36 @@ public class ReservationSlotServiceV1 {
     private final ReservationSlotRepository slotRepository;
     private final JdbcTemplate jdbcTemplate;
 
-    private static final int BATCH_SIZE = 5000; // 배치 크기 설정
-
     @PersistenceContext
     private EntityManager entityManager;
 
     @Transactional
-    public List<ReservationSlot> generateAndPersistSlots() {
-        List<ReservationSlot> slots = slotGenerator.generateSlotsForWeek();
-
-        // 데이터를 BATCH_SIZE 단위로 분할
-        List<List<ReservationSlot>> batches = Lists.partition(slots, BATCH_SIZE);
-
+    public void bulkInsert(List<ReservationSlot> reservationSlots) {
         String sql = """
                 INSERT INTO reservation_slot (date, time, count, restaurant_id)
                 VALUES (?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE count = count
                 """;
 
-        int batchCount = 0;
-        for (List<ReservationSlot> batch : batches) {
-            jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
-                @Override
-                public void setValues(PreparedStatement ps, int i) throws SQLException {
-                    ReservationSlot slot = batch.get(i);
-                    ps.setDate(1, java.sql.Date.valueOf(slot.getDate()));
-                    ps.setTime(2, java.sql.Time.valueOf(slot.getTime()));
-                    ps.setLong(3, slot.getCount());
-                    ps.setLong(4, slot.getRestaurant().getId());
-                }
+        jdbcTemplate.batchUpdate(sql,
+                new BatchPreparedStatementSetter() {
+                    @Override
+                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        ReservationSlot slot = reservationSlots.get(i);
+                        ps.setDate(1, java.sql.Date.valueOf(slot.getDate()));
+                        ps.setTime(2, java.sql.Time.valueOf(slot.getTime()));
+                        ps.setLong(3, slot.getCount());
+                        ps.setLong(4, slot.getRestaurant().getId());
+                    }
 
-                @Override
-                public int getBatchSize() {
-                    return batch.size();
-                }
-            });
-            batchCount++;
-            System.out.println(
-                    "Inserted batch " + batchCount + " of " + batches.size() + " (" + batch.size() + " records)");
-        }
+                    @Override
+                    public int getBatchSize() {
+                        return reservationSlots.size();
+                    }
+                });
 
-        return slots;
     }
+
 
     @Transactional
     public void bulkDelete() {
