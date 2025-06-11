@@ -4,6 +4,12 @@ spring:
     username: tablepick
     password: tablepick
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
+      idle-timeout: 10000
+      max-lifetime: 30000
+      connection-timeout: 30000
 
   jpa:
     hibernate:
@@ -12,6 +18,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+        session_factory:
+          statement_inspector: com.goorm.tablepick.domain.reservation.config.QueryCountInspector
 
   task:
     execution:
@@ -59,7 +67,7 @@ server:
 
 project:
   upload:
-    board-image-path: C:/uploads/images/board
+    board-image-path: /Users/oheunsol/imagefolder
 
 kakao:
   admin:
