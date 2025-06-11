@@ -1,6 +1,4 @@
-package com.goorm.tablepick.repository;
-
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+package com.goorm.tablepick.domain.restaurant.repository;
 
 import com.goorm.tablepick.domain.board.entity.Board;
 import com.goorm.tablepick.domain.board.entity.BoardTag;
@@ -18,17 +16,8 @@ import com.goorm.tablepick.domain.restaurant.entity.Menu;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
 import com.goorm.tablepick.domain.restaurant.entity.RestaurantImage;
-import com.goorm.tablepick.domain.restaurant.repository.MenuRepository;
-import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryRepository;
-import com.goorm.tablepick.domain.restaurant.repository.RestaurantImageRepository;
-import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,10 +28,17 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+
 @ActiveProfiles("test")
 @DataJpaTest
 public class RestaurantRepositoryTest {
-
     @Autowired
     private RestaurantRepository restaurantRepository;
     @Autowired
@@ -446,27 +442,78 @@ public class RestaurantRepositoryTest {
                 .containsExactlyElementsOf(List.of(restaurant3, restaurant1, restaurant2));
     }
 
-    @DisplayName("이름 순으로 식당을 정렬한다.")
+    @DisplayName("보드 많은 순으로 식당을 정렬한다.")
     @Test
-    void findRestaurantsOrderByNameAsc(){
+    void findRestaurantsOrderByBoardNum(){
         // given
         RestaurantCategory restaurantCategory1 = RestaurantCategory.builder().name("한식").build();
         RestaurantCategory restaurantCategory2 = RestaurantCategory.builder().name("카페").build();
+        RestaurantCategory restaurantCategory3 = RestaurantCategory.builder().name("양식").build();
 
         Restaurant restaurant1 = createRestaurant("골목 식당", "강남구 강남대로 11", restaurantCategory1);
         Restaurant restaurant2 = createRestaurant("바다 식당", "서초구 서초대로 22", restaurantCategory1);
         Restaurant restaurant3 = createRestaurant("달콤한 카페", "도봉구 도봉대로 33", restaurantCategory2);
+        Restaurant restaurant4 = createRestaurant("조용한 카페", "강남구 삼성대로 33", restaurantCategory2);
+        Restaurant restaurant5 = createRestaurant("케이크가 맛있는 카페", " 도봉대로 33", restaurantCategory2);
+        Restaurant restaurant6 = createRestaurant("경양식집", "도봉구 도봉대로 33", restaurantCategory3);
+        RestaurantImage restaurantImage1 = createRestaurantImage(restaurant1, "https://example.com/image1.jpg");
+        RestaurantImage restaurantImage2 = createRestaurantImage(restaurant2, "https://example.com/image2.jpg");
+        RestaurantImage restaurantImage3 = createRestaurantImage(restaurant3, "https://example.com/image3.jpg");
+        RestaurantImage restaurantImage4 = createRestaurantImage(restaurant4, "https://example.com/image4.jpg");
+        RestaurantImage restaurantImage5 = createRestaurantImage(restaurant5, "https://example.com/image5.jpg");
+        RestaurantImage restaurantImage6 = createRestaurantImage(restaurant6, "https://example.com/image6.jpg");
+        restaurant1.getRestaurantImages().add(restaurantImage1);
+        restaurant2.getRestaurantImages().add(restaurantImage2);
+        restaurant3.getRestaurantImages().add(restaurantImage3);
+        restaurant4.getRestaurantImages().add(restaurantImage4);
+        restaurant5.getRestaurantImages().add(restaurantImage5);
+        restaurant6.getRestaurantImages().add(restaurantImage6);
 
-        restaurantCategoryRepository.saveAll(List.of(restaurantCategory1, restaurantCategory2));
-        restaurantRepository.saveAll(List.of(restaurant1, restaurant2, restaurant3));
+        restaurantCategoryRepository.saveAll(List.of(restaurantCategory1, restaurantCategory2, restaurantCategory3));
+        restaurantRepository.saveAll(List.of(restaurant1, restaurant2, restaurant3, restaurant4, restaurant5, restaurant6));
 
-        // when
+        Member member1 = createMember("member1@gmail.com", "홍길동");
+        Member member2 = createMember("member2@gmail.com", "고길동");
+
+        memberRepository.saveAll(List.of(member1, member2));
+
+        ReservationSlot reservationSlot1 = createReservationSlot(restaurant1);
+        ReservationSlot reservationSlot2 = createReservationSlot(restaurant2);
+        ReservationSlot reservationSlot3 = createReservationSlot(restaurant3);
+        ReservationSlot reservationSlot4 = createReservationSlot(restaurant4);
+        ReservationSlot reservationSlot5 = createReservationSlot(restaurant5);
+        ReservationSlot reservationSlot6 = createReservationSlot(restaurant6);
+
+        reservationSlotRepository.saveAll(List.of(reservationSlot1, reservationSlot2, reservationSlot3, reservationSlot4, reservationSlot5, reservationSlot6));
+
+        Reservation reservation1 = createReservation(reservationSlot1, member1, restaurant1);
+        Reservation reservation2 = createReservation(reservationSlot2, member1, restaurant2);
+        Reservation reservation3 = createReservation(reservationSlot3, member1, restaurant3);
+        Reservation reservation4 = createReservation(reservationSlot3, member2, restaurant3);
+        Reservation reservation5 = createReservation(reservationSlot3, member1, restaurant3);
+        Reservation reservation6 = createReservation(reservationSlot4, member1, restaurant4);
+        Reservation reservation7 = createReservation(reservationSlot4, member2, restaurant4);
+
+        reservationRepository.saveAll(List.of(reservation1, reservation2, reservation3, reservation4, reservation5, reservation6, reservation7));
+
+        Board board1 = createBoard(restaurant1, member1, reservation1);
+        Board board2 = createBoard(restaurant2, member1, reservation2);
+        Board board3 = createBoard(restaurant3, member1, reservation3);
+        Board board4 = createBoard(restaurant3, member2, reservation3);
+        Board board5 = createBoard(restaurant3, member1, reservation3);
+        Board board6 = createBoard(restaurant4, member1, reservation4);
+        Board board7 = createBoard(restaurant4, member2, reservation4);
+
+        boardRepository.saveAll(List.of(board1, board2, board3, board4, board5, board6, board7));
+
+        //when
         Pageable pageable = PageRequest.of(0, 6);
-        Page<Restaurant> popularRestaurants = restaurantRepository.findAllOrderByNameAsc(pageable);
+        Page<Restaurant> allOrderByBoardNum = restaurantRepository.findAllOrderByBoardNum(pageable);
 
-        // then
-        Assertions.assertThat(popularRestaurants).hasSize(3)
-                .containsExactlyElementsOf(List.of(restaurant1, restaurant3, restaurant2));
+        //then
+        Assertions.assertThat(allOrderByBoardNum.getContent()).hasSize(6)
+                .extracting("name")
+                .containsExactlyElementsOf(List.of("달콤한 카페", "조용한 카페", "골목 식당", "바다 식당", "케이크가 맛있는 카페", "경양식집"));
 
     }
 

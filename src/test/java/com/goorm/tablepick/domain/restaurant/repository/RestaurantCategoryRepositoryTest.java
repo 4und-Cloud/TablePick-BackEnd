@@ -1,7 +1,6 @@
-package com.goorm.tablepick.repository;
+package com.goorm.tablepick.domain.restaurant.repository;
 
 import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
-import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,7 +11,6 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 @DataJpaTest
 public class RestaurantCategoryRepositoryTest {
-
     @Autowired
     private RestaurantCategoryRepository restaurantCategoryRepository;
 
