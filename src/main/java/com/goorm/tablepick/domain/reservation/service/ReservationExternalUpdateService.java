@@ -56,7 +56,7 @@ public class ReservationExternalUpdateService {
     }
 
     @Transactional
-    public Reservation updateReservationPayment(Long reservationId, String paymentId) {
+    public void updateReservationPayment(Long reservationId, String paymentId) {
         // 1. 예약 정보 조회
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ReservationException(ReservationErrorCode.NOT_FOUND));
@@ -64,6 +64,6 @@ public class ReservationExternalUpdateService {
         // 2. 결제 ID 및 상태 갱신
         reservation.setPaymentId(paymentId);
         reservation.setPaymentStatus("CONFIRMED");
-        return reservationRepository.save(reservation);
+        reservationRepository.save(reservation);
     }
 }
