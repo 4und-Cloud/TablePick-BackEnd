@@ -46,4 +46,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("endDate") LocalDate endDate
     );
 
+    long countByReservationSlot(ReservationSlot updatedSlot);
+
+    // 특정 시간 이전에 생성된 외부 ID 미할당 참가자 조회
+    @Query("SELECT r FROM Reservation r WHERE (r.paymentStatus = :status) AND r.createdAt <= :now")
+    List<Reservation> findByPaymentStatusEquals(String status, LocalDateTime now);
 }

@@ -1,9 +1,15 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/tablepickdb
+    url: jdbc:mysql://localhost:3306/tablepickdb?rewriteBatchedStatements=true
     username: tablepick
     password: tablepick
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
+      idle-timeout: 10000
+      max-lifetime: 30000
+      connection-timeout: 30000
 
   jpa:
     hibernate:
@@ -12,6 +18,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+        session_factory:
+          statement_inspector: com.goorm.tablepick.domain.reservation.config.QueryCountInspector
 
   task:
     execution:
@@ -59,7 +67,7 @@ server:
 
 project:
   upload:
-    board-image-path: C:/uploads/images/board
+    board-image-path: /Users/oheunsol/imagefolder
 
 kakao:
   admin:
@@ -81,6 +89,7 @@ logging:
   level:
     root: info  # 전체 로그 레벨 (info 이상 출력)
     com.goorm.tablepick: debug  # 너의 패키지에 debug 로그까지 출력
+    # com.mysql.cj: trace # jdbc 쿼리 출력 가능, 로컬 환경에서만 사용
     org.springframework.web: info
     org.hibernate.SQL: info  # Hibernate 실행 쿼리를 info 레벨로 변경 (debug에서 info로)
     org.hibernate.type.descriptor.sql: info  # 바인딩되는 실제 파라미터도 info로 변경 (trace에서 info로)

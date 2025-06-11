@@ -5,6 +5,7 @@ import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.entity.RestaurantOperatingHour;
 import com.goorm.tablepick.domain.restaurant.enums.DayOfWeek;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantOperatingHourRepository;
+import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 public class ReservationSlotGenerator {
 
     private final RestaurantOperatingHourRepository operatingHourRepository;
+    private final RestaurantRepository restaurantRepository;
 
     public List<ReservationSlot> generateSlotsForWeek() {
         List<ReservationSlot> slots = new ArrayList<>();
@@ -55,6 +57,50 @@ public class ReservationSlotGenerator {
         return slots;
     }
 
+    public List<ReservationSlot> generateSlotsForTest(int count, RestaurantRepository restaurantRepository) {
+        List<ReservationSlot> slots = new ArrayList<>();
+        LocalDate startDate = LocalDate.now().plusDays(1); // 내일 날짜부터 시작
+        int slotsPerDay = 10; // 9:00 ~ 18:00, 1시간 간격
+        int totalDays = 30;   // 테스트용으로 30일 사용
+        int slotsPerRestaurant = slotsPerDay * totalDays; // 식당당 슬롯 수: 10 * 30 = 300
+
+        // 총 슬롯 개수: count * 30 * 10
+        int totalSlotsToGenerate = count * slotsPerDay * totalDays;
+
+        // 테스트용 Restaurant 생성 (count 개수만큼)
+        List<Restaurant> restaurants = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Restaurant restaurant = Restaurant.builder()
+                    .name("Test Restaurant " + (i + 1))
+                    .restaurantPhoneNumber("010-0000-000" + i)
+                    .address("Seoul")
+                    .xcoordinate(127.0 + (i * 0.01))
+                    .ycoordinate(37.5 + (i * 0.01))
+                    .maxCapacity(100L)
+                    .build();
+            restaurants.add(restaurantRepository.save(restaurant));
+        }
+
+        // 각 식당에 대해 슬롯 생성
+        for (Restaurant restaurant : restaurants) {
+            for (int day = 0; day < totalDays; day++) {
+                LocalDate date = startDate.plusDays(day);
+                for (int hourIndex = 0; hourIndex < slotsPerDay; hourIndex++) {
+                    LocalTime time = LocalTime.of(9 + hourIndex, 0); // 9:00 ~ 18:00
+                    slots.add(ReservationSlot.builder()
+                            .date(date)
+                            .time(time)
+                            .count(0L)
+                            .restaurant(restaurant)
+                            .build());
+                }
+            }
+        }
+
+        return slots;
+    }
+
+
     private List<LocalDate> getDatesForDayOfWeek(LocalDate startDate, LocalDate endDate, DayOfWeek targetDay) {
         List<LocalDate> dates = new ArrayList<>();
         LocalDate date = startDate;
@@ -86,7 +132,6 @@ public class ReservationSlotGenerator {
 
         // current가 end 이전이거나 같은 시간일 때까지 슬롯 생성
         while (current.isBefore(end)) {
-            System.out.println("Current: " + current + ", End: " + end + ", SlotDate: " + slotDate);
             if (current.toLocalDate().isAfter(date)) {
                 slotDate = current.toLocalDate();
             }
@@ -101,4 +146,5 @@ public class ReservationSlotGenerator {
 
         return slots;
     }
+
 }

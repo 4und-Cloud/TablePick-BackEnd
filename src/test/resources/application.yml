@@ -83,5 +83,5 @@ logging:
     root: info
     com.goorm.tablepick: debug
     org.springframework.web: info
-    org.hibernate.SQL: info
-    org.hibernate.type.descriptor.sql: info
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql: trace

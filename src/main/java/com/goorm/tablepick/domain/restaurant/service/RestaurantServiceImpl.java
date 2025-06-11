@@ -11,8 +11,6 @@ import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryReposi
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
 import jakarta.validation.Valid;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
@@ -21,11 +19,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Primary
+@Transactional(readOnly = true)
 public class RestaurantServiceImpl implements RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final RestaurantCategoryRepository restaurantCategoryRepository;
@@ -106,7 +109,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page) {
         Pageable pageable = PageRequest.of(page, 6);
-        Page<Restaurant> restaurantList = restaurantRepository.findAllOrderByNameAsc(pageable);
+        Page<Restaurant> restaurantList = restaurantRepository.findAllOrderByBoardNum(pageable);
         return new PagedRestaurantResponseDto(restaurantList);
     }
 

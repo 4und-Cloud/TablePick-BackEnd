@@ -7,7 +7,6 @@ import com.goorm.tablepick.domain.restaurant.entity.QRestaurant;
 import com.goorm.tablepick.domain.restaurant.entity.QRestaurantImage;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
-import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -83,8 +82,8 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
             where.and(restaurant.id.in(filteredRestaurantIds));
         }
 
-        // 1. fetch content
-        List<RestaurantSearchResponseDto> dtos = queryFactory
+        // 3. 메인 쿼리 (태그 개수로 정렬 추가)
+        JPAQuery<RestaurantSearchResponseDto> query = queryFactory
                 .select(Projections.fields(
                         RestaurantSearchResponseDto.class,
                         restaurant.id,
@@ -93,7 +92,17 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
                         restaurant.restaurantCategory.name.as("restaurantCategory")
                 ))
                 .from(restaurant)
-                .where(where)
+                .where(where);
+
+        // 태그 개수로 정렬하는 서브쿼리 추가
+        if (hasTags) {
+            query.leftJoin(boardTag).on(boardTag.restaurant.id.eq(restaurant.id))
+                    .groupBy(restaurant.id, restaurant.name, restaurant.address, restaurant.restaurantCategory.name)
+                    .orderBy(boardTag.countDistinct().desc());
+        }
+
+        // 페이징 적용
+        List<RestaurantSearchResponseDto> dtos = query
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

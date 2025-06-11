@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
+@Builder
 @Schema(description = "예약 요청 시 정보")
 public class ReservationRequestDto {
     @Schema(description = "예약 식당 ID", example = "1")
