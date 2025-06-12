@@ -18,14 +18,15 @@ public class JwtProvider {
     @Value("${jwt.secret}")
     private String SECRET_KEY;
     private static final long ACCESS_TOKEN_EXPIRATION_MS = 1000 * 60 * 60 * 24;         // access - 24시간
-//    private static final long ACCESS_TOKEN_EXPIRATION_MS = 1000 * 10;         // 테스트용 - 10초
+    //    private static final long ACCESS_TOKEN_EXPIRATION_MS = 1000 * 10;         // 테스트용 - 10초
     private static final long REFRESH_TOKEN_EXPIRATION_MS = 1000 * 60 * 60 * 24 * 7; // refesh - 1주일
 
     private Key key;
 
     @PostConstruct
     public void init() {
-        this.key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+        byte[] keyBytes = hexStringToByteArray(SECRET_KEY);
+        this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String createAccessToken(Long userId, String email) {
@@ -92,6 +93,18 @@ public class JwtProvider {
                 .parseClaimsJws(token)
                 .getBody();
         return claims.get("email", String.class);
+    }
+
+
+    // hex 문자열을 byte 배열로 변환
+    private byte[] hexStringToByteArray(String hex) {
+        int len = hex.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+                    + Character.digit(hex.charAt(i + 1), 16));
+        }
+        return data;
     }
 
 }
