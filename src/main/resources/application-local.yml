@@ -1,0 +1,96 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/tablepickdb?rewriteBatchedStatements=true
+    username: tablepick
+    password: tablepick
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
+      idle-timeout: 10000
+      max-lifetime: 30000
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        session_factory:
+          statement_inspector: com.goorm.tablepick.domain.reservation.config.QueryCountInspector
+
+  task:
+    execution:
+      pool:
+        core-size: 10
+        max-size: 50
+        queue-capacity: 100
+
+  sql:
+    init:
+      mode: never
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: email, profile
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            authorization-grant-type: authorization_code
+            client-authentication-method: client_secret_post
+            scope: profile_nickname, account_email, phone_number, birthyear, birthday, gender, profile_image
+        provider: # kakao는 OAuth 기본 제공 provider가 이니므로 설정해주어야 함
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+jwt:
+  secret: ${JWT_SECRET:defaultSecretIfMissing}
+
+server:
+  port: 8080
+  domain: ${SERVER_DOMAIN:http://localhost:8080}
+
+project:
+  upload:
+    board-image-path: /Users/oheunsol/imagefolder
+
+kakao:
+  admin:
+    key: ${KAKAO_ADMIN_KEY}
+
+firebase:
+  service-account-file: classpath:firebase-service-account.json
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    displayRequestDuration: true
+    docExpansion: none
+
+logging:
+  level:
+    root: info  # 전체 로그 레벨 (info 이상 출력)
+    com.goorm.tablepick: debug  # 너의 패키지에 debug 로그까지 출력
+    # com.mysql.cj: trace # jdbc 쿼리 출력 가능, 로컬 환경에서만 사용
+    org.springframework.web: info
+    org.hibernate.SQL: info  # Hibernate 실행 쿼리를 info 레벨로 변경 (debug에서 info로)
+    org.hibernate.type.descriptor.sql: info  # 바인딩되는 실제 파라미터도 info로 변경 (trace에서 info로)
+
