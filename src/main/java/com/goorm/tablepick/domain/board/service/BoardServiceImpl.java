@@ -1,7 +1,7 @@
 package com.goorm.tablepick.domain.board.service;
 
-import com.goorm.tablepick.domain.board.dto.response.BoardCreateResponseDto;
 import com.goorm.tablepick.domain.board.dto.request.BoardRequestDto;
+import com.goorm.tablepick.domain.board.dto.response.BoardCreateResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardDetailResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.BoardListResponseDto;
 import com.goorm.tablepick.domain.board.dto.response.PagedBoardListResponseDto;
@@ -19,8 +19,15 @@ import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
+import com.goorm.tablepick.global.util.S3Uploader;
 import jakarta.transaction.Transactional;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,13 +43,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -54,7 +54,7 @@ public class BoardServiceImpl implements BoardService {
     private final BoardTagRepository boardTagRepository;
     private final TagRepository tagRepository;
     private final RestTemplate restTemplate;
-
+    private final S3Uploader s3Uploader;
 
     @Value("${project.upload.board-image-path}")
     private String boardImagePath;
@@ -79,15 +79,15 @@ public class BoardServiceImpl implements BoardService {
             boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
         }
         List<BoardListResponseDto> dtoList = boardPage.getContent().stream()
-                    .map(objects -> {
-                        Board board = (Board) objects[0];
-                        Restaurant restaurant = (Restaurant) objects[1];
-                        RestaurantCategory category = (RestaurantCategory) objects[2];
-                        return BoardListResponseDto.from(board, restaurant, category);
-                    })
-                    .toList();
+                .map(objects -> {
+                    Board board = (Board) objects[0];
+                    Restaurant restaurant = (Restaurant) objects[1];
+                    RestaurantCategory category = (RestaurantCategory) objects[2];
+                    return BoardListResponseDto.from(board, restaurant, category);
+                })
+                .toList();
 
-            return new PagedBoardListResponseDto(dtoList, boardPage);
+        return new PagedBoardListResponseDto(dtoList, boardPage);
 
     }
 
@@ -251,21 +251,25 @@ public class BoardServiceImpl implements BoardService {
             }
         }
     }
+
     // 추천 AI API 연결
     public List<Long> getRecommendedBoardIds(Long userId, int page, int size) {
-        String url = String.format("http://localhost:8000/post/recommend-for-user/%d?page=%d&size=%d", userId, page, size);
+        String url = String.format("http://localhost:8000/post/recommend-for-user/%d?page=%d&size=%d", userId, page,
+                size);
         try {
             ResponseEntity<List<Long>> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
                     null,
-                    new ParameterizedTypeReference<List<Long>>() {}
+                    new ParameterizedTypeReference<List<Long>>() {
+                    }
             );
             List<Long> boardIds = response.getBody();
             System.out.println("boardIds: " + boardIds);
             return (boardIds != null) ? boardIds : Collections.emptyList();
         } catch (HttpClientErrorException e) {
-            log.error("AI 서버 요청 실패: userId={}, status={}, response={}", userId, e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("AI 서버 요청 실패: userId={}, status={}, response={}", userId, e.getStatusCode(),
+                    e.getResponseBodyAsString());
             return Collections.emptyList();
         } catch (Exception e) {
             log.error("AI 서버에서 추천 게시글 ID를 가져오지 못했습니다. userId={}", userId, e);
