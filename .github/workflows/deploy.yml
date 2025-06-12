@@ -42,23 +42,18 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          ls -la src/main/resources/
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
 
       - name: Deploy to EC2 using SSM
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          GITHUB_SHA: ${{ github.sha }}
           KAKAO_ADMIN_KEY: ${{ secrets.KAKAO_ADMIN_KEY }}
           KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
           KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
-          RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}
+
         run: |
-          echo "RDS_ENDPOINT=$RDS_ENDPOINT"
-          echo "RDS_PASSWORD=$RDS_PASSWORD"
           aws ssm send-command \
             --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
             --document-name "AWS-RunShellScript" \
@@ -67,6 +62,6 @@ jobs:
                 "docker stop tablepick-app || true",
                 "docker rm tablepick-app || true",
                 "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}",
-                "docker run -d --name tablepick-app -p 8080:8080 -e JAVA_OPTS=-Xmx256m -e SPRING_DATASOURCE_URL=jdbc:mysql://$RDS_ENDPOINT:3306/tablepick?useSSL=false\\&serverTimezone=Asia/Seoul\\&allowPublicKeyRetrieval=true -e SPRING_DATASOURCE_PASSWORD=$RDS_PASSWORD -e SPRING_DATASOURCE_USERNAME=tablepick_user -e KAKAO_ADMIN_KEY=$KAKAO_ADMIN_KEY -e KAKAO_CLIENT_ID=$KAKAO_CLIENT_ID -e KAKAO_CLIENT_SECRET=$KAKAO_CLIENT_SECRET -e JWT_SECRET=$JWT_SECRET '$REGISTRY'/'$ECR_REPOSITORY':'$GITHUB_SHA'"
+                "docker run -d --name tablepick-app -p 8080:8080 -e JAVA_OPTS=-Xmx256m -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ secrets.RDS_ENDPOINT }}:3306/tablepick?useSSL=false\\&serverTimezone=Asia/Seoul\\&allowPublicKeyRetrieval=true -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} '$REGISTRY'/'$ECR_REPOSITORY':'$GITHUB_SHA'"
               ]
             }'
