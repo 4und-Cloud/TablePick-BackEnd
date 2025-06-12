@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,6 +31,8 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService customUserDetailsService;
+    @Value("${FRONTEND_HOST}")
+    private String frontendHost;
 
     @Override
     @Transactional
@@ -53,7 +56,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         response.addCookie(createRefreshCookie(refreshToken));
 
         // 리다이렉션
-        response.sendRedirect("http://localhost:5173/oauth2/success");
+        response.sendRedirect(frontendHost+"/oauth2/success");
     }
 
     @SuppressWarnings("unchecked")
