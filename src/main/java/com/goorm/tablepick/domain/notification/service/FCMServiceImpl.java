@@ -20,12 +20,16 @@ public class FCMServiceImpl implements FCMService {
     @Value("${server.domain:http://localhost:8080}")
     private String serverDomain;
     
+    private void validateToken(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            log.error("FCM 토큰이 null 또는 공백입니다.");
+            throw new NotificationException("FCM 토큰이 null 또는 공백입니다.", "FCM_INVALID_TOKEN");
+        }
+    }
+    
     @Override
     public String sendMessage(String token, String title, String body, Map<String, String> data) {
-        if (token == null || token.trim().isEmpty()) {
-            log.error("FCM 토큰이 null 또는 공백이라서 메시지를 보낼 수 없습니다.");
-            return null;
-        }
+        validateToken(token);
         
         // 데이터에 제목과 내용 추가 (서비스 워커에서 사용)
         data.put("title", title);
@@ -73,10 +77,7 @@ public class FCMServiceImpl implements FCMService {
     
     @Override
     public String sendMessageWithLogo(String token, String title, String body, Map<String, String> data) {
-        if (token == null || token.trim().isEmpty()) {
-            log.error("FCM 토큰이 null 또는 공백이라서 로고가 포함된 메시지를 보낼 수 없습니다.");
-            return null;
-        }
+        validateToken(token);
         
         // 로고 이미지 URL 생성
         String logoUrl = serverDomain + "/images/logo.png";
@@ -123,7 +124,7 @@ public class FCMServiceImpl implements FCMService {
             
             return response;
         } catch (FirebaseMessagingException e) {
-            log.error("FCM 로고 메시지 전송에 실패했어용 ㅠㅠ: {}", e.getMessage());
+            log.error("FCM 로고 메시지 전송에 실패했습니다: {}", e.getMessage());
             
             if (e.getMessagingErrorCode() == com.google.firebase.messaging.MessagingErrorCode.INVALID_ARGUMENT ||
                     e.getMessagingErrorCode() == com.google.firebase.messaging.MessagingErrorCode.UNREGISTERED) {
