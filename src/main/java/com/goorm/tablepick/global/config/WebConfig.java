@@ -2,6 +2,7 @@ package com.goorm.tablepick.global.config;
 
 import com.goorm.tablepick.domain.reservation.config.QueryCountInterceptor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -15,11 +16,13 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     private QueryCountInterceptor queryCountInterceptor;
+    @Value("${FRONTEND_HOST}")
+    private String frontendHost;
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:5173")
+                .allowedOrigins(frontendHost)
                 .allowedMethods("GET", "POST", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("Content-Type", "Access-Token")
                 .exposedHeaders("Access-Token")
