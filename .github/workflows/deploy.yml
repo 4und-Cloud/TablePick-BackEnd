@@ -42,6 +42,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
+          ls -la src/main/resources/
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }} .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}
 
@@ -56,6 +57,8 @@ jobs:
           RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
           RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}
         run: |
+          echo "RDS_ENDPOINT=$RDS_ENDPOINT"
+          echo "RDS_PASSWORD=***"
           aws ssm send-command \
             --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
             --document-name "AWS-RunShellScript" \
