@@ -3,6 +3,7 @@ package com.goorm.tablepick.domain.notification.controller;
 import com.goorm.tablepick.domain.notification.dto.request.FCMTokenRequest;
 import com.goorm.tablepick.domain.notification.dto.request.NotificationRequest;
 import com.goorm.tablepick.domain.notification.dto.response.NotificationResponse;
+import com.goorm.tablepick.domain.notification.entity.NotificationTypes;
 import com.goorm.tablepick.domain.notification.repository.NotificationTypesRepository;
 import com.goorm.tablepick.domain.notification.service.FCMTokenService;
 import com.goorm.tablepick.domain.notification.service.NotificationService;
@@ -38,7 +39,7 @@ public class NotificationController {
     private final NotificationService notificationService;
     private final FCMTokenService fcmTokenService;
     private final NotificationTypesRepository notificationTypesRepository;
-
+    
     @Operation(
             summary = "알림 예약",
             description = "새로운 알림을 예약합니다. 회원ID, 알림타입ID, 예약ID, 예약시간을 포함해야 합니다."
@@ -71,7 +72,7 @@ public class NotificationController {
         NotificationResponse response = notificationService.scheduleNotification(request);
         return ResponseEntity.ok(response);
     }
-
+    
     @Operation(
             summary = "알림 상태 조회",
             description = "특정 알림의 상태를 조회합니다."
@@ -101,7 +102,7 @@ public class NotificationController {
         NotificationResponse response = notificationService.getNotificationStatus(id);
         return ResponseEntity.ok(response);
     }
-
+    
     @Operation(
             summary = "회원 알림 목록 조회",
             description = "특정 회원의 알림 목록을 조회합니다. 선택적으로 상태 필터링이 가능합니다."
@@ -139,7 +140,7 @@ public class NotificationController {
         List<NotificationResponse> notifications = notificationService.getMemberNotifications(memberId, status);
         return ResponseEntity.ok(notifications);
     }
-
+    
     @Operation(
             summary = "FCM 토큰 업데이트",
             description = "회원의 FCM 토큰을 부분 업데이트합니다."
@@ -174,7 +175,7 @@ public class NotificationController {
         fcmTokenService.updateFcmToken(memberId, request.getToken());
         return ResponseEntity.ok().build();
     }
-
+    
     @Operation(
             summary = "FCM 토큰 NULL로 변경",
             description = "회원의 FCM 토큰을 NULL로 변경합니다."
@@ -195,7 +196,7 @@ public class NotificationController {
         fcmTokenService.updateFcmTokenToNull(memberId);
         return ResponseEntity.ok().build();
     }
-
+    
     @Operation(
             summary = "테스트용 알림 전송",
             description = "테스트 목적으로 특정 회원에게 지정된 알림 타입 ID로 알림을 즉시 전송합니다."
@@ -218,30 +219,49 @@ public class NotificationController {
             @RequestParam Long memberId,
             @Parameter(description = "알림 타입 ID (1~6)", example = "1", required = true)
             @RequestParam Long notificationTypeId) {
-
+        
         log.info("테스트 알림 요청 - 회원 ID: {}, 알림 타입 ID: {}", memberId, notificationTypeId);
-
+        
         // 알림 요청 생성 (10초 후 발송)
         NotificationRequest notificationRequest = NotificationRequest.builder()
                 .memberId(memberId)
                 .notificationTypeId(notificationTypeId)
                 .scheduledAt(LocalDateTime.now())
                 .build();
-
+        
         // 알림 예약
         NotificationResponse response = notificationService.scheduleNotification(notificationRequest);
         log.info("테스트 알림 예약 완료 - 알림 ID: {}", response.getId());
-
+        
         return ResponseEntity.ok(response);
     }
-
-
+    
+    @Operation(
+            summary = "알림 타입 목록 조회",
+            description = "모든 알림 타입 목록을 조회합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "알림 타입 목록 조회 성공",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = NotificationTypes.class)))
+            )
+    })
+    @GetMapping("/notification-types")
+    public ResponseEntity<List<NotificationTypes>> getNotificationTypes() {
+        log.info("알림 타입 목록 조회 요청");
+        List<NotificationTypes> notificationTypes = notificationTypesRepository.findAll();
+        log.info("알림 타입 목록 조회 완료 - 총 {} 개", notificationTypes.size());
+        return ResponseEntity.ok(notificationTypes);
+    }
+    
+    
     // Swagger에서 사용할 오류 응답 스키마 정의
     @Schema(name = "ErrorResponse", description = "오류 응답")
     private static class ErrorResponse {
         @Schema(description = "오류 메시지", example = "Member not found")
         private String message;
-
+        
         @Schema(description = "오류 코드", example = "MEMBER_NOT_FOUND")
         private String code;
     }
