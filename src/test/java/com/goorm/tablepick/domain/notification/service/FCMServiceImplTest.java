@@ -31,15 +31,11 @@ class FCMServiceImplTest {
     private FirebaseMessaging firebaseMessaging;
     
     @Autowired
-    private FirebaseMessaging firebaseMessaging2;
-    
-    @Autowired
     private FCMService fcmService;
     
     @AfterEach
     void tearDown() {
         reset(firebaseMessaging);
-        reset(firebaseMessaging2);
     }
     
     @DisplayName("FCM 서비스가 메시지 전송 요청을 올바르게 처리하고 응답 ID를 반환한다.")
