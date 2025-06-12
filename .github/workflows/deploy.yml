@@ -6,7 +6,7 @@ on:
 
 env:
   AWS_REGION: ap-northeast-2
-  ECR_REPOSITORY: table-pick
+  ECR_REPOSITORY: backend-tablepick
 
 jobs:
   deploy:
