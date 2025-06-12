@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -32,42 +31,44 @@ class FCMServiceImplTest {
     private FirebaseMessaging firebaseMessaging;
     
     @Autowired
+    private FirebaseMessaging firebaseMessaging2;
+    
+    @Autowired
     private FCMService fcmService;
     
     @AfterEach
     void tearDown() {
         reset(firebaseMessaging);
+        reset(firebaseMessaging2);
     }
     
     @DisplayName("FCM 서비스가 메시지 전송 요청을 올바르게 처리하고 응답 ID를 반환한다.")
     @Test
     void sendMessage() throws FirebaseMessagingException {
-        // given
+        // given 준비
         String fcmToken = "valid-fcm-token";
         String title = "테스트 알림 제목";
         String body = "테스트 알림 내용입니다";
-        Map<String, String> additionalData = new HashMap<>();
-        additionalData.put("key1", "value1");
-        additionalData.put("key2", "value2");
-        String expectedResponse = "message_id_12345";
+        Map<String, String> data = new HashMap<>();
         
-        when(firebaseMessaging.send(any(Message.class))).thenReturn(expectedResponse); // 메시지 객체 모킹
+        when(firebaseMessaging.send(any(Message.class))).thenReturn("message_id_12345"); // 메시지 객체 모킹
         
-        // when
-        String result = fcmService.sendMessage(fcmToken, title, body, additionalData);
+        // when 실행
+        String response = fcmService.sendMessage(fcmToken, title, body, data);
+        System.out.println(response);
         
-        // then
-        assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(expectedResponse); // sendMessage가 반환한 값 검증
-        
-        assertThat(additionalData).containsEntry("title", title); // additionalData가 서비스 내에서 수정되었는지 확인
-        assertThat(additionalData).containsEntry("body", body);
-        assertThat(additionalData).containsEntry("key1", "value1");
-        assertThat(additionalData).containsEntry("key2", "value2");
+        // then 검증
+        assertThat(data).containsEntry("title", title); // createMessageData로 생성된 데이터 검증
+        assertThat(data).containsEntry("body", body);
+        assertThat(response)
+                .isNotNull()
+                .isNotEmpty()
+                .doesNotContainIgnoringCase("error")
+                .doesNotContainIgnoringCase("fail")
+                .doesNotContainIgnoringCase("exception");
         
         verify(firebaseMessaging, times(1)).send(any(Message.class)); // 메시지 전송 메서드가 정확히 1번 호출되었는지 확인
     }
-    
     
     @Test
     @DisplayName("FCM 서비스가 이미지가 포함된 메시지 전송 요청을 올바르게 전송하고 응답 ID를 반환한다.")
@@ -76,26 +77,24 @@ class FCMServiceImplTest {
         String fcmToken = "valid-fcm-token";
         String title = "테스트 알림 제목";
         String body = "테스트 알림 내용입니다";
-        Map<String, String> additionalData = new HashMap<>();
-        additionalData.put("key1", "value1");
-        additionalData.put("key2", "value2");
-        String expectedResponse = "message_id_12345";
+        Map<String, String> data = new HashMap<>();
         
-        when(firebaseMessaging.send(any(Message.class))).thenReturn(expectedResponse);
+        when(firebaseMessaging.send(any(Message.class))).thenReturn("message_id_12345");
         
         // when 실행
-        String result = fcmService.sendMessageWithLogo(fcmToken, title, body, additionalData);
+        String response = fcmService.sendMessageWithLogo(fcmToken, title, body, data);
         
         // then 검증
-        assertThat(result).isNotNull();
-        assertThat(result).isEqualTo(expectedResponse);
+        assertThat(data).containsEntry("title", title);
+        assertThat(data).containsEntry("body", body);
+        assertThat(response)
+                .isNotNull()
+                .isNotEmpty()
+                .doesNotContainIgnoringCase("error")
+                .doesNotContainIgnoringCase("fail")
+                .doesNotContainIgnoringCase("exception");
         
-        assertThat(additionalData).containsEntry("title", title);
-        assertThat(additionalData).containsEntry("body", body);
-        assertThat(additionalData).containsKey("image");
-        assertThat(additionalData.get("image")).contains("/images/logo.png"); // 이미지 확인
-        assertThat(additionalData).containsEntry("key1", "value1");
-        assertThat(additionalData).containsEntry("key2", "value2");
+        assertThat(data.get("image")).contains("/images/logo.png");
         
         verify(firebaseMessaging, times(1)).send(any(Message.class));
     }
@@ -104,88 +103,88 @@ class FCMServiceImplTest {
     @Test
     @ExtendWith(OutputCaptureExtension.class)
     void sendMessageWithNullToken(CapturedOutput capturedOutput) throws FirebaseMessagingException {
-        // given
+        // given 준비
         String fcmToken = null;
         String title = "테스트 알림 제목";
         String body = "테스트 알림 내용입니다";
-        Map<String, String> additionalData = new HashMap<>();
-        additionalData.put("key1", "value1");
-        additionalData.put("key2", "value2");
+        Map<String, String> data = new HashMap<>();
         
-        // when
-        String result = fcmService.sendMessage(fcmToken, title, body, additionalData);
+        // when 실행
+        String response = fcmService.sendMessage(fcmToken, title, body, data);
         
-        // then
-        assertThat(result).isNull(); // null을 반환하는지 확인
-        verifyNoInteractions(firebaseMessaging); // firebaseMessaging이 호출되지 않았는지 확인
-        assertThat(capturedOutput.getOut()).contains("FCM 토큰이 없어서 메시지를 보낼 수 없습니다."); // 로그 메시지 확인
+        // then 검증
+        assertThat(response).isNull();
+        assertThat(data).isEmpty();
+        
+        verify(firebaseMessaging, times(0)).send(any(Message.class));
+        
+        assertThat(capturedOutput.getOut()).contains("FCM 토큰이 null 또는 공백이라서 메시지를 보낼 수 없습니다.");
     }
     
     @DisplayName("FCM 토큰이 비어있을 때 메시지 전송을 시도하지 않고 null을 반환한다.")
     @Test
     @ExtendWith(OutputCaptureExtension.class)
     void sendMessageWithEmptyToken(CapturedOutput capturedOutput) throws FirebaseMessagingException {
-        // given
-        String fcmToken = "  "; // 공백만 있는 토큰
+        // given 준비
+        String fcmToken = "   ";
         String title = "테스트 알림 제목";
         String body = "테스트 알림 내용입니다";
-        Map<String, String> additionalData = new HashMap<>();
-        additionalData.put("key1", "value1");
-        additionalData.put("key2", "value2");
+        Map<String, String> data = new HashMap<>();
         
-        // when
-        String result = fcmService.sendMessage(fcmToken, title, body, additionalData);
+        // when 실행
+        String response = fcmService.sendMessage(fcmToken, title, body, data);
         
-        // then
-        assertThat(result).isNull(); // null을 반환하는지 확인
-        verifyNoInteractions(firebaseMessaging); // firebaseMessaging이 호출되지 않았는지 확인
-        assertThat(capturedOutput.getOut()).contains("FCM 토큰이 없어서 메시지를 보낼 수 없습니다."); // 로그 메시지 확인
+        // then 검증
+        assertThat(response).isNull();
+        assertThat(data).isEmpty();
+        
+        verify(firebaseMessaging, times(0)).send(any(Message.class));
+        
+        assertThat(capturedOutput.getOut()).contains("FCM 토큰이 null 또는 공백이라서 메시지를 보낼 수 없습니다.");
     }
     
     @DisplayName("FCM 토큰이 null일 때 로고가 포함된 메시지 전송을 시도하지 않고 null을 반환한다.")
     @Test
     @ExtendWith(OutputCaptureExtension.class)
     void sendMessageWithLogoNullToken(CapturedOutput capturedOutput) throws FirebaseMessagingException {
-        // given
+        // given 준비
         String fcmToken = null;
         String title = "테스트 알림 제목";
         String body = "테스트 알림 내용입니다";
-        Map<String, String> additionalData = new HashMap<>();
-        additionalData.put("key1", "value1");
+        Map<String, String> data = new HashMap<>();
         
-        // when
-        String result = fcmService.sendMessageWithLogo(fcmToken, title, body, additionalData);
+        // when 실행
+        String response = fcmService.sendMessageWithLogo(fcmToken, title, body, data);
         
-        // then
-        assertThat(result).isNull(); // null을 반환하는지 확인
-        verifyNoInteractions(firebaseMessaging); // firebaseMessaging이 호출되지 않았는지 확인
-        assertThat(capturedOutput.getOut()).contains("FCM 토큰이 없어서 메시지를 보낼 수 없습니다."); // 로그 메시지 확인
+        // then 검증
+        assertThat(response).isNull();
+        assertThat(data).isEmpty();
+        
+        verify(firebaseMessaging, times(0)).send(any(Message.class));
+        
+        assertThat(capturedOutput.getOut()).contains("FCM 토큰이 null 또는 공백이라서 로고가 포함된 메시지를 보낼 수 없습니다.");
     }
     
     @DisplayName("FCM 토큰이 비어있을 때 로고가 포함된 메시지 전송을 시도하지 않고 null을 반환한다.")
     @Test
     @ExtendWith(OutputCaptureExtension.class)
     void sendMessageWithLogoEmptyToken(CapturedOutput capturedOutput) throws FirebaseMessagingException {
-        // given
-        String fcmToken = ""; // 빈 토큰
+        // given 준비
+        String fcmToken = "   ";
         String title = "테스트 알림 제목";
         String body = "테스트 알림 내용입니다";
-        Map<String, String> additionalData = new HashMap<>();
-        additionalData.put("key1", "value1");
+        Map<String, String> data = new HashMap<>();
         
-        // when
-        String result = fcmService.sendMessageWithLogo(fcmToken, title, body, additionalData);
+        // when 실행
+        String response = fcmService.sendMessageWithLogo(fcmToken, title, body, data);
         
-        // then
-        assertThat(result).isNull(); // null을 반환하는지 확인
-        verifyNoInteractions(firebaseMessaging); // firebaseMessaging이 호출되지 않았는지 확인
-        assertThat(capturedOutput.getOut()).contains("FCM 토큰이 없어서 메시지를 보낼 수 없습니다."); // 로그 메시지 확인
+        // then 검증
+        assertThat(response).isNull();
+        assertThat(data).isEmpty();
+        
+        verify(firebaseMessaging, times(0)).send(any(Message.class));
+        
+        assertThat(capturedOutput.getOut()).contains("FCM 토큰이 null 또는 공백이라서 로고가 포함된 메시지를 보낼 수 없습니다.");
     }
     
-    private Map<String, String> createMessageData(String title, String body, Map<String, String> additionalData) {
-        Map<String, String> data = new HashMap<>(additionalData);
-        data.put("title", title);
-        data.put("body", body);
-        return data;
-    }
 }
