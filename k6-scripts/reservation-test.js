@@ -6,14 +6,14 @@ import {SharedArray} from 'k6/data';
 const BASE_URL = 'http://172.16.24.77:8080';
 
 const userIds = new SharedArray('userIds', function () {
-    return Array.from({length: 100}, (_, i) => i + 1);
+    return Array.from({length: 5000}, (_, i) => i + 1);
 });
 
 export const options = {
     scenarios: {
         reservation_scenario: {
             executor: 'per-vu-iterations',
-            vus: 10000,
+            vus: 5000,
             iterations: 1,
         },
     },
@@ -40,7 +40,7 @@ export default function () {
         timeout: '10s',
     };
 
-    const res = http.post(`${BASE_URL}/api/reservations/test/optimistic/${userId}`, payload, params);
+    const res = http.post(`${BASE_URL}/api/reservations/test/${userId}`, payload, params);
     console.log(`User ${userId} - Status: ${res.status}, Body: ${res.body || 'No body'}, Error: ${res.error || 'No error'}, Error Code: ${res.error_code || 'No error code'}`);
 
     check(res, {

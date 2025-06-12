@@ -52,3 +52,15 @@ src/main/resources/static/firebase-messaging-sw.js
 **/**/firebase-messaging-sw.js
 
 src/main/resources/*.csv
+
+### terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+terraform.tfvars
+.env
+variable.tf
+tablepick-key
+tablepick-key.pem
+tablepick-key.pub
