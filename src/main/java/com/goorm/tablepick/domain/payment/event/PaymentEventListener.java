@@ -11,6 +11,7 @@ public class PaymentEventListener {
     private final ReservationRepository reservationRepository;
     private final ReservationSlotRepository reservationSlotRepository;
 
+    //
 //    @EventListener
 //    @Transactional
 //    public void handlePaymentResult(PaymentResultEvent event) {
