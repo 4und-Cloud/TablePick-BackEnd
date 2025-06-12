@@ -10,23 +10,19 @@ import jakarta.annotation.PostConstruct;
 import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class JwtProvider {
-    @Value("${jwt.secret}")
-    private String SECRET_KEY;
-    private static final long ACCESS_TOKEN_EXPIRATION_MS = 1000 * 60 * 60 * 24;         // access - 24시간
-    //    private static final long ACCESS_TOKEN_EXPIRATION_MS = 1000 * 10;         // 테스트용 - 10초
-    private static final long REFRESH_TOKEN_EXPIRATION_MS = 1000 * 60 * 60 * 24 * 7; // refesh - 1주일
+    private static final long ACCESS_TOKEN_EXPIRATION_MS = 1000 * 60 * 60 * 24; // access - 24 hours
+    private static final long REFRESH_TOKEN_EXPIRATION_MS = 1000 * 60 * 60 * 24 * 7; // refresh - 1 week
 
     private Key key;
 
     @PostConstruct
     public void init() {
-        byte[] keyBytes = hexStringToByteArray(SECRET_KEY);
-        this.key = Keys.hmacShaKeyFor(keyBytes);
+        // Generate a secure key for HS512
+        this.key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
     }
 
     public String createAccessToken(Long userId, String email) {
@@ -58,14 +54,13 @@ public class JwtProvider {
         return Long.parseLong(parseClaims(token).getSubject());
     }
 
-
     public boolean validateToken(String token) {
         try {
             Claims claims = parseClaims(token);
             Date expiration = claims.getExpiration();
             return Instant.now().isBefore(expiration.toInstant());
         } catch (ExpiredJwtException e) {
-            // 토큰이 만료된 경우도 false 반환
+            // Token expired, return false
             return false;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
@@ -80,12 +75,12 @@ public class JwtProvider {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (ExpiredJwtException e) {
-            // 이미 만료된 경우라도 Claims는 얻을 수 있음
+            // Return claims even if token is expired
             return e.getClaims();
         }
     }
 
-    // JWT에서 이메일 클레임 추출
+    // Extract email claim from JWT
     public String getEmailFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(key)
@@ -94,17 +89,4 @@ public class JwtProvider {
                 .getBody();
         return claims.get("email", String.class);
     }
-
-
-    // hex 문자열을 byte 배열로 변환
-    private byte[] hexStringToByteArray(String hex) {
-        int len = hex.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
-                    + Character.digit(hex.charAt(i + 1), 16));
-        }
-        return data;
-    }
-
 }
