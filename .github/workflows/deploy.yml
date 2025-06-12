@@ -66,14 +66,14 @@ jobs:
                 "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}",
                 "docker run -d --name tablepick-app -p 8080:8080 \
                   -e JAVA_OPTS=-Xmx256m \
-          -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ secrets.RDS_ENDPOINT }}:3306/tablepick?useSSL=false\\&serverTimezone=Asia/Seoul\\&allowPublicKeyRetrieval=true \
-          -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} \
-          -e KAKAO_ADMIN_KEY='"${KAKAO_ADMIN_KEY}"' \
-          -e KAKAO_CLIENT_ID='"${KAKAO_CLIENT_ID}"' \
-          -e KAKAO_CLIENT_SECRET='"${KAKAO_CLIENT_SECRET}"' \
-          -e GOOGLE_CLIENT_ID='"${GOOGLE_CLIENT_ID}"' \
-          -e GOOGLE_CLIENT_SECRET='"${GOOGLE_CLIENT_SECRET}"' \
-          -e JWT_SECRET='"${JWT_SECRET}"' \
-          '$REGISTRY'/'$ECR_REPOSITORY':'$GITHUB_SHA'"
+                  -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ secrets.RDS_ENDPOINT }}:3306/tablepick?useSSL=false\\&serverTimezone=Asia/Seoul\\&allowPublicKeyRetrieval=true \
+                  -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} \
+                  -e KAKAO_ADMIN_KEY='$KAKAO_ADMIN_KEY' \
+                  -e KAKAO_CLIENT_ID='$KAKAO_CLIENT_ID' \
+                  -e KAKAO_CLIENT_SECRET='$KAKAO_CLIENT_SECRET' \
+                  -e GOOGLE_CLIENT_ID='$GOOGLE_CLIENT_ID' \
+                  -e GOOGLE_CLIENT_SECRET='$GOOGLE_CLIENT_SECRET' \
+                  -e JWT_SECRET='$JWT_SECRET' \
+                  '$REGISTRY'/'$ECR_REPOSITORY':'$GITHUB_SHA'"
               ]
             }'
