@@ -67,7 +67,6 @@ server:
 
 project:
   upload:
-    csv-file-path: ${IMPORT_CSV_FILE_PATH}
     board-image-path: ${BOARD_IMAGE_PATH}
 
 kakao:
