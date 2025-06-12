@@ -24,7 +24,7 @@ jobs:
       - name: Set application.yml
         uses: microsoft/variable-substitution@v1
         with:
-          files: ./src/main/resources/application.yml
+          files: ./src/main/resources/application-prod.yml
         env:
           KAKAO_ADMIN_KEY: ${{ secrets.KAKAO_ADMIN_KEY }}
           KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
