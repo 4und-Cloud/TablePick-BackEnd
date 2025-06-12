@@ -22,15 +22,10 @@ import com.goorm.tablepick.domain.tag.repository.TagRepository;
 import com.goorm.tablepick.global.util.S3Uploader;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -42,6 +37,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -55,9 +52,9 @@ public class BoardServiceImpl implements BoardService {
     private final TagRepository tagRepository;
     private final RestTemplate restTemplate;
     private final S3Uploader s3Uploader;
+    private final S3Client s3Client;
 
-    @Value("${project.upload.board-image-path}")
-    private String boardImagePath;
+    private static final String BUCKET_NAME = "tablepick-bucket";
 
     @Override
     public PagedBoardListResponseDto getBoards(int page, int size, Member member) {
@@ -68,13 +65,8 @@ public class BoardServiceImpl implements BoardService {
         Page<Object[]> boardPage;
         if (member != null) {
             long userId = member.getId();
-
-            // 1. AI 서버에 userId로 추천 board_id 리스트 요청
             List<Long> recommendedBoardIds = getRecommendedBoardIds(userId, page, 30);
-
-            // 2. 추천 board_id 리스트로 DB에서 게시글 정보 조회 (순서 보장 필요시 IN절 + FIELD 함수 등 활용)
             boardPage = boardRepository.findBoardsByIdsInOrder(recommendedBoardIds, pageable);
-
         } else {
             boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
         }
@@ -88,18 +80,14 @@ public class BoardServiceImpl implements BoardService {
                 .toList();
 
         return new PagedBoardListResponseDto(dtoList, boardPage);
-
     }
-
 
     @Override
     public BoardDetailResponseDto getBoardDetail(Long boardId) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 리뷰를 찾을 수 없습니다."));
-
         Restaurant restaurant = restaurantRepository.findById(board.getRestaurantId())
                 .orElseThrow(() -> new IllegalArgumentException("해당 식당을 찾을 수 없습니다."));
-
         return BoardDetailResponseDto.from(board, restaurant);
     }
 
@@ -107,7 +95,6 @@ public class BoardServiceImpl implements BoardService {
     public List<BoardListResponseDto> getBoardsByRestaurant(Long restaurantId) {
         Pageable pageable = PageRequest.of(0, 6);
         Page<Object[]> boardPage = boardRepository.findBoardsWithImagesByRestaurantId(restaurantId, pageable);
-
         return boardPage.getContent().stream()
                 .map(objects -> {
                     Board board = (Board) objects[0];
@@ -118,19 +105,15 @@ public class BoardServiceImpl implements BoardService {
                 .toList();
     }
 
-
     @Override
     @Transactional
     public BoardCreateResponseDto createBoard(BoardRequestDto dto, List<MultipartFile> images, Member member) {
-        // 1. 예약 확인
         Reservation reservation = reservationRepository.findById(dto.getReservationId())
                 .orElseThrow(() -> new IllegalArgumentException("해당 예약이 존재하지 않습니다."));
-
         if (!reservation.getMember().getId().equals(member.getId())) {
-            throw new AccessDeniedException("예약한 사용자만 리뷰을 작성할 수 있습니다.");
+            throw new AccessDeniedException("예약한 사용자만 리뷰를 작성할 수 있습니다.");
         }
 
-        // 2. Board 저장 (restaurantId 추가)
         Board board = Board.builder()
                 .content(dto.getContent())
                 .reservation(reservation)
@@ -139,20 +122,22 @@ public class BoardServiceImpl implements BoardService {
                 .build();
         boardRepository.save(board);
 
-        // 3. 이미지 저장
         if (images != null && !images.isEmpty()) {
             for (MultipartFile image : images) {
-                String webPath = saveImage(image);
-                BoardImage boardImage = BoardImage.builder()
-                        .imageUrl(webPath)
-                        .board(board)
-                        .build();
-                board.addImage(boardImage);
-                boardImageRepository.save(boardImage);
+                try {
+                    String imageUrl = s3Uploader.upload(image);
+                    BoardImage boardImage = BoardImage.builder()
+                            .imageUrl(imageUrl)
+                            .board(board)
+                            .build();
+                    board.addImage(boardImage);
+                    boardImageRepository.save(boardImage);
+                } catch (IOException e) {
+                    throw new RuntimeException("이미지 업로드 실패", e);
+                }
             }
         }
 
-        // 4. 태그 저장
         List<Long> tagIds = dto.getTagId();
         if (tagIds == null || tagIds.isEmpty()) {
             throw new IllegalArgumentException("태그는 최소 1개 이상 입력해야 합니다.");
@@ -161,14 +146,12 @@ public class BoardServiceImpl implements BoardService {
         for (Long tagId : tagIds) {
             Tag tag = tagRepository.findById(tagId)
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 태그입니다: " + tagId));
-
             Restaurant restaurant = board.getReservation().getRestaurant();
             BoardTag boardTag = BoardTag.builder()
                     .board(board)
                     .tag(tag)
                     .restaurant(restaurant)
                     .build();
-
             board.addTag(boardTag);
             boardTagRepository.save(boardTag);
         }
@@ -184,75 +167,31 @@ public class BoardServiceImpl implements BoardService {
     public void deleteBoard(Long boardId, Member member) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 게시글이 존재하지 않습니다."));
-
         if (!board.getMember().getId().equals(member.getId())) {
             throw new AccessDeniedException("게시글 작성자만 삭제할 수 있습니다.");
         }
 
-        deletePhysicalImageFiles(board.getBoardImages());
-
+        deleteS3ImageFiles(board.getBoardImages());
         boardRepository.delete(board);
     }
 
-
-    // 이미지 저장 메서드
-    private String saveImage(MultipartFile image) {
-        String originalFileName = image.getOriginalFilename();
-        String extension = getFileExtension(originalFileName);
-        String storeFileName = UUID.randomUUID() + extension;
-        String uploadDir = boardImagePath;
-
-        try {
-            Path uploadPath = Paths.get(uploadDir);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            Path filePath = uploadPath.resolve(storeFileName);
-            Files.write(filePath, image.getBytes());
-
-            return storeFileName;
-
-        } catch (IOException e) {
-            throw new RuntimeException("이미지 저장 실패", e);
-        }
-    }
-
-    // 확장자 추출 메서드 추가
-    private String getFileExtension(String fileName) {
-        if (fileName == null || fileName.isEmpty()) {
-            return "";
-        }
-
-        int lastDotIndex = fileName.lastIndexOf('.');
-        if (lastDotIndex == -1) {
-            return "";
-        }
-
-        return fileName.substring(lastDotIndex);
-    }
-
-    // 물리적 파일 삭제 메서드 추가
-    private void deletePhysicalImageFiles(List<BoardImage> boardImages) {
+    private void deleteS3ImageFiles(List<BoardImage> boardImages) {
         for (BoardImage boardImage : boardImages) {
             try {
-                String fileName = boardImage.getImageUrl();
-                Path filePath = Paths.get(boardImagePath).resolve(fileName);
-
-                if (Files.exists(filePath)) {
-                    Files.delete(filePath);
-                    log.info("이미지 파일 삭제 성공: {}", fileName);
-                } else {
-                    log.warn("삭제할 이미지 파일이 존재하지 않음: {}", fileName);
-                }
-            } catch (IOException e) {
-                log.error("이미지 파일 삭제 실패: {}", boardImage.getImageUrl(), e);
-                // 파일 삭제 실패해도 DB 삭제는 계속 진행
+                String imageUrl = boardImage.getImageUrl();
+                String fileName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
+                DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                        .bucket(BUCKET_NAME)
+                        .key(fileName)
+                        .build();
+                s3Client.deleteObject(deleteObjectRequest);
+                log.info("S3 이미지 삭제 성공: {}", fileName);
+            } catch (Exception e) {
+                log.error("S3 이미지 삭제 실패: {}", boardImage.getImageUrl(), e);
             }
         }
     }
 
-    // 추천 AI API 연결
     public List<Long> getRecommendedBoardIds(Long userId, int page, int size) {
         String url = String.format("http://localhost:8000/post/recommend-for-user/%d?page=%d&size=%d", userId, page,
                 size);
