@@ -200,7 +200,7 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 # EC2 인스턴스
 resource "aws_instance" "app" {
   ami = "ami-0e9bfdb247cc8de84"  # Ubuntu 22.04 LTS AMI
-  instance_type = "t2.micro"
+  instance_type = "t2.small"
   subnet_id = aws_subnet.public_1.id
 
   # 세부 모니터링 활성화
@@ -427,7 +427,7 @@ resource "aws_db_instance" "tablepick" {
   identifier        = "tablepick-db"
   engine            = "mysql"
   engine_version    = "8.0"
-  instance_class    = "db.t3.micro"
+  instance_class    = "db.t3.medium"
   allocated_storage = 20
   storage_type      = "gp2"
 

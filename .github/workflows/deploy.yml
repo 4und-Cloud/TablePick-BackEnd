@@ -61,6 +61,6 @@ jobs:
                 "docker stop tablepick-app || true",
                 "docker rm tablepick-app || true",
                 "aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}",
-                "docker run -d --name tablepick-app -p 8080:8080 -e JAVA_OPTS=-Xmx256m -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ secrets.RDS_ENDPOINT }}:3306/tablepick?useSSL=false\\&serverTimezone=Asia/Seoul\\&allowPublicKeyRetrieval=true -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} -e KAKAO_ADMIN_KEY=$KAKAO_ADMIN_KEY '$REGISTRY'/'$ECR_REPOSITORY':'$GITHUB_SHA'"
+                "docker run -d --name tablepick-app -p 8080:8080 -e JAVA_OPTS=-Xmx256m -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ secrets.RDS_ENDPOINT }}/tablepick?useSSL=false\\&serverTimezone=Asia/Seoul\\&allowPublicKeyRetrieval=true -e SPRING_DATASOURCE_PASSWORD=${{ secrets.RDS_PASSWORD }} -e KAKAO_ADMIN_KEY=$KAKAO_ADMIN_KEY '$REGISTRY'/'$ECR_REPOSITORY':'$GITHUB_SHA'"
               ]
             }'
