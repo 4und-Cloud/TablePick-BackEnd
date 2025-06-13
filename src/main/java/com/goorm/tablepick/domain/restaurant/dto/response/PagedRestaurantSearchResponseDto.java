@@ -1,14 +1,11 @@
 package com.goorm.tablepick.domain.restaurant.dto.response;
 
-import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.domain.Page;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 @Setter
