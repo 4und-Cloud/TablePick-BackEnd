@@ -49,8 +49,11 @@ public class BoardController {
             @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음")
     })
     public ResponseEntity<BoardDetailResponseDto> getBoardDetail(
-            @PathVariable @Parameter(description = "게시글 ID") Long boardId) {
-        return ResponseEntity.ok(boardService.getBoardDetail(boardId));
+            @PathVariable @Parameter(description = "게시글 ID") Long boardId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Member member = (userDetails != null) ? userDetails.getMember() : null;
+
+        return ResponseEntity.ok(boardService.getBoardDetail(boardId, member));
     }
 
     @GetMapping("/restaurant/{restaurantId}")

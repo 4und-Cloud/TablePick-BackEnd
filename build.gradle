@@ -87,6 +87,8 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok:1.18.30'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
 
+    // kafka
+    implementation 'org.springframework.kafka:spring-kafka'
 }
 //Data parser
 tasks.register('importRestaurantData', JavaExec) {

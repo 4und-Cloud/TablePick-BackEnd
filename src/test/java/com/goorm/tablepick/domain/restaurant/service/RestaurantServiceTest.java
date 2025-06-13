@@ -325,7 +325,7 @@ public class RestaurantServiceTest {
 
         // when
         Pageable pageable = PageRequest.of(0, 4);
-        Page<RestaurantResponseDto> restaurants = restaurantService.getAllRestaurants(pageable);
+        Page<RestaurantResponseDto> restaurants = restaurantService.getAllRestaurants(pageable, member1);
 
         // then
         Assertions.assertThat(restaurants).hasSize(4)
@@ -398,7 +398,7 @@ public class RestaurantServiceTest {
         boardRepository.saveAll(List.of(board1, board2, board3, board4, board5, board6, board7));
 
         //when
-        PagedRestaurantResponseDto allRestaurantsOrderedByBoardNum = restaurantService.getAllRestaurantsOrderedByBoardNum(0);
+        PagedRestaurantResponseDto allRestaurantsOrderedByBoardNum = restaurantService.getAllRestaurantsOrderedByBoardNum(0, member1);
 
         //then
         Assertions.assertThat(allRestaurantsOrderedByBoardNum.getRestaurants()).hasSize(6)
@@ -410,6 +410,8 @@ public class RestaurantServiceTest {
     @Test
     void getRestaurantDetails(){
     //given
+        Member member1 = createMember("member1@gmail.com", "홍길동");
+
         RestaurantCategory restaurantCategory1 = RestaurantCategory.builder().name("한식").build();
 
         Restaurant restaurant1 = createRestaurant("골목 식당", "강남구 강남대로 11", restaurantCategory1);
@@ -422,7 +424,7 @@ public class RestaurantServiceTest {
         Restaurant savedRestaurant = restaurantRepository.save(restaurant1);
 
         //when
-        restaurantService.getRestaurantDetail(savedRestaurant.getId());
+        restaurantService.getRestaurantDetail(savedRestaurant.getId(), member1);
 
     //then
         Assertions.assertThat(savedRestaurant).isNotNull();
@@ -433,6 +435,8 @@ public class RestaurantServiceTest {
     @Test
     void getRestaurantDetailsWithWrongId(){
         //given
+        Member member1 = createMember("member1@gmail.com", "홍길동");
+
         RestaurantCategory restaurantCategory1 = RestaurantCategory.builder().name("한식").build();
 
         Restaurant restaurant1 = createRestaurant("골목 식당", "강남구 강남대로 11", restaurantCategory1);
@@ -445,7 +449,7 @@ public class RestaurantServiceTest {
         Restaurant savedRestaurant = restaurantRepository.save(restaurant1);
 
         //when&then
-        Assertions.assertThatThrownBy(() -> restaurantService.getRestaurantDetail(1234L))
+        Assertions.assertThatThrownBy(() -> restaurantService.getRestaurantDetail(1234L, member1))
                 .isInstanceOf(RestaurantException.class)
                 .hasMessageContaining("식당 정보를 찾을 수 없습니다.");
     }

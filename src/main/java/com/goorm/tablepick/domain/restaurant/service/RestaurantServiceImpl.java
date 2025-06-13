@@ -1,6 +1,8 @@
 package com.goorm.tablepick.domain.restaurant.service;
 
+import com.goorm.tablepick.domain.board.dto.response.BoardListResponseDto;
 import com.goorm.tablepick.domain.board.repository.BoardTagRepository;
+import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantSearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.*;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
@@ -10,6 +12,8 @@ import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryRepository;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
+import com.goorm.tablepick.domain.userevent.dto.UserClickEventDto;
+import com.goorm.tablepick.domain.userevent.service.UserEventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +37,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final RestaurantCategoryRepository restaurantCategoryRepository;
     private final BoardTagRepository boardTagRepository;
+    private final UserEventService userEventService;
 
     @Override
     public PagedRestaurantResponseDto searchRestaurants(@Valid RestaurantSearchRequestDto dto) {
@@ -87,11 +92,22 @@ public class RestaurantServiceImpl implements RestaurantService {
 
 
     @Override
-    public Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable) {
+    public Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable, Member member) {
         Page<Restaurant> restaurantPage = restaurantRepository.findPopularRestaurants(pageable);
 
         Page<RestaurantResponseDto> dtoPage = restaurantPage.map(restaurant -> {
             List<String> topTags = boardTagRepository.findTopTagsByRestaurantIdNative(restaurant.getId());
+
+            if (member != null) {
+                UserClickEventDto event = new UserClickEventDto(
+                        "RESTAURANT_VIEW",
+                        restaurant.getId(),  // targetId에 식당 ID 넣기
+                        member.getId(),
+                        System.currentTimeMillis()
+                );
+                userEventService.sendClickEvent(event);
+            }
+
             return new RestaurantResponseDto(
                     restaurant.getId(),
                     restaurant.getName(),
@@ -107,18 +123,40 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
-    public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page) {
+    public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page, Member member) {
         Pageable pageable = PageRequest.of(page, 6);
         Page<Restaurant> restaurantList = restaurantRepository.findAllOrderByBoardNum(pageable);
+
+        if (member != null) {
+            restaurantList.forEach(restaurant -> {
+                UserClickEventDto event = new UserClickEventDto(
+                        "RESTAURANT_VIEW",
+                        restaurant.getId(),  // 각 식당 ID 넣기
+                        member.getId(),
+                        System.currentTimeMillis()
+                );
+                userEventService.sendClickEvent(event);
+            });
+        }
         return new PagedRestaurantResponseDto(restaurantList);
     }
 
     @Override
-    public RestaurantDetailResponseDto getRestaurantDetail(Long id) {
+    public RestaurantDetailResponseDto getRestaurantDetail(Long id, Member member) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new RestaurantException(RestaurantErrorCode.NOT_FOUND));
 
         List<String> topTags = boardTagRepository.findTopTagsByRestaurantIdNative(restaurant.getId());
+
+        if(member != null) {
+            UserClickEventDto event = new UserClickEventDto(
+                    "RESTAURANT_CLICK",
+                    id,
+                    member.getId(),
+                    System.currentTimeMillis()
+            );
+            userEventService.sendClickEvent(event);
+        }
 
         return RestaurantDetailResponseDto.fromEntity(restaurant, topTags);
     }
