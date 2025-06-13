@@ -20,16 +20,17 @@ public class FCMServiceImpl implements FCMService {
     @Value("${server.domain:http://localhost:8080}")
     private String serverDomain;
     
-    private void validateToken(String token) {
-        if (token == null || token.trim().isEmpty()) {
-            log.error("FCM 토큰이 null 또는 공백입니다.");
-            throw new NotificationException("FCM 토큰이 null 또는 공백입니다.", "FCM_INVALID_TOKEN");
-        }
+    private boolean isValidToken(String token) {
+        return token != null && !token.trim().isEmpty();
     }
     
     @Override
     public String sendMessage(String token, String title, String body, Map<String, String> data) {
-        validateToken(token);
+        if (!isValidToken(token)) {
+            log.warn("FCM 토큰이 null 또는 공백이라서 메시지를 보낼 수 없습니다.");
+            System.out.println("FCM 토큰이 null 또는 공백이라서 메시지를 보낼 수 없습니다.");
+            return null;
+        }
         
         // 데이터에 제목과 내용 추가 (서비스 워커에서 사용)
         data.put("title", title);
@@ -51,7 +52,6 @@ public class FCMServiceImpl implements FCMService {
             log.info("응답: {}", response);
             log.info("=======================================");
             
-            // 브라우저 콘솔에서도 확인할 수 있도록 System.out으로도 출력
             System.out.println("\n========== FCM 알림 전송 성공 ==========");
             System.out.println("제목: " + title);
             System.out.println("내용: " + body);
@@ -77,7 +77,11 @@ public class FCMServiceImpl implements FCMService {
     
     @Override
     public String sendMessageWithLogo(String token, String title, String body, Map<String, String> data) {
-        validateToken(token);
+        if (!isValidToken(token)) {
+            log.warn("FCM 토큰이 null 또는 공백이라서 로고가 포함된 메시지를 보낼 수 없습니다.");
+            System.out.println("FCM 토큰이 null 또는 공백이라서 로고가 포함된 메시지를 보낼 수 없습니다.");
+            return null;
+        }
         
         // 로고 이미지 URL 생성
         String logoUrl = serverDomain + "/images/logo.png";
@@ -113,7 +117,6 @@ public class FCMServiceImpl implements FCMService {
             log.info("메시지 타입: 알림 메시지 (로고 이미지 포함)");
             log.info("=======================================");
             
-            // 브라우저 콘솔에서도 확인할 수 있도록 System.out으로도 출력
             System.out.println("\n========== FCM 로고 알림 전송 성공 ==========");
             System.out.println("제목: " + title);
             System.out.println("내용: " + body);

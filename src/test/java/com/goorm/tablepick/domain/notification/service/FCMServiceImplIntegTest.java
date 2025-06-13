@@ -1,11 +1,9 @@
 package com.goorm.tablepick.domain.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
-import com.goorm.tablepick.global.exception.NotificationException;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -85,7 +83,7 @@ public class FCMServiceImplIntegTest {
     }
     
     @Test
-    @DisplayName("null 또는 빈 FCM 토큰으로 알림 전송 시 NotificationException이 발생한다.")
+    @DisplayName("null 또는 빈 FCM 토큰으로 알림 전송 시 null을 반환한다.")
     void sendMessageWithNullOrEmptyFcmToken() {
         // given
         String nullToken = null;
@@ -95,21 +93,16 @@ public class FCMServiceImplIntegTest {
         String body = "빈 토큰 테스트 내용";
         Map<String, String> data = new HashMap<>();
         
-        // when & then
-        assertThatThrownBy(() -> fcmService.sendMessage(nullToken, title, body, data))
-                .isInstanceOf(NotificationException.class)
-                .hasMessageContaining("FCM 토큰이 null 또는 공백입니다")
-                .hasFieldOrPropertyWithValue("errorCode", "FCM_INVALID_TOKEN");
+        // when
+        String responseNull = fcmService.sendMessage(nullToken, title, body, data);
+        String responseEmpty = fcmService.sendMessage(emptyToken, title, body, data);
+        String responseBlank = fcmService.sendMessage(blankToken, title, body, data);
         
-        assertThatThrownBy(() -> fcmService.sendMessage(emptyToken, title, body, data))
-                .isInstanceOf(NotificationException.class)
-                .hasMessageContaining("FCM 토큰이 null 또는 공백입니다")
-                .hasFieldOrPropertyWithValue("errorCode", "FCM_INVALID_TOKEN");
-        
-        assertThatThrownBy(() -> fcmService.sendMessage(blankToken, title, body, data))
-                .isInstanceOf(NotificationException.class)
-                .hasMessageContaining("FCM 토큰이 null 또는 공백입니다")
-                .hasFieldOrPropertyWithValue("errorCode", "FCM_INVALID_TOKEN");
+        // then
+        assertThat(responseNull).isNull();
+        assertThat(responseEmpty).isNull();
+        assertThat(responseBlank).isNull();
+        assertThat(data).isEmpty(); // 데이터가 수정되지 않았는지 확인
     }
     
 }
