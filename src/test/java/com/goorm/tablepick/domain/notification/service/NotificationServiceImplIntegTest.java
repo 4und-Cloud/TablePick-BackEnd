@@ -48,7 +48,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
 @SpringBootTest
-class NotificationServiceImplIntegrationTest {
+class NotificationServiceImplIntegTest {
     
     @Autowired
     private NotificationService notificationService;
