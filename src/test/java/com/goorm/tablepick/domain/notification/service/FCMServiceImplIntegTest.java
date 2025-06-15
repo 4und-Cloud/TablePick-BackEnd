@@ -14,7 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
 @SpringBootTest
-public class FCMServiceImplIntegTest {
+class FCMServiceImplIntegTest {
     
     @Autowired
     private FCMService fcmService;
@@ -26,7 +26,7 @@ public class FCMServiceImplIntegTest {
     @DisplayName("실제 FCM 서버를 통해 브라우저로 알림이 정상적으로 송수신이 된다.")
     void sendMessageToFcmServer() throws FirebaseMessagingException {
         // given 준비
-        String fcmToken = "fWl5TIBryr_6_lBj6i7NMh:APA91bFzSm5E6CoIj5EV3e5kp7wylGaxCv6YfLN73KAm4r_TQwPPhKmecfMFySTEeSkkvJ2IaeByUAva6G9I5Vf23scItcQsBFFVoWOcePLhbECJ9GNMbac";
+        String fcmToken = "Valid-fcm-token";
         String title = "실제 알림 테스트 제목";
         String body = "실제 알림 테스트 내용입니다";
         Map<String, String> data = new HashMap<>();
@@ -47,7 +47,7 @@ public class FCMServiceImplIntegTest {
     @DisplayName("실제 FCM 서버를 통해 브라우저로 로고가 포함된 알림이 정상적으로 송수신이 된다.")
     void sendMessageWithLogoToFcmServer() throws FirebaseMessagingException {
         // given 준비
-        String fcmToken = "fWl5TIBryr_6_lBj6i7NMh:APA91bFzSm5E6CoIj5EV3e5kp7wylGaxCv6YfLN73KAm4r_TQwPPhKmecfMFySTEeSkkvJ2IaeByUAva6G9I5Vf23scItcQsBFFVoWOcePLhbECJ9GNMbac";
+        String fcmToken = "Valid-fcm-token";
         String title = "실제 로고 알림 테스트 제목";
         String body = "실제 로고 알림 테스트 내용입니다";
         Map<String, String> data = new HashMap<>();

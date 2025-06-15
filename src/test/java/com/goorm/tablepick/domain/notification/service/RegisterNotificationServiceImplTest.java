@@ -28,7 +28,7 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 @ExtendWith(OutputCaptureExtension.class)
 @SpringBootTest
-public class RegisterNotificationServiceImplTest {
+class RegisterNotificationServiceImplTest {
     
     @Mock
     private NotificationService notificationService;

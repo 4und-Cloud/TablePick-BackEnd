@@ -20,7 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
 @SpringBootTest
-public class FCMTokenServiceImplTest {
+class FCMTokenServiceImplTest {
     
     @MockBean
     private MemberRepository memberRepository;
