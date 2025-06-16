@@ -52,3 +52,7 @@ src/main/resources/static/firebase-messaging-sw.js
 **/**/firebase-messaging-sw.js
 
 src/main/resources/*.csv
+
+env
+
+src/main/generated
