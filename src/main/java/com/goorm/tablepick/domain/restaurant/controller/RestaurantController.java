@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -60,7 +59,7 @@ public class RestaurantController {
 
     @GetMapping("/v1/search")
     @Operation(summary = "식당 검색", description = "키워드와 태그로 식당이름과 주소, 메뉴 이름, 태그을 통해 식당을 검색합니다.")
-    public List<RestaurantSearchResponseDto> searchRestaurantsV1(
+    public Page<RestaurantSearchResponseDto> searchRestaurantsV1(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) List<Long> tagIds,
             @RequestParam(required = false) boolean onlyOperating,

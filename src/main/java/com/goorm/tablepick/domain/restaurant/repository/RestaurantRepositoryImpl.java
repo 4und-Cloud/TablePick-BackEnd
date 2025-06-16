@@ -24,8 +24,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
+
+;
 
 @Repository
 public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
@@ -44,36 +49,36 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
      * @param onlyOperating true 면 영업 중인 식당만 조회
      */
     @Override
-    public List<RestaurantSearchResponseDto> searchRestaurantResult(
+    public Page<RestaurantSearchResponseDto> searchRestaurantResult(
             String keyword,
             List<Long> tagIds,
             String sort,
-            Boolean onlyOperating
+            Boolean onlyOperating,
+            Pageable pageable
     ) {
-        QRestaurant restaurant         = QRestaurant.restaurant;
-        QBoardTag boardTag             = QBoardTag.boardTag;
-        QBoard board                   = QBoard.board;
-        QReservation reservation        = QReservation.reservation;
-        QRestaurantOperatingHour oh    = QRestaurantOperatingHour.restaurantOperatingHour;
-        QMenu menu                     = QMenu.menu;
-        QRestaurantImage image         = QRestaurantImage.restaurantImage;
+        QRestaurant restaurant = QRestaurant.restaurant;
+        QBoardTag boardTag = QBoardTag.boardTag;
+        QBoard board = QBoard.board;
+        QReservation reservation = QReservation.reservation;
+        QRestaurantOperatingHour oh = QRestaurantOperatingHour.restaurantOperatingHour;
+        QMenu menu = QMenu.menu;
+        QRestaurantImage image = QRestaurantImage.restaurantImage;
 
         boolean hasKeyword = StringUtils.hasText(keyword);
-        boolean hasTags    = tagIds != null && !tagIds.isEmpty();
-        int     tagCount   = hasTags ? tagIds.size() : 0;
+        boolean hasTags = tagIds != null && !tagIds.isEmpty();
+        int tagCount = hasTags ? tagIds.size() : 0;
 
-        // 1) WHERE 절 빌드
         BooleanBuilder where = new BooleanBuilder();
 
         if (hasKeyword) {
             String kw = "%" + keyword.trim().toLowerCase() + "%";
             where.and(
-                    restaurant.name.like(kw)
-                            .or(restaurant.address.like(kw))
+                    restaurant.name.likeIgnoreCase(kw)
+                            .or(restaurant.address.likeIgnoreCase(kw))
                             .or(JPAExpressions.selectOne()
                                     .from(menu)
                                     .where(menu.restaurant.eq(restaurant)
-                                            .and(menu.name.like(kw)))
+                                            .and(menu.name.likeIgnoreCase(kw)))
                                     .exists())
             );
         }
@@ -93,8 +98,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
             );
         }
 
-        // 2) Main query: projection + from + where
-        JPAQuery<RestaurantSearchResponseDto> q = queryFactory
+        JPAQuery<RestaurantSearchResponseDto> contentQuery = queryFactory
                 .select(Projections.fields(
                         RestaurantSearchResponseDto.class,
                         restaurant.id,
@@ -105,36 +109,32 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
                 .from(restaurant)
                 .where(where);
 
-        // 3) 조인: tagIds 범위 내 boardTag (정렬용)
         if (hasTags) {
-            q.leftJoin(boardTag)
+            contentQuery.leftJoin(boardTag)
                     .on(boardTag.restaurant.eq(restaurant),
                             boardTag.tag.id.in(tagIds));
         }
 
-        // 4) 조인: board / reservation (정렬용)
         boolean sortByBoard = "boardCount".equals(sort);
-        boolean sortByResv  = "reservationCount".equals(sort);
+        boolean sortByResv = "reservationCount".equals(sort);
         if (sortByBoard) {
-            q.leftJoin(board)
-                    .on(board.restaurantId.eq(restaurant.id));
+            contentQuery.leftJoin(board).on(board.restaurantId.eq(restaurant.id));
         }
         if (sortByResv) {
-            q.leftJoin(reservation)
-                    .on(reservation.restaurant.eq(restaurant));
+            contentQuery.leftJoin(reservation).on(reservation.restaurant.eq(restaurant));
         }
-        if(hasTags){
-            q.having(boardTag.tag.id.countDistinct().eq((long) tagCount));
+
+        if (hasTags) {
+            contentQuery.having(boardTag.tag.id.countDistinct().eq((long) tagCount));
         }
-        // 5) GROUP BY (projection 컬럼 기준)
-        q.groupBy(
+
+        contentQuery.groupBy(
                 restaurant.id,
                 restaurant.name,
                 restaurant.address,
                 restaurant.restaurantCategory.name
         );
 
-        // 6) ORDER BY (board -> reservation -> 태그 순)
         List<OrderSpecifier<?>> orders = new ArrayList<>();
         if (sortByBoard) {
             orders.add(board.id.countDistinct().desc());
@@ -145,26 +145,26 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
             orders.add(boardTag.tag.id.countDistinct().desc());
         }
         if (!orders.isEmpty()) {
-            q.orderBy(orders.toArray(new OrderSpecifier<?>[0]));
+            contentQuery.orderBy(orders.toArray(new OrderSpecifier[0]));
         }
 
-        // 7) fetch all
-        List<RestaurantSearchResponseDto> results = q.fetch();
-        if (results.isEmpty()) {
-            return results;
+        contentQuery.limit(pageable.getPageSize());
+
+        List<RestaurantSearchResponseDto> content = contentQuery.fetch();
+
+        if (content.isEmpty()) {
+            return new PageImpl<>(content, pageable, 0);
         }
 
-        // 8) 추가 매핑: 이미지, 태그 이름
-        List<Long> ids = results.stream()
-                .map(RestaurantSearchResponseDto::getId)
-                .toList();
+        List<Long> ids = content.stream().map(RestaurantSearchResponseDto::getId).toList();
 
         Map<Long, String> imageMap = queryFactory
                 .select(image.restaurant.id, image.imageUrl)
                 .from(image)
                 .where(image.restaurant.id.in(ids))
                 .orderBy(image.id.asc())
-                .fetch().stream()
+                .fetch()
+                .stream()
                 .collect(Collectors.toMap(
                         tuple -> tuple.get(image.restaurant.id),
                         tuple -> tuple.get(image.imageUrl),
@@ -172,10 +172,11 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
                 ));
 
         Map<Long, List<String>> tagMap = queryFactory
-                .selectDistinct(boardTag.restaurant.id, boardTag.tag.name)
+                .select(boardTag.restaurant.id, boardTag.tag.name)
                 .from(boardTag)
                 .where(boardTag.restaurant.id.in(ids))
-                .fetch().stream()
+                .fetch()
+                .stream()
                 .collect(Collectors.groupingBy(
                         tuple -> tuple.get(boardTag.restaurant.id),
                         Collectors.mapping(
@@ -184,12 +185,18 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
                         )
                 ));
 
-        // 9) DTO에 세팅
-        results.forEach(dto -> {
+        content.forEach(dto -> {
             dto.setRestaurantImage(imageMap.get(dto.getId()));
             dto.setBoardTags(tagMap.getOrDefault(dto.getId(), List.of()));
         });
 
-        return results;
+        // count query
+        Long count = queryFactory
+                .select(restaurant.countDistinct())
+                .from(restaurant)
+                .where(where)
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, count != null ? count : 0);
     }
 }

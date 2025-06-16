@@ -149,7 +149,7 @@ public class RestaurantServiceTest {
         Page<RestaurantResponseDto> restaurants = restaurantService.getAllRestaurants(pageable, member1);
 
         // then
-        Assertions.assertThat(restaurants).hasSize(4)
+        Assertions.assertThat(restaurants.getContent()).hasSize(4)
                 .extracting( "name")
                 .containsExactlyElementsOf(List.of("달콤한 카페", "조용한 카페", "골목 식당", "바다 식당"));
     }
@@ -298,6 +298,7 @@ public class RestaurantServiceTest {
     void searchByKeywordUsingQueryDSL(){
         RestaurantSearchRequestDto requestDto = RestaurantSearchRequestDto.builder()
                 .keyword("여기는맛있는숨겨진아주아주맛이좋은식당")
+                .page(0)
                 .build();
 
         RestaurantCategory restaurantCategory1 = RestaurantCategory.builder().name("한식").build();
@@ -316,10 +317,10 @@ public class RestaurantServiceTest {
         restaurantRepository.saveAll(List.of(restaurant1, restaurant2, restaurant3));
 
         // when
-        List<RestaurantSearchResponseDto> result = restaurantService.searchRestaurantsV1(requestDto);
+        Page<RestaurantSearchResponseDto> result = restaurantService.searchRestaurantsV1(requestDto);
 
         // then
-        Assertions.assertThat(result).hasSize(2)
+        Assertions.assertThat(result.getContent()).hasSize(2)
                 .extracting("name")
                 .containsExactlyInAnyOrder("골목 여기는맛있는숨겨진아주아주맛이좋은식당", "바다 여기는맛있는숨겨진아주아주맛이좋은식당");
 
@@ -404,10 +405,10 @@ public class RestaurantServiceTest {
                 .build();
 
         // when
-        List<RestaurantSearchResponseDto> result = restaurantService.searchRestaurantsV1(requestDto);
+        Page<RestaurantSearchResponseDto> result = restaurantService.searchRestaurantsV1(requestDto);
 
         // then
-        Assertions.assertThat(result).hasSize(1)
+        Assertions.assertThat(result.getContent()).hasSize(1)
                 .extracting("name")
                 .containsExactlyInAnyOrder("골목 식당");
     }
@@ -453,10 +454,10 @@ public class RestaurantServiceTest {
         restaurantRepository.saveAll(List.of(restaurant1, restaurant2, restaurant3));
 
         // when
-        List<RestaurantSearchResponseDto> restaurants = restaurantService.searchRestaurantsV1(requestDto);
+        Page<RestaurantSearchResponseDto> restaurants = restaurantService.searchRestaurantsV1(requestDto);
 
         // then
-        Assertions.assertThat(restaurants).hasSize(3)
+        Assertions.assertThat(restaurants.getContent()).hasSize(3)
                 .extracting("name")
                 .containsExactlyElementsOf(List.of("골목 식당", "바다 식당","달콤한 카페"));
     }
@@ -542,10 +543,10 @@ public class RestaurantServiceTest {
         boardTagRepository.saveAll(List.of(boardTag1, boardTag2, boardTag3, boardTag4, boardTag5, boardTag6));
 
         // when
-        List<RestaurantSearchResponseDto> restaurants = restaurantService.searchRestaurantsV1(requestDto);
+        Page<RestaurantSearchResponseDto> restaurants = restaurantService.searchRestaurantsV1(requestDto);
 
         // then
-        Assertions.assertThat(restaurants).hasSize(4)
+        Assertions.assertThat(restaurants.getContent()).hasSize(4)
                 .extracting("name")
                 .containsExactlyElementsOf(List.of("달콤한 카페", "조용한 카페","골목 식당","바다 식당"));
     }
@@ -617,11 +618,11 @@ public class RestaurantServiceTest {
 
         //when
 
-        List<RestaurantSearchResponseDto> restaurantSearchResponseDtos = restaurantService.searchRestaurantsV1(
+        Page<RestaurantSearchResponseDto> restaurantSearchResponseDtos = restaurantService.searchRestaurantsV1(
                 requestDto);
 
         //then
-        Assertions.assertThat(restaurantSearchResponseDtos).hasSize(2)
+        Assertions.assertThat(restaurantSearchResponseDtos.getContent()).hasSize(2)
                 .extracting("name")
                 .containsExactlyInAnyOrder("골목 식당", "바다 식당");
     }
@@ -710,11 +711,11 @@ public class RestaurantServiceTest {
                 .tagIds(tagIds)
                 .sort("boardCount")
                 .build();
-        List<RestaurantSearchResponseDto> restaurantSearchResponseDtos = restaurantService.searchRestaurantsV1(
+        Page<RestaurantSearchResponseDto> restaurantSearchResponseDtos = restaurantService.searchRestaurantsV1(
                 requestDto);
 
         //then
-        Assertions.assertThat(restaurantSearchResponseDtos).hasSize(2)
+        Assertions.assertThat(restaurantSearchResponseDtos.getContent()).hasSize(2)
                 .extracting("name")
                 .containsExactly("골목 식당", "바다 식당");
     }
@@ -774,10 +775,10 @@ public class RestaurantServiceTest {
                 .tagIds(null)
                 .sort("reservationCount")
                 .build();
-        List<RestaurantSearchResponseDto> restaurants = restaurantService.searchRestaurantsV1(requestDto);
+        Page<RestaurantSearchResponseDto> restaurants = restaurantService.searchRestaurantsV1(requestDto);
 
         //then
-        Assertions.assertThat(restaurants).hasSize(4)
+        Assertions.assertThat(restaurants.getContent()).hasSize(4)
                 .extracting("name")
                 .containsExactly("골목 식당", "달콤한 카페", "조용한 카페", "바다 식당");
     }
@@ -836,10 +837,10 @@ public class RestaurantServiceTest {
                 .tagIds(null)
                 .sort("reservationCount")
                 .build();
-        List<RestaurantSearchResponseDto> restaurants = restaurantService.searchRestaurantsV1(requestDto);
+        Page<RestaurantSearchResponseDto> restaurants = restaurantService.searchRestaurantsV1(requestDto);
 
         //then
-        Assertions.assertThat(restaurants).hasSize(2)
+        Assertions.assertThat(restaurants.getContent()).hasSize(2)
                 .extracting("name")
                 .containsExactly("골목 식당", "바다 식당");
     }
@@ -928,10 +929,10 @@ public class RestaurantServiceTest {
                 .tagIds(tagIds)
                 .sort("reservationCount")
                 .build();
-        List<RestaurantSearchResponseDto> restaurants = restaurantService.searchRestaurantsV1(requestDto);
+        Page<RestaurantSearchResponseDto> restaurants = restaurantService.searchRestaurantsV1(requestDto);
 
         //then
-        Assertions.assertThat(restaurants).hasSize(2)
+        Assertions.assertThat(restaurants.getContent()).hasSize(2)
                 .extracting("name")
                 .containsExactly("골목 식당", "바다 식당");
     }
@@ -985,10 +986,10 @@ public class RestaurantServiceTest {
                 .onlyOperating(true)
                 .sort(null)
                 .build();
-        List<RestaurantSearchResponseDto> restaurantSearchResponseDtos = restaurantService.searchRestaurantsV1(requestDto);
+        Page<RestaurantSearchResponseDto> restaurantSearchResponseDtos = restaurantService.searchRestaurantsV1(requestDto);
 
         //then
-        Assertions.assertThat(restaurantSearchResponseDtos).hasSize(3)
+        Assertions.assertThat(restaurantSearchResponseDtos.getContent()).hasSize(3)
                 .extracting("name")
                 .containsExactlyInAnyOrder("골목 식당", "바다 식당", "달콤한 카페");
     }
@@ -1041,10 +1042,10 @@ public class RestaurantServiceTest {
                 .sort(null)
                 .onlyOperating(true)
                 .build();
-        List<RestaurantSearchResponseDto> restaurantSearchResponseDtos = restaurantService.searchRestaurantsV1(requestDto);
+        Page<RestaurantSearchResponseDto> restaurantSearchResponseDtos = restaurantService.searchRestaurantsV1(requestDto);
 
         //then
-        Assertions.assertThat(restaurantSearchResponseDtos).hasSize(2)
+        Assertions.assertThat(restaurantSearchResponseDtos.getContent()).hasSize(2)
                 .extracting("name")
                 .containsExactlyInAnyOrder("골목 식당", "바다 식당");
     }
@@ -1152,10 +1153,10 @@ public class RestaurantServiceTest {
                 .sort(null)
                 .onlyOperating(true)
                 .build();
-        List<RestaurantSearchResponseDto> restaurantSearchResponseDtos = restaurantService.searchRestaurantsV1(requestDto);
+        Page<RestaurantSearchResponseDto> restaurantSearchResponseDtos = restaurantService.searchRestaurantsV1(requestDto);
 
         //then
-        Assertions.assertThat(restaurantSearchResponseDtos).hasSize(2)
+        Assertions.assertThat(restaurantSearchResponseDtos.getContent()).hasSize(2)
                 .extracting("name")
                 .containsExactlyInAnyOrder("골목 식당", "바다 식당");
     }
@@ -1263,10 +1264,10 @@ public class RestaurantServiceTest {
                 .tagIds(tagIds)
                 .sort("BoardCount")
                 .build();
-        List<RestaurantSearchResponseDto> restaurantSearchResponseDtos = restaurantService.searchRestaurantsV1(requestDto);
+        Page<RestaurantSearchResponseDto> restaurantSearchResponseDtos = restaurantService.searchRestaurantsV1(requestDto);
 
         //then
-        Assertions.assertThat(restaurantSearchResponseDtos).hasSize(2)
+        Assertions.assertThat(restaurantSearchResponseDtos.getContent()).hasSize(2)
                 .extracting("name")
                 .containsExactlyInAnyOrder("바다 식당", "골목 식당");
     }
@@ -1373,10 +1374,10 @@ public class RestaurantServiceTest {
                 .tagIds(tagIds)
                 .sort("BoardCount")
                 .build();
-        List<RestaurantSearchResponseDto> restaurantSearchResponseDtos = restaurantService.searchRestaurantsV1(requestDto);
+        Page<RestaurantSearchResponseDto> restaurantSearchResponseDtos = restaurantService.searchRestaurantsV1(requestDto);
 
         //then
-        Assertions.assertThat(restaurantSearchResponseDtos).hasSize(2)
+        Assertions.assertThat(restaurantSearchResponseDtos.getContent()).hasSize(2)
                 .extracting("name")
                 .containsExactlyInAnyOrder("골목 식당", "바다 식당");
     }

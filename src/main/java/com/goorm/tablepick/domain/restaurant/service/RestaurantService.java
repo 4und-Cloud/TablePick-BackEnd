@@ -21,5 +21,5 @@ public interface RestaurantService {
 
     List<CategoryResponseDto> getCategoryList();
 
-    List<RestaurantSearchResponseDto> searchRestaurantsV1(RestaurantSearchRequestDto requestDto);
+    Page<RestaurantSearchResponseDto> searchRestaurantsV1(RestaurantSearchRequestDto requestDto);
 }
