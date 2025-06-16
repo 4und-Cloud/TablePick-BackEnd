@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationScheduleControllerTest {
@@ -39,7 +40,7 @@ class NotificationScheduleControllerTest {
     private NotificationScheduleController controller;
     
     @Test
-    @DisplayName("일일 알림 스케줄링 실행 - 성공")
+    @DisplayName("일일 알림 스케줄링 API를 호출하면 200 OK와 성공 메시지를 반환한다.")
     void runDailyScheduling_Success() {
         // given 준비
         doNothing().when(scheduler).scheduleNotificationsDaily();
@@ -57,7 +58,7 @@ class NotificationScheduleControllerTest {
     }
     
     @Test
-    @DisplayName("특정 예약에 대한 알림 스케줄링 - 성공")
+    @DisplayName("존재하지 않는 예약 ID로 개별 알림 스케줄링 API를 호출하면 404 NOT_FOUND 예외를 발생시킨다.")
     void scheduleForReservation_Success() {
         // given 준비
         Long reservationId = 1L;
@@ -82,7 +83,7 @@ class NotificationScheduleControllerTest {
     }
     
     @Test
-    @DisplayName("특정 예약에 대한 알림 스케줄링 - 예약을 찾을 수 없는 경우")
+    @DisplayName("예약이 없는 예약을 스케줄링하면 404 에러와 에러 메시지를 반환한다.")
     void scheduleForReservation_ReservationNotFound() {
         // given 준비
         Long reservationId = 999L;
@@ -90,10 +91,12 @@ class NotificationScheduleControllerTest {
                 .willReturn(Optional.empty());
         
         // when & then 실행 및 검증
-        RuntimeException exception = assertThrows(RuntimeException.class,
+        // ResponseStatusException을 사용하는 경우
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
                 () -> controller.scheduleForReservation(reservationId));
         
-        assertThat(exception.getMessage()).isEqualTo("Reservation not found: " + reservationId);
+        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(exception.getReason()).isEqualTo("Reservation not found: " + reservationId);
         
         verify(reservationRepository).findById(reservationId);
     }
