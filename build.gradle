@@ -57,6 +57,7 @@ dependencies {
 
     // Swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0'
+    implementation "org.jetbrains.kotlin:kotlin-reflect"
 
     // JSON and CSV parsing
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
