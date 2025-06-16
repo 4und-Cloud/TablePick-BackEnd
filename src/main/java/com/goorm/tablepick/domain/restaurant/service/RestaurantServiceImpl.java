@@ -4,7 +4,11 @@ import com.goorm.tablepick.domain.board.dto.response.BoardListResponseDto;
 import com.goorm.tablepick.domain.board.repository.BoardTagRepository;
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantSearchRequestDto;
-import com.goorm.tablepick.domain.restaurant.dto.response.*;
+import com.goorm.tablepick.domain.restaurant.dto.response.CategoryResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantDetailResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantSearchResponseDto;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantErrorCode;
@@ -15,18 +19,16 @@ import com.goorm.tablepick.domain.tag.repository.TagRepository;
 import com.goorm.tablepick.domain.userevent.dto.UserClickEventDto;
 import com.goorm.tablepick.domain.userevent.service.UserEventService;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -170,8 +172,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
-    public PagedRestaurantSearchResponseDto searchRestaurantsV1(RestaurantSearchRequestDto requestDto) {
-        Pageable pageable = PageRequest.of(requestDto.getPage(), 6);
+    public List<RestaurantSearchResponseDto> searchRestaurantsV1(RestaurantSearchRequestDto requestDto) {
         String keyword = requestDto.getKeyword();
         List<Long> tagIds = requestDto.getTagIds();
 
@@ -182,8 +183,6 @@ public class RestaurantServiceImpl implements RestaurantService {
         if (tagIds != null && !tagIds.isEmpty() && tagIds.size() > 3) {
             throw new RestaurantException(RestaurantErrorCode.TOO_MANY_TAGS);
         }
-        PagedRestaurantSearchResponseDto pagedRestaurantSearchResponseDto = PagedRestaurantSearchResponseDto.create(restaurantRepository.searchRestaurantResult(keyword,
-                tagIds, pageable));
-        return pagedRestaurantSearchResponseDto;
+        return restaurantRepository.searchRestaurantResult(keyword, tagIds,requestDto.getSort(), requestDto.getOnlyOperating());
     }
 }

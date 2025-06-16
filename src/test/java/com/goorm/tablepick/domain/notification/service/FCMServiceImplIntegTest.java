@@ -1,11 +1,9 @@
 package com.goorm.tablepick.domain.notification.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
-import com.goorm.tablepick.global.exception.NotificationException;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
 @SpringBootTest
-public class FCMServiceImplIntegTest {
+class FCMServiceImplIntegTest {
     
     @Autowired
     private FCMService fcmService;
@@ -28,7 +26,7 @@ public class FCMServiceImplIntegTest {
     @DisplayName("실제 FCM 서버를 통해 브라우저로 알림이 정상적으로 송수신이 된다.")
     void sendMessageToFcmServer() throws FirebaseMessagingException {
         // given 준비
-        String fcmToken = "fWl5TIBryr_6_lBj6i7NMh:APA91bFzSm5E6CoIj5EV3e5kp7wylGaxCv6YfLN73KAm4r_TQwPPhKmecfMFySTEeSkkvJ2IaeByUAva6G9I5Vf23scItcQsBFFVoWOcePLhbECJ9GNMbac";
+        String fcmToken = "Valid-fcm-token";
         String title = "실제 알림 테스트 제목";
         String body = "실제 알림 테스트 내용입니다";
         Map<String, String> data = new HashMap<>();
@@ -49,7 +47,7 @@ public class FCMServiceImplIntegTest {
     @DisplayName("실제 FCM 서버를 통해 브라우저로 로고가 포함된 알림이 정상적으로 송수신이 된다.")
     void sendMessageWithLogoToFcmServer() throws FirebaseMessagingException {
         // given 준비
-        String fcmToken = "fWl5TIBryr_6_lBj6i7NMh:APA91bFzSm5E6CoIj5EV3e5kp7wylGaxCv6YfLN73KAm4r_TQwPPhKmecfMFySTEeSkkvJ2IaeByUAva6G9I5Vf23scItcQsBFFVoWOcePLhbECJ9GNMbac";
+        String fcmToken = "Valid-fcm-token";
         String title = "실제 로고 알림 테스트 제목";
         String body = "실제 로고 알림 테스트 내용입니다";
         Map<String, String> data = new HashMap<>();
@@ -85,7 +83,7 @@ public class FCMServiceImplIntegTest {
     }
     
     @Test
-    @DisplayName("null 또는 빈 FCM 토큰으로 알림 전송 시 NotificationException이 발생한다.")
+    @DisplayName("null 또는 빈 FCM 토큰으로 알림 전송 시 null을 반환한다.")
     void sendMessageWithNullOrEmptyFcmToken() {
         // given
         String nullToken = null;
@@ -95,21 +93,16 @@ public class FCMServiceImplIntegTest {
         String body = "빈 토큰 테스트 내용";
         Map<String, String> data = new HashMap<>();
         
-        // when & then
-        assertThatThrownBy(() -> fcmService.sendMessage(nullToken, title, body, data))
-                .isInstanceOf(NotificationException.class)
-                .hasMessageContaining("FCM 토큰이 null 또는 공백입니다")
-                .hasFieldOrPropertyWithValue("errorCode", "FCM_INVALID_TOKEN");
+        // when
+        String responseNull = fcmService.sendMessage(nullToken, title, body, data);
+        String responseEmpty = fcmService.sendMessage(emptyToken, title, body, data);
+        String responseBlank = fcmService.sendMessage(blankToken, title, body, data);
         
-        assertThatThrownBy(() -> fcmService.sendMessage(emptyToken, title, body, data))
-                .isInstanceOf(NotificationException.class)
-                .hasMessageContaining("FCM 토큰이 null 또는 공백입니다")
-                .hasFieldOrPropertyWithValue("errorCode", "FCM_INVALID_TOKEN");
-        
-        assertThatThrownBy(() -> fcmService.sendMessage(blankToken, title, body, data))
-                .isInstanceOf(NotificationException.class)
-                .hasMessageContaining("FCM 토큰이 null 또는 공백입니다")
-                .hasFieldOrPropertyWithValue("errorCode", "FCM_INVALID_TOKEN");
+        // then
+        assertThat(responseNull).isNull();
+        assertThat(responseEmpty).isNull();
+        assertThat(responseBlank).isNull();
+        assertThat(data).isEmpty(); // 데이터가 수정되지 않았는지 확인
     }
     
 }
