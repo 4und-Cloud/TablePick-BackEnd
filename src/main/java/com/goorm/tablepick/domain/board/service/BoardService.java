@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface BoardService {
     PagedBoardListResponseDto getBoards(int page, int size, Member member);
-    BoardDetailResponseDto getBoardDetail(Long boardId);
+    BoardDetailResponseDto getBoardDetail(Long boardId, Member member);
     List<BoardListResponseDto> getBoardsByRestaurant(Long restaurantId);
 
     BoardCreateResponseDto createBoard(BoardRequestDto dto, List<MultipartFile> images, Member member);

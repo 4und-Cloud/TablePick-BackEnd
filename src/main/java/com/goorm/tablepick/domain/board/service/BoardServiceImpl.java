@@ -19,6 +19,8 @@ import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
+import com.goorm.tablepick.domain.userevent.dto.UserClickEventDto;
+import com.goorm.tablepick.domain.userevent.service.UserEventService;
 import jakarta.transaction.Transactional;
 import java.util.Collections;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +56,7 @@ public class BoardServiceImpl implements BoardService {
     private final BoardTagRepository boardTagRepository;
     private final TagRepository tagRepository;
     private final RestTemplate restTemplate;
+    private final UserEventService userEventService;
 
 
     @Value("${project.upload.board-image-path}")
@@ -66,19 +69,18 @@ public class BoardServiceImpl implements BoardService {
         }
         Pageable pageable = PageRequest.of(page, size);
         Page<Object[]> boardPage;
+        List<BoardListResponseDto> dtoList;
         if (member != null) {
             long userId = member.getId();
 
-            // 1. AI 서버에 userId로 추천 board_id 리스트 요청
+            // AI 서버에서 추천 게시글 아이디 받아오기
             List<Long> recommendedBoardIds = getRecommendedBoardIds(userId, page, 30);
 
-            // 2. 추천 board_id 리스트로 DB에서 게시글 정보 조회 (순서 보장 필요시 IN절 + FIELD 함수 등 활용)
+            // 추천 게시글 정보 조회
             boardPage = boardRepository.findBoardsByIdsInOrder(recommendedBoardIds, pageable);
 
-        } else {
-            boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
-        }
-        List<BoardListResponseDto> dtoList = boardPage.getContent().stream()
+            // 게시글 리스트 변환
+            dtoList = boardPage.getContent().stream()
                     .map(objects -> {
                         Board board = (Board) objects[0];
                         Restaurant restaurant = (Restaurant) objects[1];
@@ -87,18 +89,52 @@ public class BoardServiceImpl implements BoardService {
                     })
                     .toList();
 
+            // 로그 이벤트 전송
+            for (BoardListResponseDto dto : dtoList) {
+                UserClickEventDto event = new UserClickEventDto(
+                        "BOARD_VIEW",
+                        dto.getId(),
+                        userId,
+                        System.currentTimeMillis()
+                );
+                userEventService.sendClickEvent(event);
+            }
+
+        } else {
+            // 비회원인 경우
+            boardPage = boardRepository.findBoardsWithImagesOrderByCreatedAtDesc(pageable);
+
+            dtoList = boardPage.getContent().stream()
+                    .map(objects -> {
+                        Board board = (Board) objects[0];
+                        Restaurant restaurant = (Restaurant) objects[1];
+                        RestaurantCategory category = (RestaurantCategory) objects[2];
+                        return BoardListResponseDto.from(board, restaurant, category);
+                    })
+                    .toList();
+        }
             return new PagedBoardListResponseDto(dtoList, boardPage);
 
     }
 
 
     @Override
-    public BoardDetailResponseDto getBoardDetail(Long boardId) {
+    public BoardDetailResponseDto getBoardDetail(Long boardId, Member member) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 리뷰를 찾을 수 없습니다."));
 
         Restaurant restaurant = restaurantRepository.findById(board.getRestaurantId())
                 .orElseThrow(() -> new IllegalArgumentException("해당 식당을 찾을 수 없습니다."));
+
+        if (member != null) {
+            UserClickEventDto event = new UserClickEventDto(
+                    "BOARD_CLICK",
+                    boardId,
+                    member.getId(),
+                    System.currentTimeMillis()
+            );
+            userEventService.sendClickEvent(event);
+        }
 
         return BoardDetailResponseDto.from(board, restaurant);
     }

@@ -1,6 +1,8 @@
 package com.goorm.tablepick.domain.restaurant.service;
 
+import com.goorm.tablepick.domain.board.dto.response.BoardListResponseDto;
 import com.goorm.tablepick.domain.board.repository.BoardTagRepository;
+import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantSearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.CategoryResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
@@ -13,6 +15,10 @@ import com.goorm.tablepick.domain.restaurant.exception.RestaurantErrorCode;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryRepository;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
+import com.goorm.tablepick.domain.tag.repository.TagRepository;
+import com.goorm.tablepick.domain.userevent.dto.UserClickEventDto;
+import com.goorm.tablepick.domain.userevent.service.UserEventService;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -33,13 +39,77 @@ public class RestaurantServiceImpl implements RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final RestaurantCategoryRepository restaurantCategoryRepository;
     private final BoardTagRepository boardTagRepository;
+    private final UserEventService userEventService;
 
     @Override
-    public Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable) {
+    public PagedRestaurantResponseDto searchRestaurants(@Valid RestaurantSearchRequestDto dto) {
+        Pageable pageable = PageRequest.of(dto.getPage(), 6);
+
+        String keyword = dto.getKeyword();
+        List<Long> tagIds = dto.getTagIds();
+
+        boolean hasKeyword = keyword != null && !keyword.isEmpty();
+        boolean hasTags = tagIds != null && !tagIds.isEmpty();
+        if (keyword != null && keyword.length() > 20) {
+            throw new RestaurantException(RestaurantErrorCode.TOO_LONG_KEYWORD);
+        }
+
+        if (tagIds != null && !tagIds.isEmpty() && tagIds.size() > 3) {
+            throw new RestaurantException(RestaurantErrorCode.TOO_MANY_TAGS);
+        }
+        Page<Restaurant> restaurantList;
+        //키워드, 태그 검색
+        if (hasKeyword && hasTags) {
+            restaurantList = restaurantRepository.findAllByKeywordAndTags(
+                    keyword, tagIds, tagIds.size(), pageable);
+            log.info("둘다 검색 -> " + keyword + tagIds);
+            if (restaurantList == null || restaurantList.isEmpty()) {
+                return new PagedRestaurantResponseDto(Page.empty(pageable));
+            }
+
+            return new PagedRestaurantResponseDto(restaurantList);
+        }
+        //키워드 검색
+        if (hasKeyword) {
+            restaurantList = restaurantRepository.findAllByKeyword(keyword, pageable);
+            log.info("키워드로만 검색 -> " + keyword + tagIds);
+            if (restaurantList == null || restaurantList.isEmpty()) {
+                return new PagedRestaurantResponseDto(Page.empty(pageable));
+            }
+            return new PagedRestaurantResponseDto(restaurantList);
+        }
+        //태그 검색
+        if (hasTags) {
+            restaurantList = restaurantRepository.findAllByTags(tagIds, tagIds.size(), pageable);
+            log.info("태그로만 검색 -> " + keyword + tagIds);
+            if (restaurantList == null || restaurantList.isEmpty()) {
+                return new PagedRestaurantResponseDto(Page.empty(pageable));
+            }
+            return new PagedRestaurantResponseDto(restaurantList);
+        }
+        //키워드, 태그 둘 다 없으면 인기순으로 식당 목록 조회
+        restaurantList = restaurantRepository.findPopularRestaurants(pageable);
+        return new PagedRestaurantResponseDto(restaurantList);
+    }
+
+
+    @Override
+    public Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable, Member member) {
         Page<Restaurant> restaurantPage = restaurantRepository.findPopularRestaurants(pageable);
 
         Page<RestaurantResponseDto> dtoPage = restaurantPage.map(restaurant -> {
             List<String> topTags = boardTagRepository.findTopTagsByRestaurantIdNative(restaurant.getId());
+
+            if (member != null) {
+                UserClickEventDto event = new UserClickEventDto(
+                        "RESTAURANT_VIEW",
+                        restaurant.getId(),  // targetId에 식당 ID 넣기
+                        member.getId(),
+                        System.currentTimeMillis()
+                );
+                userEventService.sendClickEvent(event);
+            }
+
             return new RestaurantResponseDto(
                     restaurant.getId(),
                     restaurant.getName(),
@@ -55,18 +125,40 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
-    public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page) {
+    public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page, Member member) {
         Pageable pageable = PageRequest.of(page, 6);
         Page<Restaurant> restaurantList = restaurantRepository.findAllOrderByBoardNum(pageable);
+
+        if (member != null) {
+            restaurantList.forEach(restaurant -> {
+                UserClickEventDto event = new UserClickEventDto(
+                        "RESTAURANT_VIEW",
+                        restaurant.getId(),  // 각 식당 ID 넣기
+                        member.getId(),
+                        System.currentTimeMillis()
+                );
+                userEventService.sendClickEvent(event);
+            });
+        }
         return new PagedRestaurantResponseDto(restaurantList);
     }
 
     @Override
-    public RestaurantDetailResponseDto getRestaurantDetail(Long id) {
+    public RestaurantDetailResponseDto getRestaurantDetail(Long id, Member member) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new RestaurantException(RestaurantErrorCode.NOT_FOUND));
 
         List<String> topTags = boardTagRepository.findTopTagsByRestaurantIdNative(restaurant.getId());
+
+        if(member != null) {
+            UserClickEventDto event = new UserClickEventDto(
+                    "RESTAURANT_CLICK",
+                    id,
+                    member.getId(),
+                    System.currentTimeMillis()
+            );
+            userEventService.sendClickEvent(event);
+        }
 
         return RestaurantDetailResponseDto.fromEntity(restaurant, topTags);
     }

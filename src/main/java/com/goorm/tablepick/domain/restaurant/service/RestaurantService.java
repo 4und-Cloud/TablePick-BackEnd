@@ -1,5 +1,6 @@
 package com.goorm.tablepick.domain.restaurant.service;
 
+import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantSearchRequestDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.CategoryResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
@@ -12,11 +13,11 @@ import org.springframework.data.domain.Pageable;
 
 public interface RestaurantService {
 
-    Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable);
+    Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable, Member member);
 
-    PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page);
+    PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page, Member member);
 
-    RestaurantDetailResponseDto getRestaurantDetail(Long id);
+    RestaurantDetailResponseDto getRestaurantDetail(Long id, Member member);
 
     List<CategoryResponseDto> getCategoryList();
 

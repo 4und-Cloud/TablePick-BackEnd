@@ -31,6 +31,11 @@ spring:
   sql:
     init:
       mode: never
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
   security:
     oauth2:

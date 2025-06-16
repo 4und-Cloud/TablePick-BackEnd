@@ -88,12 +88,27 @@ dependencies {
     // Test dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.4'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.4'
+    testImplementation 'org.mockito:mockito-inline:5.2.0'
+    testRuntimeOnly 'com.h2database:h2' //test용
+
+    // 테스트용
+    testImplementation 'org.testcontainers:testcontainers:1.19.6'
+    testImplementation 'org.testcontainers:junit-jupiter:1.19.6'
+    testImplementation 'org.testcontainers:mysql:1.19.6'
+    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+
     testImplementation 'org.junit.jupiter:junit-jupiter-api'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     testImplementation 'org.mockito:mockito-inline:5.2.0' // Explicit version added
     testImplementation 'org.testcontainers:testcontainers'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:mysql'
+    
+    // kafka
+    implementation 'org.springframework.kafka:spring-kafka'
 }
 
 // Data parser task
