@@ -92,7 +92,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 path.startsWith("/api/boards/restaurant/") ||
                 path.startsWith("/oauth2/") ||               // 카카오, 구글 로그인 인증 중간 경로
                 path.startsWith("/api/reservations/test/") ||
-                path.startsWith("/login/oauth2/code/");
+                path.startsWith("/login/oauth2/code/") ||
+                path.equals("/actuator/prometheus");
     }
 
     private void handleUnauthorized(HttpServletResponse response) {
