@@ -7,6 +7,7 @@ import com.goorm.tablepick.domain.notification.entity.NotificationTypes;
 import com.goorm.tablepick.domain.notification.repository.NotificationTypesRepository;
 import com.goorm.tablepick.domain.notification.service.FCMTokenService;
 import com.goorm.tablepick.domain.notification.service.NotificationService;
+import com.goorm.tablepick.global.exception.NotificationException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -99,9 +100,15 @@ public class NotificationController {
                     in = ParameterIn.PATH
             )
             @PathVariable Long id) {
-        NotificationResponse response = notificationService.getNotificationStatus(id);
-        return ResponseEntity.ok(response);
+        try {
+            NotificationResponse response = notificationService.getNotificationStatus(id);
+            return ResponseEntity.ok(response);
+        } catch (NotificationException e) {
+            // 알림이 없을 때 예외가 발생하면 404 반환
+            return ResponseEntity.notFound().build();
+        }
     }
+    
     
     @Operation(
             summary = "회원 알림 목록 조회",
