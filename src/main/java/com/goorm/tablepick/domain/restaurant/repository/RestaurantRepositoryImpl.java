@@ -172,7 +172,7 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
                 ));
 
         Map<Long, List<String>> tagMap = queryFactory
-                .select(boardTag.restaurant.id, boardTag.tag.name)
+                .selectDistinct(boardTag.restaurant.id, boardTag.tag.name)
                 .from(boardTag)
                 .where(boardTag.restaurant.id.in(ids))
                 .fetch()
