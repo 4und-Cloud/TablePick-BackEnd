@@ -98,3 +98,16 @@ logging:
     org.springframework.web: info
     org.hibernate.SQL: info  # Hibernate 실행 쿼리를 info 레벨로 변경 (debug에서 info로)
     org.hibernate.type.descriptor.sql: info  # 바인딩되는 실제 파라미터도 info로 변경 (trace에서 info로)
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    prometheus:
+      access: unrestricted
+  prometheus:
+    metrics:
+      export:
+        enabled: true
