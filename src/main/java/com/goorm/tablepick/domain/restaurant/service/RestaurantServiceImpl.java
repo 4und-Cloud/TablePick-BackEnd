@@ -117,10 +117,10 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
     
     @Override
-    public List<RestaurantSearchResponseDto> searchRestaurantsV1(RestaurantSearchRequestDto requestDto) {
+    public Page<RestaurantSearchResponseDto> searchRestaurantsV1(RestaurantSearchRequestDto requestDto) {
         String keyword = requestDto.getKeyword();
         List<Long> tagIds = requestDto.getTagIds();
-        
+        Pageable pageable = PageRequest.of(requestDto.getPage(), 6);
         if (keyword != null && keyword.length() > 20) {
             throw new RestaurantException(RestaurantErrorCode.TOO_LONG_KEYWORD);
         }
@@ -129,6 +129,6 @@ public class RestaurantServiceImpl implements RestaurantService {
             throw new RestaurantException(RestaurantErrorCode.TOO_MANY_TAGS);
         }
         return restaurantRepository.searchRestaurantResult(keyword, tagIds, requestDto.getSort(),
-                requestDto.getOnlyOperating());
+                requestDto.getOnlyOperating(), pageable);
     }
 }
