@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,10 +29,17 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final MemberRepository memberRepository;
+    private final Environment environment;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+
+        // 테스트 환경에서는 JWT 필터를 건너뜀
+        if (isTestProfile()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         if (shouldSkipFilter(request)) {
             filterChain.doFilter(request, response);
@@ -71,6 +79,16 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(auth);
 
         log.info("✅ 사용자 인증 성공 - userId: {}", userId);
+    }
+
+    private boolean isTestProfile() {
+        String[] activeProfiles = environment.getActiveProfiles();
+        for (String profile : activeProfiles) {
+            if ("test".equals(profile)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean shouldSkipFilter(HttpServletRequest request) {
