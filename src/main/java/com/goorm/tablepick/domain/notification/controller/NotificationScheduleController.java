@@ -12,11 +12,13 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/notifications/schedule")
@@ -24,10 +26,10 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @Tag(name = "알림 스케줄링 API", description = "알림 스케줄링 관련 API")
 public class NotificationScheduleController {
-
+    
     private final ReservationNotificationScheduler scheduler;
     private final ReservationRepository reservationRepository;
-
+    
     @Operation(
             summary = "일일 알림 스케줄링 실행",
             description = "향후 2일 이내의 모든 예약에 대한 알림을 스케줄링합니다."
@@ -39,14 +41,14 @@ public class NotificationScheduleController {
     @PostMapping("/run-daily")
     public ResponseEntity<Map<String, String>> runDailyScheduling() {
         scheduler.scheduleNotificationsDaily();
-
+        
         Map<String, String> response = new HashMap<>();
         response.put("status", "success");
         response.put("message", "일일 알림 스케줄링 실행 성공 ^^");
-
+        
         return ResponseEntity.ok(response);
     }
-
+    
     @Operation(
             summary = "특정 예약에 대한 알림 스케줄링",
             description = "지정된 예약 ID에 대한 알림을 스케줄링합니다."
@@ -60,16 +62,17 @@ public class NotificationScheduleController {
     public ResponseEntity<Map<String, String>> scheduleForReservation(
             @Parameter(description = "예약 ID", required = true)
             @PathVariable Long reservationId) {
-
+        
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Reservation not found: " + reservationId));
-
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Reservation not found: " + reservationId));
+        
         scheduler.scheduleReservationNotifications(reservation);
-
+        
         Map<String, String> response = new HashMap<>();
         response.put("status", "success");
         response.put("message", "지정된 예약 ID에 대한 알림을 스케줄링 진행 중~~: " + reservationId);
-
+        
         return ResponseEntity.ok(response);
     }
 }
