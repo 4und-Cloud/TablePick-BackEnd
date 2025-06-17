@@ -32,7 +32,7 @@ class FCMServiceImplIntegTest {
     @DisplayName("실제 FCM 서버를 통해 브라우저로 알림이 정상적으로 송수신이 된다.")
     void sendMessageToFcmServer() throws FirebaseMessagingException {
         // given 준비
-        String fcmToken = "fWl5TIBryr_6_lBj6i7NMh:APA91bFzSm5E6CoIj5EV3e5kp7wylGaxCv6YfLN73KAm4r_TQwPPhKmecfMFySTEeSkkvJ2IaeByUAva6G9I5Vf23scItcQsBFFVoWOcePLhbECJ9GNMbac";
+        String fcmToken = "valid-fcm-token";
         String title = "실제 알림 테스트 제목";
         String body = "실제 알림 테스트 내용입니다";
         Map<String, String> data = new HashMap<>();
@@ -53,7 +53,7 @@ class FCMServiceImplIntegTest {
     @DisplayName("실제 FCM 서버를 통해 브라우저로 로고가 포함된 알림이 정상적으로 송수신이 된다.")
     void sendMessageWithLogoToFcmServer() throws FirebaseMessagingException {
         // given 준비
-        String fcmToken = "fWl5TIBryr_6_lBj6i7NMh:APA91bFzSm5E6CoIj5EV3e5kp7wylGaxCv6YfLN73KAm4r_TQwPPhKmecfMFySTEeSkkvJ2IaeByUAva6G9I5Vf23scItcQsBFFVoWOcePLhbECJ9GNMbac";
+        String fcmToken = "valid-fcm-token";
         String title = "실제 로고 알림 테스트 제목";
         String body = "실제 로고 알림 테스트 내용입니다";
         Map<String, String> data = new HashMap<>();
@@ -115,7 +115,7 @@ class FCMServiceImplIntegTest {
     @DisplayName("실제 FCM 서버를 통해 로고가 포함된 알림을 100개 동시에 전송한다.")
     void sendMultipleMessagesWithLogoToFcmServer() throws InterruptedException {
         // given 준비
-        String fcmToken = "fWl5TIBryr_6_lBj6i7NMh:APA91bFzSm5E6CoIj5EV3e5kp7wylGaxCv6YfLN73KAm4r_TQwPPhKmecfMFySTEeSkkvJ2IaeByUAva6G9I5Vf23scItcQsBFFVoWOcePLhbECJ9GNMbac";
+        String fcmToken = "valid-fcm-token";
         int messageCount = 100;
         String baseTitle = "대량 로고 알림 테스트 제목";
         String baseBody = "대량 로고 알림 테스트 내용입니다";
@@ -203,7 +203,7 @@ class FCMServiceImplIntegTest {
     @DisplayName("실제 FCM 서버를 통해 로고가 포함된 알림을 100개 순차적으로 전송한다.")
     void sendSequentialMessagesWithLogoToFcmServer() {
         // given 준비
-        String fcmToken = "fWl5TIBryr_6_lBj6i7NMh:APA91bFzSm5E6CoIj5EV3e5kp7wylGaxCv6YfLN73KAm4r_TQwPPhKmecfMFySTEeSkkvJ2IaeByUAva6G9I5Vf23scItcQsBFFVoWOcePLhbECJ9GNMbac";
+        String fcmToken = "valid-fcm-token";
         int messageCount = 100;
         String baseTitle = "순차 로고 알림 테스트 제목";
         String baseBody = "순차 로고 알림 테스트 내용입니다";
