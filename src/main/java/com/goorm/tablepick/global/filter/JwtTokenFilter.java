@@ -26,28 +26,28 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 @Slf4j
 public class JwtTokenFilter extends OncePerRequestFilter {
-
+    
     private final JwtProvider jwtProvider;
     private final MemberRepository memberRepository;
     private final Environment environment;
-
+    
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
+        
         // 테스트 환경에서는 JWT 필터를 건너뜀
         if (isTestProfile()) {
             filterChain.doFilter(request, response);
             return;
         }
-
+        
         if (shouldSkipFilter(request)) {
             filterChain.doFilter(request, response);
             return;
         }
-
+        
         String accessToken = getCookieValue(request, "access_token");
-
+        
         try {
             if (accessToken != null && jwtProvider.validateToken(accessToken)) {
                 setAuthentication(accessToken, request);
@@ -61,15 +61,15 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             handleUnauthorized(response);
             return;
         }
-
+        
         filterChain.doFilter(request, response);
     }
-
+    
     private void setAuthentication(String token, HttpServletRequest request) {
         Long userId = jwtProvider.getUserIdFromToken(token);
         var member = memberRepository.findById(userId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
-
+        
         var userDetails = new CustomUserDetails(member);
         var auth = new UsernamePasswordAuthenticationToken(
                 userDetails, null,
@@ -77,10 +77,10 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         );
         auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(auth);
-
+        
         log.info("✅ 사용자 인증 성공 - userId: {}", userId);
     }
-
+    
     private boolean isTestProfile() {
         String[] activeProfiles = environment.getActiveProfiles();
         for (String profile : activeProfiles) {
@@ -90,10 +90,10 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         }
         return false;
     }
-
+    
     private boolean shouldSkipFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-
+        
         return path.contains("/swagger-ui") ||
                 path.contains("/v3/api-docs") ||
                 path.equals("/oauth2/success") ||
@@ -113,25 +113,25 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 path.startsWith("/login/oauth2/code/") ||
                 path.equals("/actuator/prometheus");
     }
-
+    
     private void handleUnauthorized(HttpServletResponse response) {
         clearTokenCookies(response);
         SecurityContextHolder.clearContext();
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
-
+    
     private void clearTokenCookies(HttpServletResponse response) {
         deleteCookie(response, "access_token");
         deleteCookie(response, "refresh_token");
     }
-
+    
     private void deleteCookie(HttpServletResponse response, String name) {
         Cookie cookie = new Cookie(name, null);
         cookie.setPath("/");
         cookie.setMaxAge(0);
         response.addCookie(cookie);
     }
-
+    
     private String getCookieValue(HttpServletRequest request, String name) {
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {

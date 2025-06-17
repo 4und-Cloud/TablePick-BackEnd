@@ -14,11 +14,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 @RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
-
+    
     private QueryCountInterceptor queryCountInterceptor;
     @Value("${FRONTEND_HOST}")
     private String frontendHost;
-
+    
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
@@ -28,7 +28,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .exposedHeaders("Access-Token")
                 .allowCredentials(true);
     }
-
+    
     // Firebase 서비스 워커를 위한 리소스 핸들러 추가
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -42,23 +42,4 @@ public class WebConfig implements WebMvcConfigurer {
 //        registry.addInterceptor(queryCountInterceptor).addPathPatterns("/**");
 //    }
 
-    // Firebase 서비스 워커를 위한 필터 빈 추가
-//    @Bean
-//    public OncePerRequestFilter serviceWorkerHeaderFilter() {
-//        return new OncePerRequestFilter() {
-//            @Override
-//            protected void doFilterInternal(HttpServletRequest request,
-//                                            HttpServletResponse response,
-//                                            FilterChain filterChain)
-//                    throws ServletException, IOException {
-//
-//                // firebase-messaging-sw.js 요청에 대해서만 헤더 추가
-//                if (request.getRequestURI().contains("firebase-messaging-sw.js")) {
-//                    response.setHeader("Service-Worker-Allowed", "/");
-//                }
-//
-//                filterChain.doFilter(request, response);
-//            }
-//        };
-//    }
 }

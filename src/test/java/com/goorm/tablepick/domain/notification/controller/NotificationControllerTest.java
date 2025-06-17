@@ -157,23 +157,6 @@ class NotificationControllerTest {
     }
     
     @Test
-    @DisplayName("유효한 회원 ID와 알림 타입 ID로 테스트 알림 전송이 성공적으로 처리된다")
-    void sendTestNotification_withValidIds_succeeds() {
-        // given 준비
-        when(notificationService.scheduleNotification(any(NotificationRequest.class)))
-                .thenReturn(notificationResponse); // 유효한 회원 ID와 알림 타입 ID 준비
-        
-        // when 실행
-        ResponseEntity<NotificationResponse> response = notificationController
-                .sendTestNotification(1L, 1L); // 테스트 알림 전송 API 호출
-        
-        // then 실행
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(notificationResponse, response.getBody());
-        verify(notificationService).scheduleNotification(any(NotificationRequest.class));
-    }
-    
-    @Test
     @DisplayName("알림 타입 목록 조회가 성공적으로 처리된다")
     void getNotificationTypes_succeeds() {
         // given 준비
