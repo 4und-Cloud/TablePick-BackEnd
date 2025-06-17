@@ -13,7 +13,8 @@ public class PaymentApi {
 
     public PaymentResponse registerPayment(Long reservationId, Long memberId, String paymentAmount) {
         try {
-            Thread.sleep(random.nextInt(1000, 1500));
+            //Thread.sleep(random.nextInt(1000, 1500));
+            Thread.sleep(0);
             return PaymentResponse.builder()
                     .success(true)
                     .paymentId(UUID.randomUUID().toString())

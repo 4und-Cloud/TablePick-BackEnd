@@ -49,7 +49,7 @@ public class ReservationExternalUpdateService {
                 .partySize(partySize)
                 .reservationStatus(ReservationStatus.PENDING)
                 .paymentStatus("PENDING")
-                //.restaurant(reservationSlot.getRestaurant())
+                .restaurant(reservationSlot.getRestaurant())
                 .createdAt(LocalDateTime.now())
                 .build();
 
