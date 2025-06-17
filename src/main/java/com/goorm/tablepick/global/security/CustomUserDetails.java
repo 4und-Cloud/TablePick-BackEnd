@@ -64,4 +64,8 @@ public class CustomUserDetails implements UserDetails {
     public boolean isEnabled() {
         return !member.getIsMemberDeleted(); // 탈퇴 여부 체크
     }
+
+    public Long getId() {
+        return member.getId();
+    }
 }
