@@ -17,11 +17,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
+    
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler successHandler;
     private final JwtTokenFilter jwtTokenFilter;
-
+    
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -35,15 +35,15 @@ public class SecurityConfig {
                                 "/api/restaurants/all", "/api/restaurants/{id}",
                                 "/api/boards/main", "/api/tags", "/api/restaurants/search",
                                 "/api/restaurants/list", "/api/reservation/available-times", "/api/board-tags/",
-                                "/api/boards/list", "api/boards", "/api/boards/{boardId}",
+                                "/api/boards/list", "/api/boards", "/api/boards/{boardId}",
                                 "/api/boards/restaurant/{restaurantId}", "/images/**", "/api/restaurants/v1/search",
-                                "/actuator/prometheus"
+                                "/actuator/prometheus", "/api/notifications/test/**"
                         ).permitAll()
-
+                        
                         // 🔧 권한 검사 조건
                         .requestMatchers("/api/**").authenticated() // 테스트 목적이라면 이렇게
                         //.requestMatchers("/api/**").hasAuthority("ROLE_USER") // 실제 권한 검사 시 이렇게
-
+                        
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
@@ -58,7 +58,7 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID", "access_token", "refresh_token")
                 )
         ;
-
+        
         return http.build();
     }
 }
