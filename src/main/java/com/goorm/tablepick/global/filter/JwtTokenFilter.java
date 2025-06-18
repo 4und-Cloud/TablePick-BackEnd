@@ -106,12 +106,21 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 path.equals("/api/members/logout") ||
                 path.startsWith("/api/restaurants") ||
                 path.startsWith("/api/restaurants/v1/search/") ||
+                path.startsWith("/api/restaurants/v1/detail/") ||
+                path.startsWith("/api/restaurants/v1/reviews/") ||
                 path.startsWith("/api/boards/") ||
                 path.startsWith("/api/boards/restaurant/") ||
                 path.startsWith("/oauth2/") ||               // 카카오, 구글 로그인 인증 중간 경로
                 path.startsWith("/api/reservations/test/") ||
                 path.startsWith("/login/oauth2/code/") ||
-                path.equals("/actuator/prometheus");
+                path.equals("/actuator/prometheus") ||
+                
+                // 알림 - 실서비스때는 삭제
+                path.startsWith("/api/notifications/member/") ||
+                path.matches("^/api/notifications/\\d+$") ||
+                path.equals("/api/notifications/notification-types") ||
+                path.startsWith("/api/notifications/test/") ||
+                path.startsWith("/api/notifications/test/fcm/");
     }
     
     private void handleUnauthorized(HttpServletResponse response) {

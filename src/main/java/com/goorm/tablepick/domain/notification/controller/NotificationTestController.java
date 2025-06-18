@@ -36,8 +36,7 @@ public class NotificationTestController {
     
     @Operation(
             summary = "단일 테스트 알림 전송",
-            description = "테스트 목적으로 특정 회원에게 지정된 알림 타입 ID로 알림을 즉시 전송합니다.",
-            tags = {"테스트 - 단일"}
+            description = "테스트 목적으로 특정 회원에게 지정된 알림 타입 ID로 알림을 즉시 전송합니다."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -108,8 +107,7 @@ public class NotificationTestController {
     
     @Operation(
             summary = "비동기 다중 테스트 알림 전송 (통계 포함)",
-            description = "테스트 목적으로 특정 회원에게 지정된 알림 타입 ID로 여러 개의 알림을 비동기로 동시에 전송하고 상세한 통계 정보를 반환합니다. 동시 접속 부하 테스트에 적합합니다.",
-            tags = {"테스트 - 다중", "테스트 - 비동기"}
+            description = "테스트 목적으로 특정 회원에게 지정된 알림 타입 ID로 여러 개의 알림을 비동기로 동시에 전송하고 상세한 통계 정보를 반환합니다. 동시 접속 부하 테스트에 적합합니다."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -275,8 +273,7 @@ public class NotificationTestController {
     
     @Operation(
             summary = "순차적(동기) 다중 테스트 알림 전송 (통계 포함)",
-            description = "테스트 목적으로 특정 회원에게 지정된 알림 타입 ID로 여러 개의 알림을 순차적으로 동기 전송하고 상세한 통계 정보를 반환합니다. 안정성 및 순차 처리 성능 테스트에 적합합니다.",
-            tags = {"테스트 - 다중", "테스트 - 동기"}
+            description = "테스트 목적으로 특정 회원에게 지정된 알림 타입 ID로 여러 개의 알림을 순차적으로 동기 전송하고 상세한 통계 정보를 반환합니다. 안정성 및 순차 처리 성능 테스트에 적합합니다."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -418,8 +415,7 @@ public class NotificationTestController {
     
     @Operation(
             summary = "FCM 토큰 기반 비동기 다중 테스트 알림 전송 (통계 포함)",
-            description = "FCM 토큰을 직접 사용하여 지정된 알림 타입 ID로 여러 개의 알림을 비동기로 동시에 전송하고 상세한 통계 정보를 반환합니다. 회원 정보 없이 직접 디바이스 테스트가 가능합니다.",
-            tags = {"테스트 - FCM", "테스트 - 비동기"}
+            description = "FCM 토큰을 직접 사용하여 지정된 알림 타입 ID로 여러 개의 알림을 비동기로 동시에 전송하고 상세한 통계 정보를 반환합니다. 회원 정보 없이 직접 디바이스 테스트가 가능합니다."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -495,7 +491,6 @@ public class NotificationTestController {
                     log.debug("FCM 토큰 기반 비동기 알림 전송 시작 - 순번: {}", notificationNumber);
                     
                     // FCM 토큰을 사용하여 직접 알림 전송
-                    // TODO: 실제로는 FCMService를 통해 fcmToken으로 직접 전송해야 함
                     NotificationRequest notificationRequest = NotificationRequest.builder()
                             .memberId(1L) // 임시 멤버ID
                             .notificationTypeId(notificationTypeId)
@@ -578,8 +573,7 @@ public class NotificationTestController {
     
     @Operation(
             summary = "FCM 토큰 기반 순차적(동기) 다중 테스트 알림 전송 (통계 포함)",
-            description = "FCM 토큰을 직접 사용하여 지정된 알림 타입 ID로 여러 개의 알림을 순차적으로 동기 전송하고 상세한 통계 정보를 반환합니다. 회원 정보 없이 직접 디바이스의 순차 처리 성능을 테스트할 수 있습니다.",
-            tags = {"테스트 - FCM", "테스트 - 동기"}
+            description = "FCM 토큰을 직접 사용하여 지정된 알림 타입 ID로 여러 개의 알림을 순차적으로 동기 전송하고 상세한 통계 정보를 반환합니다. 회원 정보 없이 직접 디바이스의 순차 처리 성능을 테스트할 수 있습니다."
     )
     @ApiResponses(value = {
             @ApiResponse(
