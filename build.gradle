@@ -116,6 +116,9 @@ dependencies {
     // 모니터링
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    implementation "io.netty:netty-resolver-dns-native-macos:4.1.107.Final:osx-aarch_64" //맥북
+
 }
 
 // Data parser task

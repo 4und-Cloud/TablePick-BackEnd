@@ -64,7 +64,7 @@ public class ReservationImpl implements ReservationService {
 
         // 중복 예약 확인
         boolean hasDuplicate = reservationRepository.findByReservationSlot(reservationSlot).stream()
-                .anyMatch(r -> r.getMember().equals(member) && r.getReservationStatus() != ReservationStatus.CANCELLED);
+                .anyMatch(r -> r.getMember().equals(member) && r.getReservationStatus() == ReservationStatus.CONFIRMED);
         if (hasDuplicate) {
             throw new ReservationException(ReservationErrorCode.DUPLICATE_RESERVATION);
         }

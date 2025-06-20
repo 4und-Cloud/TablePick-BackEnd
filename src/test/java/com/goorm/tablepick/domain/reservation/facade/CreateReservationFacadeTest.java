@@ -7,6 +7,7 @@ import com.goorm.tablepick.domain.member.repository.MemberRepository;
 import com.goorm.tablepick.domain.reservation.config.IntegrationTest;
 import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
+import com.goorm.tablepick.domain.reservation.facade.V0.CreateReservationFacade;
 import com.goorm.tablepick.domain.reservation.repository.ReservationSlotRepository;
 import com.goorm.tablepick.domain.reservation.service.ImprovedReservationService.ReservationServiceV2;
 import com.goorm.tablepick.domain.reservation.util.ConcurrentTestUtil;

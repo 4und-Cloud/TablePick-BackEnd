@@ -1,7 +1,7 @@
 package com.goorm.tablepick.domain.reservation.controller;
 
 import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
-import com.goorm.tablepick.domain.reservation.facade.CreateReservationTestFacade;
+import com.goorm.tablepick.domain.reservation.facade.V0.CreateReservationTestFacadeV0;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,23 +16,33 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/reservations")
 @RequiredArgsConstructor
 public class ReservationTestController {
-    private final CreateReservationTestFacade createReservationTestFacade;
+    private final CreateReservationTestFacadeV0 createReservationTestFacadeV0;
+    private final CreateReservationTestFacadeV0 createReservationTestFacadeV1;
 
-    @PostMapping("/test/optimistic/{memberId}")
+    @PostMapping("/test/v0/optimistic/{memberId}")
     @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
-    public ResponseEntity<Void> createReservationOptimistic(@PathVariable Long memberId,
+    public ResponseEntity<Void> createReservationOptimisticV0(@PathVariable Long memberId,
                                                             @RequestBody @Valid ReservationRequestDto request) {
 
-        createReservationTestFacade.createReservationOptimistic(memberId, request);
+        createReservationTestFacadeV0.createReservationOptimistic(memberId, request);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/test/pessimistic/{memberId}")
+    @PostMapping("/test/v1/optimistic/{memberId}")
+    @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
+    public ResponseEntity<Void> createReservationOptimisticV1(@PathVariable Long memberId,
+                                                            @RequestBody @Valid ReservationRequestDto request) {
+
+        createReservationTestFacadeV1.createReservationOptimistic(memberId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/test/v0/pessimistic/{memberId}")
     @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
     public ResponseEntity<Void> createReservationPessimistic(@PathVariable Long memberId,
                                                              @RequestBody @Valid ReservationRequestDto request) {
 
-        createReservationTestFacade.createReservationPessimistic(memberId, request);
+        createReservationTestFacadeV0.createReservationPessimistic(memberId, request);
         return ResponseEntity.ok().build();
     }
 

@@ -14,7 +14,17 @@ public class RestPaymentApi implements PaymentApi {
     private final WebClient webClient; // 예약 서버에서 결제 서버 호출
 
     @Override
-    public PaymentResponseDto registerPayment(Long reservationId, Long userId, int amount) {
+    public PaymentResponseDto registerPaymentV0(Long reservationId, Long userId, int amount) {
+        return webClient.post()
+                .uri("http://localhost:8083/api/pg/approve")
+                .bodyValue(new PaymentRequestDto(reservationId, userId, amount))
+                .retrieve()
+                .bodyToMono(PaymentResponseDto.class)
+                .block(); // 동기 처리
+    }
+
+    @Override
+    public PaymentResponseDto registerPaymentV1(Long reservationId, Long userId, int amount) {
         return webClient.post()
                 .uri("http://localhost:8082/api/payments")
                 .bodyValue(new PaymentRequestDto(reservationId, userId, amount))
