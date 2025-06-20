@@ -1,6 +1,6 @@
 package com.goorm.tablepick.global.config;
 
-import com.goorm.tablepick.domain.userevent.dto.UserClickEventDto;
+import com.goorm.tablepick.domain.userevent.dto.UserActionEventDto;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -19,7 +19,7 @@ public class KafkaProducerConfig {
     private String kafkaHost;
 
     @Bean
-    public ProducerFactory<String, UserClickEventDto> producerFactory() {
+    public ProducerFactory<String, UserActionEventDto> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaHost);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -28,7 +28,7 @@ public class KafkaProducerConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, UserClickEventDto> kafkaTemplate() {
+    public KafkaTemplate<String, UserActionEventDto> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 }

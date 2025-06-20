@@ -109,6 +109,10 @@ dependencies {
     
     // kafka
     implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'org.apache.kafka:kafka-streams:3.6.1'
+
+    // redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     // 모니터링
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -192,5 +196,10 @@ jacocoTestCoverageVerification {
 // Test configuration
 test {
     useJUnitPlatform()
+    systemProperty "file.encoding", "UTF-8" // 💡 한글 깨짐 방지
     finalizedBy jacocoTestReport
+}
+
+springBoot {
+    mainClass = 'com.goorm.tablepick.TablePickBackEndApplication'  // Spring Boot 플러그인 설정
 }

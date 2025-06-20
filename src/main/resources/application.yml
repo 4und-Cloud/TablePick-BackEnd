@@ -31,11 +31,17 @@ spring:
   sql:
     init:
       mode: never
+
   kafka:
     bootstrap-servers: ${KAFKA_HOST}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      properties:
+        spring.json.trusted.packages: "*"
+    streams:
+      application-id: tablepick-stream
 
   security:
     oauth2:
@@ -63,12 +69,19 @@ spring:
   jackson:
     serialization:
       write-dates-as-timestamps: false
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: 6379
 jwt:
   secret: ${JWT_SECRET:defaultSecretIfMissing}
 
 server:
   domain: ${BACKEND_HOST:http://localhost:8080}
   port: 8080
+
+ai:
+  host: ${AI_HOST:http://localhost:8000}
 
 project:
   upload:

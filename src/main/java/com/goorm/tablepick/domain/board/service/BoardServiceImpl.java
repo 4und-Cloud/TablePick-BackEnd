@@ -19,7 +19,7 @@ import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.tag.entity.Tag;
 import com.goorm.tablepick.domain.tag.repository.TagRepository;
-import com.goorm.tablepick.domain.userevent.dto.UserClickEventDto;
+import com.goorm.tablepick.domain.userevent.dto.UserActionEventDto;
 import com.goorm.tablepick.domain.userevent.service.UserEventService;
 import jakarta.transaction.Transactional;
 import java.util.Collections;
@@ -62,6 +62,10 @@ public class BoardServiceImpl implements BoardService {
     @Value("${project.upload.board-image-path}")
     private String boardImagePath;
 
+    @Value("${ai.host}")
+    private String aiHostUrl;
+
+
     @Override
     public PagedBoardListResponseDto getBoards(int page, int size, Member member) {
         if (page < 0) {
@@ -91,7 +95,7 @@ public class BoardServiceImpl implements BoardService {
 
             // 로그 이벤트 전송
             for (BoardListResponseDto dto : dtoList) {
-                UserClickEventDto event = new UserClickEventDto(
+                UserActionEventDto event = new UserActionEventDto(
                         "BOARD_VIEW",
                         dto.getId(),
                         userId,
@@ -127,7 +131,7 @@ public class BoardServiceImpl implements BoardService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 식당을 찾을 수 없습니다."));
 
         if (member != null) {
-            UserClickEventDto event = new UserClickEventDto(
+            UserActionEventDto event = new UserActionEventDto(
                     "BOARD_CLICK",
                     boardId,
                     member.getId(),
@@ -289,16 +293,15 @@ public class BoardServiceImpl implements BoardService {
     }
     // 추천 AI API 연결
     public List<Long> getRecommendedBoardIds(Long userId, int page, int size) {
-        String url = String.format("http://localhost:8000/post/recommend-for-user/%d?page=%d&size=%d", userId, page, size);
+        String url = String.format(aiHostUrl+"/post/recommend-for-user/%d?page=%d&size=%d", userId, page, size);
         try {
             ResponseEntity<List<Long>> response = restTemplate.exchange(
                     url,
                     HttpMethod.GET,
                     null,
-                    new ParameterizedTypeReference<List<Long>>() {}
+                    new ParameterizedTypeReference<>() {}
             );
             List<Long> boardIds = response.getBody();
-            System.out.println("boardIds: " + boardIds);
             return (boardIds != null) ? boardIds : Collections.emptyList();
         } catch (HttpClientErrorException e) {
             log.error("AI 서버 요청 실패: userId={}, status={}, response={}", userId, e.getStatusCode(), e.getResponseBodyAsString());
