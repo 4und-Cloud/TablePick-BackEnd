@@ -26,7 +26,7 @@ public class ReservationExternalUpdateService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public Reservation createReservationWithOptimisticTransaction(Long memberId, Long slotId, Long partySize) {
+    public Reservation createReservationWithOptimisticTransaction(Long memberId, Long slotId, int partySize) {
         // 1. 회원 및 예약 슬롯 조회
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
@@ -37,6 +37,13 @@ public class ReservationExternalUpdateService {
         // 2. 예약 슬롯 용량 검증 및 카운트 증가
         if (reservationSlot.getCount() >= reservationSlot.getRestaurant().getMaxCapacity()) {
             throw new ReservationException(ReservationErrorCode.EXCEED_RESERVATION_LIMIT);
+        }
+
+        // 3. 중복 예약 확인
+        boolean hasDuplicate = reservationRepository.findByReservationSlot(reservationSlot).stream()
+                .anyMatch(r -> r.getMember().equals(member) && r.getReservationStatus() == ReservationStatus.CONFIRMED);
+        if (hasDuplicate) {
+            throw new ReservationException(ReservationErrorCode.DUPLICATE_RESERVATION);
         }
 
         reservationSlot.setCount(reservationSlot.getCount() + 1);
@@ -57,7 +64,7 @@ public class ReservationExternalUpdateService {
     }
 
     @Transactional
-    public Reservation createReservationWithPessimisticTransaction(Long memberId, Long slotId, Long partySize) {
+    public Reservation createReservationWithPessimisticTransaction(Long memberId, Long slotId, int partySize) {
         // 1. 회원 및 예약 슬롯 조회
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
@@ -68,6 +75,13 @@ public class ReservationExternalUpdateService {
         // 2. 예약 슬롯 용량 검증 및 카운트 증가
         if (reservationSlot.getCount() >= reservationSlot.getRestaurant().getMaxCapacity()) {
             throw new ReservationException(ReservationErrorCode.EXCEED_RESERVATION_LIMIT);
+        }
+
+        // 3. 중복 예약 확인
+        boolean hasDuplicate = reservationRepository.findByReservationSlot(reservationSlot).stream()
+                .anyMatch(r -> r.getMember().equals(member) && r.getReservationStatus() != ReservationStatus.CANCELLED);
+        if (hasDuplicate) {
+            throw new ReservationException(ReservationErrorCode.DUPLICATE_RESERVATION);
         }
 
         reservationSlot.setCount(reservationSlot.getCount() + 1);

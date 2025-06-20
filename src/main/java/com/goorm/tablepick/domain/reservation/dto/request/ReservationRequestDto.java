@@ -15,7 +15,7 @@ public class ReservationRequestDto {
     private Long restaurantId;
 
     @Schema(description = "예약 인원 수", example = "3")
-    private Long partySize;
+    private int partySize;
 
     @Schema(description = "예약 날짜", example = "2025-05-08")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")

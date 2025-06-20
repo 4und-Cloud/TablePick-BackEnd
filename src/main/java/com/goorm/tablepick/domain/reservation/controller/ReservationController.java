@@ -3,8 +3,8 @@ package com.goorm.tablepick.domain.reservation.controller;
 import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
 import com.goorm.tablepick.domain.reservation.dto.response.CreateReservationResponseDto;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
-import com.goorm.tablepick.domain.reservation.facade.CreateReservationFacade;
 import com.goorm.tablepick.domain.reservation.facade.OptimisticLockFacade;
+import com.goorm.tablepick.domain.reservation.facade.V0.CreateReservationFacadeV0;
 import com.goorm.tablepick.domain.reservation.service.ImprovedReservationService.ReservationServiceV2;
 import com.goorm.tablepick.domain.reservation.service.ImprovedReservationSlotService.ReservationSlotServiceV2;
 import com.goorm.tablepick.domain.reservation.service.ReservationService;
@@ -37,11 +37,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ReservationController {
     private final ReservationService reservationService;
-    private final CreateReservationFacade createReservationFacade;
     private final OptimisticLockFacade optimisticLockFacade;
     private final ReservationServiceV2 reservationServiceV2;
     private final ReservationSlotGenerator reservationSlotGenerator;
     private final ReservationSlotServiceV2 reservationSlotServiceV2;
+    private final CreateReservationFacadeV0 createReservationFacadeV0;
 
     @PostMapping
     @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
@@ -79,7 +79,7 @@ public class ReservationController {
     public ResponseEntity<Void> createReservationCurrent(@AuthenticationPrincipal UserDetails userDetails,
                                                          @RequestBody @Valid ReservationRequestDto request) {
 
-        createReservationFacade.createReservation(userDetails.getUsername(), request);
+        createReservationFacadeV0.createReservation(userDetails.getUsername(), request);
         return ResponseEntity.ok().build();
     }
 
