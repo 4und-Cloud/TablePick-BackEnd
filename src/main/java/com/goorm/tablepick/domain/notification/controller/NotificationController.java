@@ -1,10 +1,13 @@
 package com.goorm.tablepick.domain.notification.controller;
 
+import com.google.api.core.ApiFuture;
 import com.goorm.tablepick.domain.notification.dto.request.FCMTokenRequest;
 import com.goorm.tablepick.domain.notification.dto.request.NotificationRequest;
+import com.goorm.tablepick.domain.notification.dto.response.FCMNotificationResponse;
 import com.goorm.tablepick.domain.notification.dto.response.NotificationResponse;
 import com.goorm.tablepick.domain.notification.entity.NotificationTypes;
 import com.goorm.tablepick.domain.notification.repository.NotificationTypesRepository;
+import com.goorm.tablepick.domain.notification.service.FCMService;
 import com.goorm.tablepick.domain.notification.service.FCMTokenService;
 import com.goorm.tablepick.domain.notification.service.NotificationService;
 import com.goorm.tablepick.global.exception.NotificationException;
@@ -17,7 +20,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class NotificationController {
     private final NotificationService notificationService;
+    private final FCMService fcmService;
     private final FCMTokenService fcmTokenService;
     private final NotificationTypesRepository notificationTypesRepository;
     
@@ -203,8 +209,243 @@ public class NotificationController {
         return ResponseEntity.ok().build();
     }
     
-
-
+    @Operation(
+            summary = "FCM 토큰을 직접 넣어서 알림 전송",
+            description = "지정된 FCM 토큰으로 푸시 알림을 전송합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "알림 전송 성공",
+                    content = @Content(schema = @Schema(implementation = FCMNotificationResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 (토큰이 null이거나 공백인 경우)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "FCM 전송 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    @PostMapping("/send-with-fcmToken")
+    public ResponseEntity<FCMNotificationResponse> sendNotification(
+            @Parameter(
+                    name = "token",
+                    description = "FCM 토큰",
+                    required = true,
+                    example = "dGhpcyBpcyBhIGZha2UgdG9rZW4",
+                    in = ParameterIn.QUERY
+            )
+            @RequestParam String token,
+            @Parameter(
+                    name = "title",
+                    description = "알림 제목",
+                    required = true,
+                    example = "테이블픽 알림",
+                    in = ParameterIn.QUERY
+            )
+            @RequestParam String title,
+            @Parameter(
+                    name = "body",
+                    description = "알림 내용",
+                    required = true,
+                    example = "새로운 예약이 있습니다.",
+                    in = ParameterIn.QUERY
+            )
+            @RequestParam String body,
+            @Parameter(
+                    name = "data",
+                    description = "추가 데이터 (JSON 형식, 선택사항)",
+                    required = false,
+                    example = "{\"reservationId\":\"123\",\"restaurantName\":\"맛있는 식당\"}",
+                    in = ParameterIn.QUERY
+            )
+            @RequestParam(required = false) String data) {
+        
+        // 전송 시작 시간 기록
+        LocalDateTime startTime = LocalDateTime.now();
+        long startMillis = System.currentTimeMillis();
+        
+        log.info("로고 알림 전송 요청 시작 - 시간: {}, 토큰: {}, 제목: {}, 내용: {}",
+                startTime, token, title, body);
+        
+        try {
+            // data 파라미터를 Map으로 변환
+            java.util.Map<String, String> dataMap = new java.util.HashMap<>();
+            if (data != null && !data.trim().isEmpty()) {
+                try {
+                    // 간단한 JSON 파싱
+                    com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    dataMap = objectMapper.readValue(data, java.util.Map.class);
+                } catch (Exception e) {
+                    log.warn("데이터 파라미터 파싱 실패, 빈 맵 사용: {}", e.getMessage());
+                }
+            }
+            
+            // 순수 FCM 전송 시간 측정 시작
+            long fcmStartMillis = System.currentTimeMillis();
+            
+            // FCM 알림 전송
+            String response = fcmService.sendMessageWithLogo(token, title, body, dataMap);
+            long fcmDurationMillis = System.currentTimeMillis() - fcmStartMillis;
+            log.info("순수 FCM 전송 소요시간: {}ms", fcmDurationMillis);
+            
+            long endMillis = System.currentTimeMillis();
+            long durationMs = endMillis - startMillis;
+            
+            if (response != null) {
+                log.info("로고 알림 전송 성공 - 응답: {}, 소요시간: {}ms", response, durationMs);
+                return ResponseEntity.ok(FCMNotificationResponse.success(response, startTime, durationMs));
+            } else {
+                log.warn("로고 알림 전송 실패 - 토큰이 유효하지 않음, 소요시간: {}ms", durationMs);
+                return ResponseEntity.badRequest()
+                        .body(FCMNotificationResponse.failure("FCM 토큰이 유효하지 않습니다.", "INVALID_TOKEN", startTime,
+                                durationMs));
+                
+            }
+        } catch (NotificationException e) {
+            long endMillis = System.currentTimeMillis();
+            long durationMs = endMillis - startMillis;
+            log.error("로고 알림 전송 중 오류 발생: {}, 소요시간: {}ms", e.getMessage(), durationMs);
+            return ResponseEntity.internalServerError()
+                    .body(FCMNotificationResponse.failure(e.getMessage(), e.getErrorCode(), startTime, durationMs));
+        } catch (Exception e) {
+            long endMillis = System.currentTimeMillis();
+            long durationMs = endMillis - startMillis;
+            log.error("로고 알림 전송 중 예상치 못한 오류 발생: {}, 소요시간: {}ms", e.getMessage(), durationMs);
+            return ResponseEntity.internalServerError()
+                    .body(FCMNotificationResponse.failure("알림 전송 중 오류가 발생했습니다.", "UNEXPECTED_ERROR", startTime,
+                            durationMs));
+        }
+    }
+    
+    @Operation(
+            summary = "비동기식 FCM 알림 전송",
+            description = "지정된 FCM 토큰으로 비동기식으로 푸시 알림을 전송합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "알림 전송 성공",
+                    content = @Content(schema = @Schema(implementation = FCMNotificationResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 (토큰이 null이거나 공백인 경우)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "FCM 전송 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    @PostMapping("/send-async-with-fcmToken")
+    public ResponseEntity<FCMNotificationResponse> sendAsyncNotification(
+            @Parameter(
+                    name = "token",
+                    description = "FCM 토큰",
+                    required = true,
+                    example = "dGhpcyBpcyBhIGZha2UgdG9rZW4",
+                    in = ParameterIn.QUERY
+            )
+            @RequestParam String token,
+            @Parameter(
+                    name = "title",
+                    description = "알림 제목",
+                    required = true,
+                    example = "테이블픽 알림",
+                    in = ParameterIn.QUERY
+            )
+            @RequestParam String title,
+            @Parameter(
+                    name = "body",
+                    description = "알림 내용",
+                    required = true,
+                    example = "새로운 예약이 있습니다.",
+                    in = ParameterIn.QUERY
+            )
+            @RequestParam String body,
+            @Parameter(
+                    name = "data",
+                    description = "추가 데이터 (JSON 형식, 선택사항)",
+                    required = false,
+                    example = "{\"reservationId\":\"123\",\"restaurantName\":\"맛있는 식당\"}",
+                    in = ParameterIn.QUERY
+            )
+            @RequestParam(required = false) String data) {
+        
+        // 전송 시작 시간 기록
+        LocalDateTime startTime = LocalDateTime.now();
+        long startMillis = System.currentTimeMillis();
+        
+        log.info("로고 알림 전송 요청 시작 - 시간: {}, 토큰: {}, 제목: {}, 내용: {}",
+                startTime, token, title, body);
+        
+        try {
+            // data 파라미터를 Map으로 변환
+            java.util.Map<String, String> dataMap = new java.util.HashMap<>();
+            if (data != null && !data.trim().isEmpty()) {
+                try {
+                    // 간단한 JSON 파싱
+                    com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    dataMap = objectMapper.readValue(data, java.util.Map.class);
+                } catch (Exception e) {
+                    log.warn("데이터 파라미터 파싱 실패, 빈 맵 사용: {}", e.getMessage());
+                }
+            }
+            
+            // 순수 FCM 전송 시간 측정 시작
+            long fcmStartMillis = System.currentTimeMillis();
+            
+            // FCM 알림 비동기 전송
+            ApiFuture<String> responseFuture = fcmService.sendMessageAsync(token, title, body,
+                    dataMap, false);
+            String response;
+            try {
+                response = responseFuture.get(); // 비동기 결과 대기
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // 인터럽트 상태 복원
+                throw new NotificationException("FCM 비동기 전송 중 인터럽트 발생: " + e.getMessage(), "FCM_INTERRUPTED");
+            } catch (ExecutionException e) {
+                throw new NotificationException("FCM 비동기 전송 실패: " + e.getCause().getMessage(), "FCM_ASYNC_FAILED");
+            }
+            
+            long fcmDurationMillis = System.currentTimeMillis() - fcmStartMillis;
+            log.info("순수 FCM 전송 소요시간: {}ms", fcmDurationMillis);
+            
+            long endMillis = System.currentTimeMillis();
+            long durationMs = endMillis - startMillis;
+            
+            if (response != null) {
+                log.info("로고 알림 전송 성공 - 응답: {}, 소요시간: {}ms", response, durationMs);
+                return ResponseEntity.ok(FCMNotificationResponse.success(response, startTime, durationMs));
+            } else {
+                log.warn("로고 알림 전송 실패 - 토큰이 유효하지 않음, 소요시간: {}ms", durationMs);
+                return ResponseEntity.badRequest()
+                        .body(FCMNotificationResponse.failure("FCM 토큰이 유효하지 않습니다.", "INVALID_TOKEN", startTime,
+                                durationMs));
+                
+            }
+        } catch (NotificationException e) {
+            long endMillis = System.currentTimeMillis();
+            long durationMs = endMillis - startMillis;
+            log.error("로고 알림 전송 중 오류 발생: {}, 소요시간: {}ms", e.getMessage(), durationMs);
+            return ResponseEntity.internalServerError()
+                    .body(FCMNotificationResponse.failure(e.getMessage(), e.getErrorCode(), startTime, durationMs));
+        } catch (Exception e) {
+            long endMillis = System.currentTimeMillis();
+            long durationMs = endMillis - startMillis;
+            log.error("로고 알림 전송 중 예상치 못한 오류 발생: {}, 소요시간: {}ms", e.getMessage(), durationMs);
+            return ResponseEntity.internalServerError()
+                    .body(FCMNotificationResponse.failure("알림 전송 중 오류가 발생했습니다.", "UNEXPECTED_ERROR", startTime,
+                            durationMs));
+        }
+    }
+    
     
     @Operation(
             summary = "알림 타입 목록 조회",
