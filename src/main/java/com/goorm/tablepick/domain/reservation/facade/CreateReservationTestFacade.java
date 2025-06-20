@@ -4,13 +4,13 @@ import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.exception.MemberErrorCode;
 import com.goorm.tablepick.domain.member.exception.MemberException;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
+import com.goorm.tablepick.domain.payment.PaymentApi;
 import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
 import com.goorm.tablepick.domain.reservation.exception.ReservationErrorCode;
 import com.goorm.tablepick.domain.reservation.exception.ReservationException;
-import com.goorm.tablepick.domain.reservation.external.PaymentApi;
-import com.goorm.tablepick.domain.reservation.external.model.PaymentResponse;
+import com.goorm.tablepick.domain.payment.dto.PaymentResponseDto;
 import com.goorm.tablepick.domain.reservation.repository.ReservationSlotRepository;
 import com.goorm.tablepick.domain.reservation.service.ReservationExternalUpdateService;
 import lombok.RequiredArgsConstructor;
@@ -44,10 +44,10 @@ public class CreateReservationTestFacade {
         );
 
         // 2. 외부 결제 API 호출
-        PaymentResponse paymentResponse = paymentApi.registerPayment(
+        PaymentResponseDto paymentResponse = paymentApi.registerPayment(
                 reservation.getId(),
                 member.getId(),
-                String.valueOf(request.getPartySize() * 5000) // 예: 1명당 5,000원
+                request.getPartySize() * 5000 // 예: 1명당 5,000원
         );
 
         if (!paymentResponse.isSuccess()) {
@@ -76,10 +76,10 @@ public class CreateReservationTestFacade {
         );
 
         // 2. 외부 결제 API 호출
-        PaymentResponse paymentResponse = paymentApi.registerPayment(
+        PaymentResponseDto paymentResponse = paymentApi.registerPayment(
                 reservation.getId(),
                 member.getId(),
-                String.valueOf(request.getPartySize() * 5000) // 예: 1명당 5,000원
+                request.getPartySize() * 5000 // 예: 1명당 5,000원
         );
 
         if (!paymentResponse.isSuccess()) {

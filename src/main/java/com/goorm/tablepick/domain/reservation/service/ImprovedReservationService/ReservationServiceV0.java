@@ -2,13 +2,13 @@ package com.goorm.tablepick.domain.reservation.service.ImprovedReservationServic
 
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
+import com.goorm.tablepick.domain.payment.PaymentApi;
 import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
 import com.goorm.tablepick.domain.reservation.enums.ReservationStatus;
 import com.goorm.tablepick.domain.reservation.exception.ReservationErrorCode;
 import com.goorm.tablepick.domain.reservation.exception.ReservationException;
-import com.goorm.tablepick.domain.reservation.external.PaymentApi;
 import com.goorm.tablepick.domain.reservation.repository.ReservationRepository;
 import com.goorm.tablepick.domain.reservation.repository.ReservationSlotRepository;
 import com.goorm.tablepick.domain.reservation.service.ReservationExternalUpdateService;

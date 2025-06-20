@@ -29,7 +29,7 @@ public class Reservation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long partySize;
+    private int partySize;
 
     @Setter
     @Enumerated(EnumType.STRING)
@@ -55,7 +55,7 @@ public class Reservation {
     private LocalDateTime createdAt;
 
     @Builder
-    public Reservation(Long partySize,
+    public Reservation(int partySize,
                        ReservationStatus reservationStatus,
                        Member member,
                        ReservationSlot reservationSlot,

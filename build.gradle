@@ -40,6 +40,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
     implementation 'io.github.cdimascio:java-dotenv:5.2.2'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    testImplementation 'io.projectreactor:reactor-test'
     // 최신 버전 확인: https://mvnrepository.com/artifact/io.github.cdimascio/java-dotenv
 
     // Lombok

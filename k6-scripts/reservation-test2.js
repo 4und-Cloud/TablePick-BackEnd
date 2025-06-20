@@ -6,19 +6,25 @@ import {SharedArray} from 'k6/data';
 const BASE_URL = 'http://172.16.24.77:8080';
 
 const userIds = new SharedArray('userIds', function () {
-    return Array.from({length: 100}, (_, i) => i + 1);
+    return Array.from({length: 10000}, (_, i) => i + 1);
 });
 
 export const options = {
     scenarios: {
-        reservation_scenario: {
-            executor: 'per-vu-iterations',
-            vus: 100000,
-            iterations: 1,
+        ramping_reservation: {
+            executor: 'ramping-vus',
+            startVUs: 0,
+            stages: [
+                { duration: '1m', target: 1000 }, // 1분 동안 1000명으로 증가
+                { duration: '2m', target: 10000 }, // 2분 동안 10000명으로 증가
+                { duration: '1m', target: 10000 }, // 10000명 유지
+                { duration: '1m', target: 0 }, // 1분 동안 0명으로 감소
+            ],
         },
     },
     thresholds: {
-        http_req_duration: ['p(95)<1000'],
+        'http_req_duration': ['p(95)<1000'],
+        'http_req_failed': ['rate<0.01'], // 실패율 1% 미만
     },
 };
 
