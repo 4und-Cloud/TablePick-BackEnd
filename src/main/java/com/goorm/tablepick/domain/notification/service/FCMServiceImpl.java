@@ -1,5 +1,7 @@
 package com.goorm.tablepick.domain.notification.service;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
@@ -43,19 +45,16 @@ public class FCMServiceImpl implements FCMService {
                 .build();
         
         try {
-            String response = firebaseMessaging.send(message);
-            log.info("========== FCM 알림 전송 성공 ==========");
-            log.info("수신자 토큰: {}", token);
-            log.info("제목: {}", title);
-            log.info("내용: {}", body);
-            log.info("데이터: {}", data);
-            log.info("응답: {}", response);
-            log.info("=======================================");
+            // FCM 알림 전송
+            String response = firebaseMessaging.send(message, false);
             
             System.out.println("\n========== FCM 알림 전송 성공 ==========");
+            System.out.println("수신자 토큰: " + token);
             System.out.println("제목: " + title);
             System.out.println("내용: " + body);
             System.out.println("데이터: " + data);
+            System.out.println("응답: " + response);
+            System.out.println("메시지 타입: 알림 메시지");
             System.out.println("=======================================\n");
             
             return response;
@@ -106,22 +105,16 @@ public class FCMServiceImpl implements FCMService {
                 .build();
         
         try {
-            String response = firebaseMessaging.send(message);
-            log.info("========== FCM 로고 알림 전송 성공 ==========");
-            log.info("수신자 토큰: {}", token);
-            log.info("제목: {}", title);
-            log.info("내용: {}", body);
-            log.info("로고 이미지 URL: {}", logoUrl);
-            log.info("데이터: {}", data);
-            log.info("응답: {}", response);
-            log.info("메시지 타입: 알림 메시지 (로고 이미지 포함)");
-            log.info("=======================================");
+            // FCM 알림 전송
+            String response = firebaseMessaging.send(message, true);
             
             System.out.println("\n========== FCM 로고 알림 전송 성공 ==========");
+            System.out.println("수신자 토큰: " + token);
             System.out.println("제목: " + title);
             System.out.println("내용: " + body);
             System.out.println("로고 이미지 URL: " + logoUrl);
             System.out.println("데이터: " + data);
+            System.out.println("응답: " + response);
             System.out.println("메시지 타입: 알림 메시지 (로고 이미지 포함)");
             System.out.println("=======================================\n");
             
@@ -139,6 +132,50 @@ public class FCMServiceImpl implements FCMService {
         } catch (Exception e) {
             log.error("FCM 로고 메시지 전송 중 예상치 못한 오류 발생: {}", e.getMessage());
             throw new NotificationException("FCM 로고 메시지 전송 중 예상치 못한 오류 발생: " + e.getMessage(), "FCM_UNEXPECTED_ERROR");
+        }
+    }
+    
+    @Override
+    public ApiFuture<String> sendMessageAsync(String token, String title, String body, Map<String, String> data,
+                                              boolean dryRun) {
+        if (!isValidToken(token)) {
+            log.warn("FCM 토큰이 null 또는 공백이라서 메시지를 보낼 수 없습니다.");
+            System.out.println("FCM 토큰이 null 또는 공백이라서 메시지를 보낼 수 없습니다.");
+            return ApiFutures.immediateFuture(null);
+        }
+        
+        // 데이터에 제목과 내용 추가 (서비스 워커에서 사용)
+        data.put("title", title);
+        data.put("body", body);
+        
+        // 데이터 메시지 형식으로 변경 (notification 필드 제거)
+        Message message = Message.builder()
+                .putAllData(data)
+                .setToken(token)
+                .build();
+        
+        try {
+            ApiFuture<String> responseFuture = firebaseMessaging.sendAsync(message, dryRun);
+            log.info("========== FCM 알림 비동기 전송 요청 시작 ==========");
+            log.info("수신자 토큰: {}", token);
+            log.info("제목: {}", title);
+            log.info("내용: {}", body);
+            log.info("데이터: {}", data);
+            log.info("DryRun: {}", dryRun);
+            log.info("=======================================");
+            
+            System.out.println("\n========== FCM 알림 비동기 전송 요청 시작 ==========");
+            System.out.println("제목: " + title);
+            System.out.println("내용: " + body);
+            System.out.println("데이터: " + data);
+            System.out.println("DryRun: " + dryRun);
+            System.out.println("=======================================\n");
+            
+            return responseFuture;
+        } catch (Exception e) {
+            log.error("FCM 비동기 메시지 전송 요청 중 예상치 못한 오류 발생: {}", e.getMessage());
+            throw new NotificationException("FCM 비동기 메시지 전송 요청 중 예상치 못한 오류 발생: " + e.getMessage(),
+                    "FCM_UNEXPECTED_ERROR");
         }
     }
 }
