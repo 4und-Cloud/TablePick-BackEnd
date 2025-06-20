@@ -1,8 +1,7 @@
 package com.goorm.tablepick.domain.userevent.controller;
 
-import com.goorm.tablepick.domain.userevent.dto.UserClickEventDto;
+import com.goorm.tablepick.domain.userevent.dto.UserActionEventDto;
 import com.goorm.tablepick.domain.userevent.service.UserEventService;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +17,7 @@ public class UserEventController {
     private final UserEventService userEventService;
 
     @PostMapping
-    public ResponseEntity<String> logClickEvent(@RequestBody UserClickEventDto dto) {
+    public ResponseEntity<String> logClickEvent(@RequestBody UserActionEventDto dto) {
         userEventService.sendClickEvent(dto);
         return ResponseEntity.ok("Event sent successfully");
     }

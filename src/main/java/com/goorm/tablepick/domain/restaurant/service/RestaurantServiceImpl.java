@@ -14,7 +14,7 @@ import com.goorm.tablepick.domain.restaurant.exception.RestaurantErrorCode;
 import com.goorm.tablepick.domain.restaurant.exception.RestaurantException;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryRepository;
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
-import com.goorm.tablepick.domain.userevent.dto.UserClickEventDto;
+import com.goorm.tablepick.domain.userevent.dto.UserActionEventDto;
 import com.goorm.tablepick.domain.userevent.service.UserEventService;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,12 +41,12 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     public Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable, Member member) {
         Page<Restaurant> restaurantPage = restaurantRepository.findPopularRestaurants(pageable);
-        
-        Page<RestaurantResponseDto> dtoPage = restaurantPage.map(restaurant -> {
+
+        return restaurantPage.map(restaurant -> {
             List<String> topTags = boardTagRepository.findTopTagsByRestaurantIdNative(restaurant.getId());
-            
+
             if (member != null) {
-                UserClickEventDto event = new UserClickEventDto(
+                UserActionEventDto event = new UserActionEventDto(
                         "RESTAURANT_VIEW",
                         restaurant.getId(),  // targetId에 식당 ID 넣기
                         member.getId(),
@@ -54,7 +54,7 @@ public class RestaurantServiceImpl implements RestaurantService {
                 );
                 userEventService.sendClickEvent(event);
             }
-            
+
             return new RestaurantResponseDto(
                     restaurant.getId(),
                     restaurant.getName(),
@@ -62,11 +62,9 @@ public class RestaurantServiceImpl implements RestaurantService {
                     topTags,
                     restaurant.getAddress(),
                     restaurant.getRestaurantImages().isEmpty() ? null
-                            : restaurant.getRestaurantImages().get(0).getImageUrl()
+                            : restaurant.getRestaurantImages().getFirst().getImageUrl()
             );
         });
-        
-        return dtoPage;
     }
     
     @Override
@@ -76,7 +74,7 @@ public class RestaurantServiceImpl implements RestaurantService {
         
         if (member != null) {
             restaurantList.forEach(restaurant -> {
-                UserClickEventDto event = new UserClickEventDto(
+                UserActionEventDto event = new UserActionEventDto(
                         "RESTAURANT_VIEW",
                         restaurant.getId(),  // 각 식당 ID 넣기
                         member.getId(),
@@ -96,7 +94,7 @@ public class RestaurantServiceImpl implements RestaurantService {
         List<String> topTags = boardTagRepository.findTopTagsByRestaurantIdNative(restaurant.getId());
         
         if (member != null) {
-            UserClickEventDto event = new UserClickEventDto(
+            UserActionEventDto event = new UserActionEventDto(
                     "RESTAURANT_CLICK",
                     id,
                     member.getId(),
