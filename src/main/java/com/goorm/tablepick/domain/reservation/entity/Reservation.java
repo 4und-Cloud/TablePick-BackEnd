@@ -49,6 +49,7 @@ public class Reservation {
 
     private String paymentId; // 결제 ID, 8082 포트에서 관리되는 Payment와 연결
     private String paymentStatus; // PENDING, COMPLETED, FAILED, CANCELLED
+    private Long amount;
 
     @Column
     @CreatedDate
@@ -98,4 +99,17 @@ public class Reservation {
     public void setPaymentId(String paymentId) {
         this.paymentId = paymentId;
     }
+
+    public void completePayment(String paymentId, Long amount) {
+        this.paymentId = paymentId;
+        this.amount = amount;
+        this.paymentStatus = "CONFIRMED";
+        this.reservationStatus = ReservationStatus.CONFIRMED;
+    }
+
+    public void failPayment() {
+        this.paymentStatus = "FAILED";
+        this.reservationStatus = ReservationStatus.CANCELLED;
+    }
+
 }

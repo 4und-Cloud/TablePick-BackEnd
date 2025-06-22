@@ -8,5 +8,5 @@ import lombok.Getter;
 public class PaymentRequestDto {
     private Long reservationId;
     private Long memberId;
-    private int amount;
+    private Long amount;
 }
