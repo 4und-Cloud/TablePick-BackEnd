@@ -72,32 +72,35 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # --- 백엔드/결제 서버 Docker 빌드 & ECR 푸시 ---
+# --- 백엔드/결제 서버 Docker 빌드 & ECR 푸시 ---
       - name: Build, tag, and push Backend/Payment image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
           IMAGE_TAG: latest
         run: |
-          # Dockerfile 경로가 'backend-service' 아래에 있으므로 명시적으로 지정
           docker build \
             --build-arg DEPENDENCY=backend-service/build/dependency \
-            -f ./backend-service/Dockerfile \ # <--- 여기도 Dockerfile 경로 명시
+            -f ./backend-service/Dockerfile \
             -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-            --platform linux/amd64 ./backend-service # <--- 컨텍스트 경로 명시
-            docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+            --platform linux/amd64 ./backend-service
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          # working-directory: ./backend-service # 이 스텝에서는 제거하는게 좋습니다.
+# 경로를 명시했기 때문에.
 
-          # --- Fake PG 서버 Docker 빌드 & ECR 푸시 ---
+# --- Fake PG 서버 Docker 빌드 & ECR 푸시 ---
       - name: Build, tag, and push Fake PG image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY_FAKE_PG: ${{ secrets.ECR_REPOSITORY_FAKE_PG_NAME }}
           IMAGE_TAG: latest
         run: |
-          # Dockerfile 경로가 fake-pg-service 디렉토리 바로 아래에 있으므로
-          # -f 옵션으로 Dockerfile의 상대 경로를 명시하고, 컨텍스트는 fake-pg-service 디렉토리 자체로 설정
-          docker build -f ./fake-pg-service/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY_FAKE_PG:$IMAGE_TAG --platform linux/amd64 ./fake-pg-service # <--- 여기 수정!
+          docker build \
+            -f ./fake-pg-service/Dockerfile \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY_FAKE_PG:$IMAGE_TAG \
+            --platform linux/amd64 ./fake-pg-service
           docker push $ECR_REGISTRY/$ECR_REPOSITORY_FAKE_PG:$IMAGE_TAG
+        # working-directory: ./fake-pg-service # 이 스텝에서는 제거하는게 좋습니다.
 
       # --- EC2 배포 스텝 ---
       - name: Deploy to server
