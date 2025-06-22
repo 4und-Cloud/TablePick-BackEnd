@@ -33,7 +33,7 @@ jobs:
       # application-secret.yml 생성은 그대로 유지 (다른 민감 정보가 있다면)
       - name: Make application.yml
         run: |
-          cd ./src/main
+          cd ./backend-service/src/main
           mkdir -p resources
           cd resources
           # 현재 yml에 변수가 있으므로, 이 부분은 크게 필요하지 않을 수 있습니다.
@@ -82,7 +82,7 @@ jobs:
       - name: Build, tag, and push Fake PG image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY_FAKE_PG: ${{ secrets.ECR_REPOSITORY_FAKE_PG_NAME }}
+          ECR_REPOSITORY_FAKE_PG: ${{ secrets.ECR_FAKEPG_REPOSITORY_NAME }}
           IMAGE_TAG: latest
         run: |
           # Dockerfile 경로를 fake-pg-service 디렉토리로 지정
