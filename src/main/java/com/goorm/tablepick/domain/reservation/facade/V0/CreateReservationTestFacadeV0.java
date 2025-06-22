@@ -4,7 +4,7 @@ import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.exception.MemberErrorCode;
 import com.goorm.tablepick.domain.member.exception.MemberException;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
-import com.goorm.tablepick.domain.payment.PaymentApi;
+import com.goorm.tablepick.domain.payment.RestPaymentApi;
 import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
@@ -24,7 +24,7 @@ public class CreateReservationTestFacadeV0 {
     private final ReservationExternalUpdateService reservationExternalUpdateService;
     private final ReservationSlotRepository reservationSlotRepository;
     private final MemberRepository memberRepository;
-    private final PaymentApi paymentApi;
+    private final RestPaymentApi paymentApi;
 
     public void createReservationOptimistic(Long memberId, ReservationRequestDto request) {
         // 0. 멤버 검증
@@ -47,7 +47,7 @@ public class CreateReservationTestFacadeV0 {
         PaymentResponseDto paymentResponse = paymentApi.registerPaymentV0(
                 reservation.getId(),
                 member.getId(),
-                request.getPartySize() * 5000 // 예: 1명당 5,000원
+                request.getPartySize() * 5000L // 예: 1명당 5,000원
         );
 
         if (!paymentResponse.isSuccess()) {
@@ -79,7 +79,7 @@ public class CreateReservationTestFacadeV0 {
         PaymentResponseDto paymentResponse = paymentApi.registerPaymentV0(
                 reservation.getId(),
                 member.getId(),
-                request.getPartySize() * 5000 // 예: 1명당 5,000원
+                request.getPartySize() * 5000L // 예: 1명당 5,000원
         );
 
         if (!paymentResponse.isSuccess()) {
