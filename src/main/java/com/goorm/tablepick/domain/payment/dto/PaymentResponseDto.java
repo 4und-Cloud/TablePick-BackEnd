@@ -7,6 +7,8 @@ import lombok.Data;
 @Builder
 public class PaymentResponseDto {
     private boolean success;
-    private String paymentId;
+    private String paymentUrl; // 사용자가 리다이렉션될 PG사 결제 페이지 URL
+    private String tid; // PG사 거래 ID
+    private String paymentId; // PG사 내부에서 발급한 최종 결제 ID
     private String errorMessage;
 }

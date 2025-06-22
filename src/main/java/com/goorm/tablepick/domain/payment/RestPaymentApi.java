@@ -9,28 +9,31 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @RequiredArgsConstructor
 @Component
-public class RestPaymentApi implements PaymentApi {
+public class RestPaymentApi{
 
-    private final WebClient webClient; // 예약 서버에서 결제 서버 호출
+    private final WebClient.Builder webClientBuilder; // 예약 서버에서 결제 서버 호출
 
-    @Override
-    public PaymentResponseDto registerPaymentV0(Long reservationId, Long userId, int amount) {
+    // 결제 서버 분리 전
+    public PaymentResponseDto registerPaymentV0(Long reservationId, Long userId, Long amount) {
+        WebClient webClient = webClientBuilder.build();
+        // PgClient의 역할
         return webClient.post()
-                .uri("http://localhost:8083/api/pg/approve")
+                .uri("http://localhost:8083/api/pg/approve") // Fake PG 서버 호출
                 .bodyValue(new PaymentRequestDto(reservationId, userId, amount))
                 .retrieve()
                 .bodyToMono(PaymentResponseDto.class)
                 .block(); // 동기 처리
     }
 
-    @Override
-    public PaymentResponseDto registerPaymentV1(Long reservationId, Long userId, int amount) {
+    // 결제 서버 분리 후
+    public PaymentResponseDto registerPaymentV1(Long reservationId, Long userId, Long amount) {
+        WebClient webClient = webClientBuilder.build();
         return webClient.post()
                 .uri("http://localhost:8082/api/payments")
                 .bodyValue(new PaymentRequestDto(reservationId, userId, amount))
                 .retrieve()
                 .bodyToMono(PaymentResponseDto.class)
-                .block(); // 동기 처리 (v0이므로 우선 이렇게)
+                .block(); // 동기 처리
     }
 
 //    public PaymentResponse getPaymentInfo(Long reservationId, Long memberId) {

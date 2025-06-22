@@ -53,6 +53,8 @@ src/main/resources/static/firebase-messaging-sw.js
 
 src/main/resources/*.csv
 
-env
+.env
 
 src/main/generated
+
+Docker-Compose.yml
