@@ -14,6 +14,15 @@ jobs:
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
+        with:
+          path: backend-service
+
+# --- 2. Fake PG 서버 코드 체크아웃 ---
+      - name: Checkout Fake PG Code
+        uses: actions/checkout@v4
+        with:
+          repository: 4und-Cloud/TablePick-Fake-Pg
+          path: fake-pg-service # Fake PG 코드를 'fake-pg-service' 디렉토리로 체크아웃
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -33,10 +42,19 @@ jobs:
         shell: bash
 
       - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
+        run: chmod +x ./backend-service/gradlew
 
       - name: Build with Gradle
-        run: ./gradlew clean build -x test
+        run: ./backend-service/gradlew clean build -x test
+
+
+        # -------pg
+      - name: Grant execute permission for gradlew (Fake PG)
+        run: chmod +x ./fake-pg-service/gradlew # 경로 변경
+
+      - name: Build with Gradle (Fake PG)
+        run: ./fake-pg-service/gradlew clean build -x test # 경로 변경
+
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -49,15 +67,27 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+# --  백엔드 서버
       - name: Build, tag, and push image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
           IMAGE_TAG: latest
         run: |
-          docker build --build-arg DEPENDENCY=build/dependency -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --platform linux/amd64 .
+          docker build --build-arg DEPENDENCY=backend-service/build/dependency -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --platform linux/amd64 backend-service
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
+# --- pg
+
+      - name: Build, tag, and push Fake PG image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY_FAKE_PG: ${{ secrets.ECR_REPOSITORY_FAKE_PG_NAME }}
+          IMAGE_TAG: latest
+        run: |
+          # Dockerfile 경로를 fake-pg-service 디렉토리로 지정
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FAKE_PG:$IMAGE_TAG --platform linux/amd64 fake-pg-service # <-- Fake PG 경로를 정확히 지정
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_FAKE_PG:$IMAGE_TAG
       # 서버에 접속 후 ECR 이미지 가져와서 배포
       - name: Deploy to server
         uses: appleboy/ssh-action@master
@@ -68,9 +98,10 @@ jobs:
           port: 22
           script: |
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
-            sudo docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
 
-            # 기존에 실행 중인 컨테이너 중지 및 삭제
+            # --- 백엔드/결제 서버 컨테이너 배포 ---
+            echo "Deploying Backend/Payment Server..."
+            sudo docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
             if [ "$(sudo docker ps -a -q -f name=tablepick-app-new)" ]; then
               sudo docker stop tablepick-app-new
               sudo docker rm -f tablepick-app-new
@@ -95,3 +126,19 @@ jobs:
               -e BOARD_IMAGE_PATH="${{ secrets.BOARD_IMAGE_PATH }}" \
               -e KAKAO_ADMIN_KEY="${{ secrets.KAKAO_ADMIN_KEY }}" \
               ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+            
+            
+             # --- Fake PG 서버 컨테이너 배포 ---
+            echo "Deploying Fake PG Server..."
+            sudo docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_FAKEPG_REPOSITORY_NAME }}:latest
+            if [ "$(sudo docker ps -a -q -f name=fake-pg-app-new)" ]; then
+              sudo docker stop fake-pg-app-new
+              sudo docker rm -f fake-pg-app-new
+            fi
+            sudo docker run -d \
+              --name fake-pg-app-new \
+              -p 8083:8083 \
+              # Fake PG에 필요한 환경 변수가 있다면 여기에 -e 옵션으로 추가
+              ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_FAKEPG_REPOSITORY_NAME }}:latest
+
+            echo "Deployment complete."
