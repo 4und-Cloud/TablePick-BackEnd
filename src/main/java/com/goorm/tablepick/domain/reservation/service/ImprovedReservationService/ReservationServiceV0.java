@@ -2,7 +2,7 @@ package com.goorm.tablepick.domain.reservation.service.ImprovedReservationServic
 
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
-import com.goorm.tablepick.domain.payment.PaymentApi;
+import com.goorm.tablepick.domain.payment.RestPaymentApi;
 import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
@@ -31,7 +31,7 @@ public class ReservationServiceV0 {
     private final MemberRepository memberRepository;
     private final ReservationSlotRepository reservationSlotRepository;
     private final RestaurantRepository restaurantRepository;
-    private final PaymentApi paymentApi;
+    private final RestPaymentApi paymentApi;
     private final ReservationExternalUpdateService reservationExternalUpdateService;
 
 
