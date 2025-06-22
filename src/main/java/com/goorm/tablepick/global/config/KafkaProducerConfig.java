@@ -1,5 +1,6 @@
 package com.goorm.tablepick.global.config;
 
+import com.goorm.tablepick.domain.reservation.event.model.PaymentRequestEvent;
 import com.goorm.tablepick.domain.userevent.dto.UserActionEventDto;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,5 +31,19 @@ public class KafkaProducerConfig {
     @Bean
     public KafkaTemplate<String, UserActionEventDto> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
+    }
+
+    @Bean
+    public ProducerFactory<String, PaymentRequestEvent> paymentProducerFactory() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaHost);
+        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        return new DefaultKafkaProducerFactory<>(config);
+    }
+
+    @Bean
+    public KafkaTemplate<String, PaymentRequestEvent> paymentKafkaTemplate() {
+        return new KafkaTemplate<>(paymentProducerFactory());
     }
 }
