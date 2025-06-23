@@ -39,9 +39,22 @@ jobs:
         run: |
           mkdir -p src/main/resources # 이미 cd된 상태에서 상대경로
           echo "${{ secrets.YML }}" > src/main/resources/application-secret.yml
-          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FILE }}" > src/main/resources/firebase-service-account.json
         shell: bash
         working-directory: ./backend-service # <--- 여기 추가!
+
+          # --- Firebase 서비스 계정 파일 생성 (Base64 디코딩) ---
+      - name: Decode Firebase Service Account File
+        run: |
+          mkdir -p src/main/resources
+          printf "%s" "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FILE }}" | base64 --decode > src/main/resources/firebase-service-account.json
+
+          # 파일이 제대로 생성되었는지 확인 (디버깅용 - 민감 정보 포함 주의!)
+          ls -l src/main/resources/firebase-service-account.json
+          echo "--- Content of firebase-service-account.json (first 10 lines) ---"
+          head -n 10 src/main/resources/firebase-service-account.json
+          echo "---------------------------------------------------"
+        shell: bash
+        working-directory: ./backend-service # backend-service 경로에서 실행되도록
 
       # --- 백엔드/결제 서버 Gradle 권한 및 빌드 ---
       - name: Grant execute permission for gradlew (Backend)
