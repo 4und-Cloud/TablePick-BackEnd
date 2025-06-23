@@ -157,6 +157,7 @@ jobs:
               -e AI_HOST="${{ secrets.AI_HOST }}" \
               -e BOARD_IMAGE_PATH="${{ secrets.BOARD_IMAGE_PATH }}" \
               -e KAKAO_ADMIN_KEY="${{ secrets.KAKAO_ADMIN_KEY }}" \
+              -e FRONTEND_HOST="${{ secrets.FRONTEND_HOST }}" \
               ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
             
             # --- Fake PG 서버 컨테이너 배포 ---
