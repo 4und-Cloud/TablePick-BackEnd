@@ -113,7 +113,11 @@ jobs:
           script: |
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
 
-            # --- 백엔드/결제 서버 컨테이너 배포 ---
+            # 2. firebase-service-account.json 생성
+            echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" | base64 -d | sudo tee /home/ubuntu/firebase-service-account.json > /dev/null
+      
+
+      # --- 백엔드/결제 서버 컨테이너 배포 ---
             echo "Deploying Backend/Payment Server..."
             sudo docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
             if [ "$(sudo docker ps -a -q -f name=tablepick-app-new)" ]; then
