@@ -39,6 +39,7 @@ jobs:
         run: |
           mkdir -p src/main/resources # 이미 cd된 상태에서 상대경로
           echo "${{ secrets.YML }}" > src/main/resources/application-secret.yml
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FILE }}" > src/main/resources/firebase-service-account.json
         shell: bash
         working-directory: ./backend-service # <--- 여기 추가!
 
