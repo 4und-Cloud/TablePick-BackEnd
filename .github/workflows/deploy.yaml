@@ -46,7 +46,7 @@ jobs:
       - name: Decode Firebase Service Account File
         run: |
           mkdir -p src/main/resources
-          printf "%s" "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FILE }}" | base64 --decode > src/main/resources/firebase-service-account.json
+          printf "%s" "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FILE_BASE64 }}" | base64 --decode > src/main/resources/firebase-service-account.json
 
           # 파일이 제대로 생성되었는지 확인 (디버깅용 - 민감 정보 포함 주의!)
           ls -l src/main/resources/firebase-service-account.json
