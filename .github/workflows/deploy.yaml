@@ -56,6 +56,12 @@ jobs:
         shell: bash
         working-directory: ./backend-service # backend-service 경로에서 실행되도록
 
+      - name: Build with Gradle
+        working-directory: ./backend-service
+        run: ./gradlew build
+        env:
+          FRONTEND_HOST: ${{ secrets.FRONTEND_HOST }}
+
       # --- 백엔드/결제 서버 Gradle 권한 및 빌드 ---
       - name: Grant execute permission for gradlew (Backend)
         run: chmod +x ./gradlew # working-directory가 설정되었으므로 ./gradlew로 변경
