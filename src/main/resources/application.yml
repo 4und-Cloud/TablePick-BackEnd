@@ -92,7 +92,7 @@ kakao:
     key: ${KAKAO_ADMIN_KEY}
 
 firebase:
-  service-account-file: file:/app/secrets/firebase-service-account.json
+  service-account-file: classpath:firebase-service-account.json
 
 springdoc:
   swagger-ui:
