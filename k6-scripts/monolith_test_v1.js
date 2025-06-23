@@ -1,5 +1,5 @@
 import http from 'k6/http';
-import { check, sleep } from 'k6';
+import {check, sleep} from 'k6';
 import {SharedArray} from 'k6/data';
 
 //const BASE_URL = 'http://localhost:8080';
@@ -9,18 +9,17 @@ const userIds = new SharedArray('userIds', function () {
     return Array.from({length: 1000}, (_, i) => i + 1);
 });
 
-export let options = {
+
+let userIndex = 0;
+
+export const options = {
     vus: 1000,
     duration: '30s',
 };
 
 export default function () {
-    // SAGA 패턴에서는 예약 도메인이 임시 예약 생성 및 Kafka 이벤트 발행 후 즉시 응답하므로,
-    // 이 엔드포인트는 결제 도메인으로 리다이렉션 URL 등을 받기 위한 동기 호출이 아닙니다.
-    // 임시 예약이 생성되고 Kafka 이벤트가 발행되는 시점까지를 측정합니다.
-
     const userId = userIds[(__VU - 1) % userIds.length]; // 고유 userId
-    // (임시 예약 생성 및 Kafka 이벤트 발행)
+
     const payload = JSON.stringify({
         restaurantId: 1,
         partySize: 1,
@@ -28,14 +27,23 @@ export default function () {
         reservationTime: '12:00',
     });
 
+    const jar = http.cookieJar();
+    jar.set(BASE_URL, 'access_token', cookies.access_token);
+    jar.set(BASE_URL, 'refresh_token', cookies.refresh_token);
+
     const params = {
         headers: {
             'Content-Type': 'application/json',
+            // 필요 시: 'Authorization': 'Bearer your-token-here',
         },
+        timeout: '10s',
     };
 
-    let res = http.post(`${BASE_URL}/api/reservations/test/v1/${userId}`, payload, params);
+    const res = http.post(`${BASE_URL}/api/reservations/test/v0/optimistic/${userId}`, payload, params);
+    check(res, {
+        'reservation success': (r) => r.json()?.status === 'success',
+        'status is 200': (r) => r.status === 200,
+    });
 
-    check(res, { 'status is 200': (r) => r.status === 200 });
-    sleep(0.1);
+    sleep(0.01); // 높은 부하 시뮬레이션, 짧은 대기
 }

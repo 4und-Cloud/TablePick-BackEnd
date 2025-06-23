@@ -4,6 +4,7 @@ import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
 import com.goorm.tablepick.domain.reservation.facade.V0.CreateReservationTestFacadeV0;
 import com.goorm.tablepick.domain.reservation.facade.V1.CreateReservationTestFacadeV1;
 import com.goorm.tablepick.domain.reservation.facade.V2.CreateReservationSagaFacade;
+import com.goorm.tablepick.domain.reservation.service.ImprovedReservationService.ReservationServiceV2;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class ReservationTestController {
     private final CreateReservationTestFacadeV0 createReservationTestFacadeV0;
     private final CreateReservationTestFacadeV1 createReservationTestFacadeV1;
     private final CreateReservationSagaFacade createReservationTestFacadeV2;
+    private final ReservationServiceV2 reservationServiceV2;
 
     @PostMapping("/test/v0/optimistic/{memberId}")
     @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
@@ -40,7 +42,17 @@ public class ReservationTestController {
         return ResponseEntity.ok().build();
     }
 
-    // 모놀리식 (동기)
+    // 모놀리식 (동기), 트랜잭션 분리 전
+    @PostMapping("/test/{memberId}")
+    @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
+    public ResponseEntity<Void> createReservation(@PathVariable Long memberId,
+                                                    @RequestBody @Valid ReservationRequestDto request) {
+
+        reservationServiceV2.createReservationOptimistic(memberId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    // 모놀리식 (동기), 트랜잭션 분리 후
     @PostMapping("/test/v0/{memberId}")
     @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
     public ResponseEntity<Void> createReservationV0(@PathVariable Long memberId,
@@ -69,5 +81,7 @@ public class ReservationTestController {
         createReservationTestFacadeV2.createReservationOptimistic(memberId, request);
         return ResponseEntity.ok().build();
     }
+
+
 
 }

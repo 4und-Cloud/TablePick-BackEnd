@@ -17,20 +17,20 @@ public class OptimisticLockFacade {
     private static final long RETRY_DELAY_MS = 50;
     private static final int MAX_RETRY_COUNT = 50; // 재시도 최대 횟수 추가
 
-    public String createReservationWithOptimisticLock(String username, ReservationRequestDto request)
+    public String createReservationWithOptimisticLock(Long memberId, ReservationRequestDto request)
             throws InterruptedException {
         int retryCount = 0;
 
         while (retryCount < MAX_RETRY_COUNT) {
             try {
-                String paymentId = reservationServiceV2.createReservationOptimistic(username, request);
+                String paymentId = reservationServiceV2.createReservationOptimistic(memberId, request);
                 log.info("예약 생성 성공 - username: {}, paymentId: {}, 총 시도횟수: {}",
-                        username, paymentId, retryCount + 1);
+                        memberId, paymentId, retryCount + 1);
                 return paymentId;
             } catch (ReservationException e) {
                 retryCount++;
                 log.warn("예약 생성 재시도 - username: {}, request: {}, 현재 시도횟수: {}, error: {}",
-                        username, request, retryCount, e.getMessage());
+                        memberId, request, retryCount, e.getMessage());
                 if (retryCount == MAX_RETRY_COUNT) {
                     throw new ReservationException(ReservationErrorCode.OPTIMISTIC_LOCK_RETRY_EXCEEDED);
                 }
@@ -38,7 +38,7 @@ public class OptimisticLockFacade {
             } catch (Exception e) {
                 retryCount++;
                 log.warn("예약 생성 실패 - username: {}, request: {}, 현재 시도횟수: {}, error: {}",
-                        username, request, retryCount, e.getMessage());
+                        memberId, request, retryCount, e.getMessage());
                 if (retryCount == MAX_RETRY_COUNT) {
                     throw new ReservationException(ReservationErrorCode.INTERNAL_SERVER_ERROR);
                 }
