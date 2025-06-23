@@ -2,7 +2,8 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import {SharedArray} from 'k6/data';
 
-const BASE_URL = 'http://localhost:8080';
+//const BASE_URL = 'http://localhost:8080';
+const BASE_URL = 'http://172.16.24.77:8080';
 
 const userIds = new SharedArray('userIds', function () {
     return Array.from({length: 1000}, (_, i) => i + 1);
