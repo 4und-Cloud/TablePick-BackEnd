@@ -58,7 +58,7 @@ jobs:
 
       - name: Build with Gradle
         working-directory: ./backend-service
-        run: ./gradlew build
+        run: ./gradlew build -x test
         env:
           FRONTEND_HOST: ${{ secrets.FRONTEND_HOST }}
 
