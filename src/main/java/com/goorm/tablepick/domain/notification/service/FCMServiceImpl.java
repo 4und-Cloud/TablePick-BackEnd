@@ -108,14 +108,19 @@ public class FCMServiceImpl implements FCMService {
             // FCM 알림 전송
             String response = firebaseMessaging.send(message, true);
             
-            System.out.println("\n========== FCM 로고 알림 전송 성공 ==========");
+            log.info("========== FCM 알림 동기 전송 요청 시작 ==========");
+            log.info("수신자 토큰: {}", token);
+            log.info("제목: {}", title);
+            log.info("내용: {}", body);
+            log.info("=======================================");
+            
+            System.out.println("\n========== FCM 알림 동기 전송 성공 ==========");
             System.out.println("수신자 토큰: " + token);
             System.out.println("제목: " + title);
             System.out.println("내용: " + body);
             System.out.println("로고 이미지 URL: " + logoUrl);
             System.out.println("데이터: " + data);
             System.out.println("응답: " + response);
-            System.out.println("메시지 타입: 알림 메시지 (로고 이미지 포함)");
             System.out.println("=======================================\n");
             
             return response;
@@ -155,6 +160,7 @@ public class FCMServiceImpl implements FCMService {
                 .build();
         
         try {
+            
             ApiFuture<String> responseFuture = firebaseMessaging.sendAsync(message, dryRun);
             log.info("========== FCM 알림 비동기 전송 요청 시작 ==========");
             log.info("수신자 토큰: {}", token);

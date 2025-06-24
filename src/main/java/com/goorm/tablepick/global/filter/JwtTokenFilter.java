@@ -119,6 +119,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 path.startsWith("/api/notifications/member/") ||
                 path.matches("^/api/notifications/\\d+$") ||
                 path.equals("/api/notifications/notification-types") ||
+                path.equals("/api/notifications/send-with-fcmToken") ||
+                path.equals("/api/notifications/send-async-with-fcmToken") ||
                 path.startsWith("/api/notifications/test/") ||
                 path.startsWith("/api/notifications/test/fcm/");
     }

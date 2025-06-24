@@ -291,13 +291,13 @@ public class NotificationController {
             // FCM 알림 전송
             String response = fcmService.sendMessageWithLogo(token, title, body, dataMap);
             long fcmDurationMillis = System.currentTimeMillis() - fcmStartMillis;
-            log.info("순수 FCM 전송 소요시간: {}ms", fcmDurationMillis);
+//            log.info("순수 FCM 전송 소요시간: {}ms", fcmDurationMillis);
             
             long endMillis = System.currentTimeMillis();
             long durationMs = endMillis - startMillis;
             
             if (response != null) {
-                log.info("로고 알림 전송 성공 - 응답: {}, 소요시간: {}ms", response, durationMs);
+//                log.info("로고 알림 전송 성공 - 응답: {}, 소요시간: {}ms", response, durationMs);
                 return ResponseEntity.ok(FCMNotificationResponse.success(response, startTime, durationMs));
             } else {
                 log.warn("로고 알림 전송 실패 - 토큰이 유효하지 않음, 소요시간: {}ms", durationMs);
@@ -382,7 +382,7 @@ public class NotificationController {
         LocalDateTime startTime = LocalDateTime.now();
         long startMillis = System.currentTimeMillis();
         
-        log.info("로고 알림 전송 요청 시작 - 시간: {}, 토큰: {}, 제목: {}, 내용: {}",
+        log.info("비동기 이미지 알림 전송 요청 시작 - 시간: {}, 토큰: {}, 제목: {}, 내용: {}",
                 startTime, token, title, body);
         
         try {
