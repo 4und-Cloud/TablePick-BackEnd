@@ -90,7 +90,7 @@ public class ReservationServiceV2 {
     }
 
     @Transactional
-    public String createReservationOptimistic(Long memberId, ReservationRequestDto request) {
+    public void createReservationOptimistic(Long memberId, ReservationRequestDto request) {
         // 식당 검증
         Restaurant restaurant = restaurantRepository.findById(request.getRestaurantId())
                 .orElseThrow(() -> new RestaurantException(RestaurantErrorCode.NOT_FOUND));
@@ -149,6 +149,6 @@ public class ReservationServiceV2 {
         // 3. 외부 API 응답으로 참가자 정보 업데이트
         reservationExternalUpdateService.updateReservationPayment(reservation.getId(), paymentResponse.getPaymentId());
 
-        return paymentResponse.getPaymentId();
+
     }
 }

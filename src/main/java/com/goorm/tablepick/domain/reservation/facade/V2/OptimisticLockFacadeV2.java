@@ -1,9 +1,9 @@
-package com.goorm.tablepick.domain.reservation.facade;
+package com.goorm.tablepick.domain.reservation.facade.V2;
 
 import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
 import com.goorm.tablepick.domain.reservation.exception.ReservationErrorCode;
 import com.goorm.tablepick.domain.reservation.exception.ReservationException;
-import com.goorm.tablepick.domain.reservation.service.ImprovedReservationService.ReservationServiceV2;
+import com.goorm.tablepick.domain.reservation.facade.V0.CreateReservationTestFacadeV0;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -11,8 +11,8 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class OptimisticLockFacade {
-    private final ReservationServiceV2 reservationServiceV2;
+public class OptimisticLockFacadeV2 {
+    private final CreateReservationSagaFacade createReservationSagaFacade;
 
     private static final long RETRY_DELAY_MS = 50;
     private static final int MAX_RETRY_COUNT = 5; // 재시도 최대 횟수 추가
@@ -23,7 +23,7 @@ public class OptimisticLockFacade {
 
         while (retryCount < MAX_RETRY_COUNT) {
             try {
-                reservationServiceV2.createReservationOptimistic(memberId, request);
+                createReservationSagaFacade.createReservationOptimistic(memberId, request);
                 log.info("예약 생성 성공 - username: {}, paymentId: {}, 총 시도횟수: {}",
                         memberId, retryCount + 1);
 

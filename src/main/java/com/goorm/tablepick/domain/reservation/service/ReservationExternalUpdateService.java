@@ -4,6 +4,7 @@ import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.exception.MemberErrorCode;
 import com.goorm.tablepick.domain.member.exception.MemberException;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
+import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
 import com.goorm.tablepick.domain.reservation.enums.ReservationStatus;
@@ -41,13 +42,13 @@ public class ReservationExternalUpdateService {
 
         // 3. 중복 예약 확인
         boolean hasDuplicate = reservationRepository.findByReservationSlot(reservationSlot).stream()
-                .anyMatch(r -> r.getMember().equals(member) && r.getReservationStatus() == ReservationStatus.CONFIRMED);
+                .anyMatch(r -> r.getMember().equals(member) && (r.getReservationStatus() == ReservationStatus.CONFIRMED || r.getReservationStatus() == ReservationStatus.PENDING));
         if (hasDuplicate) {
             throw new ReservationException(ReservationErrorCode.DUPLICATE_RESERVATION);
         }
 
         reservationSlot.setCount(reservationSlot.getCount() + 1);
-        reservationSlotRepository.saveAndFlush(reservationSlot);
+
 
         // 3. 예약 생성
         Reservation reservation = Reservation.builder()
@@ -64,13 +65,16 @@ public class ReservationExternalUpdateService {
     }
 
     @Transactional
-    public Reservation createReservationWithPessimisticTransaction(Long memberId, Long slotId, int partySize) {
+    public Reservation createReservationWithPessimisticTransaction(Long memberId, ReservationRequestDto request) {
+        // 0. 예약 슬롯 조회 (읽기 전용)
+        ReservationSlot reservationSlot = reservationSlotRepository.findByRestaurantIdAndDateAndTimeWithPessimisticLock(
+                request.getRestaurantId(), request.getReservationDate(), request.getReservationTime()
+        ).orElseThrow(() -> new ReservationException(ReservationErrorCode.NO_RESERVATION_SLOT));
+
         // 1. 회원 및 예약 슬롯 조회
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
 
-        ReservationSlot reservationSlot = reservationSlotRepository.findByIdWithPessimisticLock(slotId)
-                .orElseThrow(() -> new ReservationException(ReservationErrorCode.NO_RESERVATION_SLOT));
 
         // 2. 예약 슬롯 용량 검증 및 카운트 증가
         if (reservationSlot.getCount() >= reservationSlot.getRestaurant().getMaxCapacity()) {
@@ -79,7 +83,7 @@ public class ReservationExternalUpdateService {
 
         // 3. 중복 예약 확인
         boolean hasDuplicate = reservationRepository.findByReservationSlot(reservationSlot).stream()
-                .anyMatch(r -> r.getMember().equals(member) && r.getReservationStatus() != ReservationStatus.CANCELLED);
+                .anyMatch(r -> r.getMember().equals(member) && (r.getReservationStatus() == ReservationStatus.CONFIRMED || r.getReservationStatus() == ReservationStatus.PENDING));
         if (hasDuplicate) {
             throw new ReservationException(ReservationErrorCode.DUPLICATE_RESERVATION);
         }
@@ -91,7 +95,7 @@ public class ReservationExternalUpdateService {
         Reservation reservation = Reservation.builder()
                 .member(member)
                 .reservationSlot(reservationSlot)
-                .partySize(partySize)
+                .partySize(request.getPartySize())
                 .reservationStatus(ReservationStatus.PENDING)
                 .paymentStatus("PENDING")
                 .restaurant(reservationSlot.getRestaurant())
