@@ -27,26 +27,17 @@ public class CreateReservationTestFacadeV1 {
     private final RestPaymentApi paymentApi;
 
     public void createReservationOptimistic(Long memberId, ReservationRequestDto request) {
-        // 0. 멤버 검증
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
-
-        // 0. 예약 슬롯 조회 (읽기 전용)
-        ReservationSlot reservationSlot = reservationSlotRepository.findByRestaurantIdAndDateAndTime(
-                request.getRestaurantId(), request.getReservationDate(), request.getReservationTime()
-        ).orElseThrow(() -> new ReservationException(ReservationErrorCode.NO_RESERVATION_SLOT));
-
         // 1. 내부 트랜잭션으로 예약 생성
         Reservation reservation = reservationExternalUpdateService.createReservationWithOptimisticTransaction(
-                member.getId(),
-                reservationSlot.getId(),
-                request.getPartySize()
+                memberId,
+                request
         );
+
 
         // 2. 외부 결제 API 호출
         PaymentResponseDto paymentResponse = paymentApi.registerPaymentV1(
                 reservation.getId(),
-                member.getId(),
+                memberId,
                 request.getPartySize() * 5000L // 예: 1명당 5,000원
         );
 
