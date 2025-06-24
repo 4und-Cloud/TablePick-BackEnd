@@ -16,16 +16,23 @@ import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryReposi
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.userevent.dto.UserActionEventDto;
 import com.goorm.tablepick.domain.userevent.service.UserEventService;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -37,10 +44,32 @@ public class RestaurantServiceImpl implements RestaurantService {
     private final RestaurantCategoryRepository restaurantCategoryRepository;
     private final BoardTagRepository boardTagRepository;
     private final UserEventService userEventService;
-    
+    private final RestTemplate restTemplate;
+
+    @Value("${ai.host}")
+    private String aiHostUrl;
+
     @Override
     public Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable, Member member) {
-        Page<Restaurant> restaurantPage = restaurantRepository.findPopularRestaurants(pageable);
+        Page<Restaurant> restaurantPage;
+
+        if (member != null) {
+            long userId = member.getId();
+
+            // 1. AI 서버에서 추천 식당 ID 리스트 받아오기
+            List<Long> recommendedRestaurantIds = getRecommendedRestaurantIds(userId);
+
+            if (recommendedRestaurantIds.isEmpty()) {
+                // 추천 결과가 없을 경우 fallback
+                restaurantPage = restaurantRepository.findPopularRestaurants(pageable);
+            } else {
+                // 2. 추천 ID 기반 식당 조회
+                restaurantPage = restaurantRepository.findRestaurantsByIdsInOrder(recommendedRestaurantIds, pageable);
+            }
+        } else {
+            // 3. 비회원 fallback
+            restaurantPage = restaurantRepository.findPopularRestaurants(pageable);
+        }
 
         return restaurantPage.map(restaurant -> {
             List<String> topTags = boardTagRepository.findTopTagsByRestaurantIdNative(restaurant.getId());
@@ -48,7 +77,7 @@ public class RestaurantServiceImpl implements RestaurantService {
             if (member != null) {
                 UserActionEventDto event = new UserActionEventDto(
                         "RESTAURANT_VIEW",
-                        restaurant.getId(),  // targetId에 식당 ID 넣기
+                        restaurant.getId(),
                         member.getId(),
                         System.currentTimeMillis()
                 );
@@ -66,26 +95,47 @@ public class RestaurantServiceImpl implements RestaurantService {
             );
         });
     }
-    
+
+
     @Override
     public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page, Member member) {
         Pageable pageable = PageRequest.of(page, 6);
-        Page<Restaurant> restaurantList = restaurantRepository.findAllOrderByBoardNum(pageable);
-        
+        Page<Restaurant> restaurantList;
+
         if (member != null) {
+            long userId = member.getId();
+
+            // 1. AI 서버에서 추천 식당 ID 가져오기
+            List<Long> recommendedRestaurantIds = getRecommendedRestaurantIds(userId);
+
+            if (recommendedRestaurantIds.isEmpty()) {
+                // 비회원과 동일하게 fallback 처리
+                restaurantList = restaurantRepository.findAllOrderByBoardNum(pageable);
+            } else {
+                // 2. 추천 식당 정보 조회 (순서를 유지하는 쿼리 필요)
+                restaurantList = restaurantRepository.findRestaurantsByIdsInOrder(recommendedRestaurantIds, pageable);
+            }
+
+            // 3. 로그 전송
             restaurantList.forEach(restaurant -> {
                 UserActionEventDto event = new UserActionEventDto(
                         "RESTAURANT_VIEW",
-                        restaurant.getId(),  // 각 식당 ID 넣기
-                        member.getId(),
+                        restaurant.getId(),
+                        userId,
                         System.currentTimeMillis()
                 );
                 userEventService.sendClickEvent(event);
             });
+
+        } else {
+            // 비회원 fallback 처리
+            restaurantList = restaurantRepository.findAllOrderByBoardNum(pageable);
         }
+
         return new PagedRestaurantResponseDto(restaurantList);
     }
-    
+
+
     @Override
     public RestaurantDetailResponseDto getRestaurantDetail(Long id, Member member) {
         Restaurant restaurant = restaurantRepository.findById(id)
@@ -128,5 +178,25 @@ public class RestaurantServiceImpl implements RestaurantService {
         }
         return restaurantRepository.searchRestaurantResult(keyword, tagIds, requestDto.getSort(),
                 requestDto.getOnlyOperating(), pageable);
+    }
+
+    public List<Long> getRecommendedRestaurantIds(Long userId) {
+        String url = String.format(aiHostUrl + "/recommend/restaurants/%d", userId);
+        try {
+            ResponseEntity<List<Long>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<>() {}
+            );
+            List<Long> restaurantIds = response.getBody();
+            return (restaurantIds != null) ? restaurantIds : Collections.emptyList();
+        } catch (HttpClientErrorException e) {
+            log.error("AI 서버 요청 실패: userId={}, status={}, response={}", userId, e.getStatusCode(), e.getResponseBodyAsString());
+            return Collections.emptyList();
+        } catch (Exception e) {
+            log.error("AI 서버에서 추천 식당 ID를 가져오지 못했습니다. userId={}", userId, e);
+            return Collections.emptyList();
+        }
     }
 }
