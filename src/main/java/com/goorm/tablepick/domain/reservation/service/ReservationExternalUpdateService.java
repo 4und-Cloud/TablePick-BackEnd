@@ -27,13 +27,15 @@ public class ReservationExternalUpdateService {
     private final MemberRepository memberRepository;
 
     @Transactional
-    public Reservation createReservationWithOptimisticTransaction(Long memberId, Long slotId, int partySize) {
+    public Reservation createReservationWithOptimisticTransaction(Long memberId, ReservationRequestDto request) {
+        // 0. 예약 슬롯 조회 (읽기 전용)
+        ReservationSlot reservationSlot = reservationSlotRepository.findByRestaurantIdAndDateAndTimeWithOptimisticLock(
+                request.getRestaurantId(), request.getReservationDate(), request.getReservationTime()
+        ).orElseThrow(() -> new ReservationException(ReservationErrorCode.NO_RESERVATION_SLOT));
+
         // 1. 회원 및 예약 슬롯 조회
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
-
-        ReservationSlot reservationSlot = reservationSlotRepository.findByIdWithOptimisticLock(slotId)
-                .orElseThrow(() -> new ReservationException(ReservationErrorCode.NO_RESERVATION_SLOT));
 
         // 2. 예약 슬롯 용량 검증 및 카운트 증가
         if (reservationSlot.getCount() >= reservationSlot.getRestaurant().getMaxCapacity()) {
@@ -54,7 +56,7 @@ public class ReservationExternalUpdateService {
         Reservation reservation = Reservation.builder()
                 .member(member)
                 .reservationSlot(reservationSlot)
-                .partySize(partySize)
+                .partySize(request.getPartySize())
                 .reservationStatus(ReservationStatus.PENDING)
                 .paymentStatus("PENDING")
                 .restaurant(reservationSlot.getRestaurant())

@@ -53,4 +53,11 @@ public interface ReservationSlotRepository extends JpaRepository<ReservationSlot
             @Param("time") LocalTime time
     );
 
+    @Lock(LockModeType.OPTIMISTIC)
+    @Query("SELECT rs FROM ReservationSlot rs WHERE rs.restaurant.id = :restaurantId AND rs.date = :date AND rs.time = :time")
+    Optional<ReservationSlot> findByRestaurantIdAndDateAndTimeWithOptimisticLock(
+            @Param("restaurantId") Long restaurantId,
+            @Param("date") LocalDate date,
+            @Param("time") LocalTime time
+    );
 }
