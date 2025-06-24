@@ -5,8 +5,8 @@ import { SharedArray } from 'k6/data'; // 여러 가상 사용자(VU)가 데이�
 // 1. 기본 설정
 // ===================================
 
-const BASE_URL = 'http://localhost:8080';
-//const BASE_URL = 'http://172.16.24.77:8080';
+//const BASE_URL = 'http://localhost:8080';
+const BASE_URL = 'http://172.16.24.77:8080';
 
 // 고유한 사용자 ID를 미리 생성하여 테스트에 사용합니다.
 // VU 수와 동일하게 1000개로 설정하는 것이 좋습니다.
