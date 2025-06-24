@@ -24,8 +24,9 @@ public class OptimisticLockFacadeV2 {
         while (retryCount < MAX_RETRY_COUNT) {
             try {
                 createReservationSagaFacade.createReservationOptimistic(memberId, request);
-                log.info("예약 생성 성공 - username: {}, paymentId: {}, 총 시도횟수: {}",
+                log.info("예약 생성 성공 - username: {}, 총 시도횟수: {}",
                         memberId, retryCount + 1);
+                return; // 성공 시 메서드 종료
 
             } catch (ReservationException e) {
                 retryCount++;

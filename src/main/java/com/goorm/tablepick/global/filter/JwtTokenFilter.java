@@ -113,6 +113,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 path.startsWith("/oauth2/") ||               // 카카오, 구글 로그인 인증 중간 경로
                 path.startsWith("/api/reservations/test/") ||
                 path.startsWith("/login/oauth2/code/") ||
+                path.startsWith("/api/pg/") ||
+                path.startsWith("/api/payments/") ||
                 path.equals("/actuator/prometheus") ||
                 
                 // 알림 - 실서비스때는 삭제
