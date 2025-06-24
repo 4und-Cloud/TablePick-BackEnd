@@ -9,6 +9,7 @@ import com.goorm.tablepick.domain.reservation.service.ImprovedReservationService
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/reservations")
 @RequiredArgsConstructor
+@Slf4j
 public class ReservationTestController {
     private final CreateReservationTestFacadeV0 createReservationTestFacadeV0;
     private final OptimisticLockFacadeV0 optimisticLockFacadeV0;
@@ -45,6 +47,7 @@ public class ReservationTestController {
                                                              @RequestBody @Valid ReservationRequestDto request) {
 
         createReservationTestFacadeV0.createReservationPessimistic(memberId, request);
+        log.info("예약 생성 성공");
         return ResponseEntity.ok().build();
     }
 
