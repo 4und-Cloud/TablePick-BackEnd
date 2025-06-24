@@ -1,13 +1,23 @@
 import http from 'k6/http'; // HTTP 요청을 보내는 기능 가져오기
-import { check, sleep } from 'k6'; // 응답 검증 및 실행 일시 정지 기능 가져오기
-import {SharedArray} from 'k6/data'; // 여러 가상 사용자(VU)가 데이터를 공유하는 기능 가져오기
+import { check, sleep } from 'k6'; // 응답 검증 기능 가져오기
+import { SharedArray } from 'k6/data'; // 여러 가상 사용자(VU)가 데이터를 공유하는 기능 가져오기
 
-//const BASE_URL = 'http://localhost:8080';
-const BASE_URL = 'http://172.16.24.77:8080';
+// 1. 기본 설정
+// ===================================
 
+const BASE_URL = 'http://localhost:8080';
+//const BASE_URL = 'http://172.16.24.77:8080';
+
+// 고유한 사용자 ID를 미리 생성하여 테스트에 사용합니다.
+// VU 수와 동일하게 1000개로 설정하는 것이 좋습니다.
 const userIds = new SharedArray('userIds', function () {
-    return Array.from({length: 1000}, (_, i) => i + 1);
+    return Array.from({ length: 1000 }, (_, i) => i + 1);
 });
+
+// export const options = {
+//     vus: 1000,
+//     duration: '30s',
+// };
 
 export const options = {
     scenarios: {
@@ -20,13 +30,13 @@ export const options = {
     },
 };
 
-export default function () {
-    // SAGA 패턴에서는 예약 도메인이 임시 예약 생성 및 Kafka 이벤트 발행 후 즉시 응답하므로,
-    // 이 엔드포인트는 결제 도메인으로 리다이렉션 URL 등을 받기 위한 동기 호출이 아닙니다.
-    // 임시 예약이 생성되고 Kafka 이벤트가 발행되는 시점까지를 측정합니다.
 
+// 2. 가상 사용자(VU)별 실행 함수 (핵심 로직)
+// ===================================
+
+export default function () {
     const userId = userIds[(__VU - 1) % userIds.length]; // 고유 userId
-    // (임시 예약 생성 및 Kafka 이벤트 발행)
+
     const payload = JSON.stringify({
         restaurantId: 1,
         partySize: 1,
@@ -38,14 +48,15 @@ export default function () {
         headers: {
             'Content-Type': 'application/json',
         },
+        timeout: '10s',
     };
 
-    let res = http.post(`${BASE_URL}/api/reservations/test/v2/${userId}`, payload, params);
-
+    const res = http.post(`${BASE_URL}/api/reservations/test/v0/optimistic/${userId}`, payload, params);
 
     check(res, {
+
         'reservation success': (r) => r.status === 200,
     });
 
-    // sleep(0.1);
+    //sleep(0.1);
 }

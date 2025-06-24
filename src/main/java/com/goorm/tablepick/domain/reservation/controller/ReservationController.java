@@ -60,19 +60,6 @@ public class ReservationController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/optimistic")
-    @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")
-    public ResponseEntity<Void> createReservationOptimistic(@AuthenticationPrincipal UserDetails userDetails,
-                                                            @RequestBody @Valid ReservationRequestDto request) {
-        try {
-            optimisticLockFacade.createReservationWithOptimisticLock(userDetails.getUsername(), request);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); // 인터럽트 상태 복원
-            throw new RuntimeException();
-        }
-
-        return ResponseEntity.ok().build();
-    }
 
     @PostMapping("/current")
     @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")

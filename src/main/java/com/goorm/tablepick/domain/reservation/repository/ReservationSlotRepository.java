@@ -45,4 +45,12 @@ public interface ReservationSlotRepository extends JpaRepository<ReservationSlot
     boolean existsByRestaurantAndDateAndTime(Restaurant restaurant, LocalDate date, LocalTime time);
 
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT rs FROM ReservationSlot rs WHERE rs.restaurant.id = :restaurantId AND rs.date = :date AND rs.time = :time")
+    Optional<ReservationSlot> findByRestaurantIdAndDateAndTimeWithPessimisticLock(
+            @Param("restaurantId") Long restaurantId,
+            @Param("date") LocalDate date,
+            @Param("time") LocalTime time
+    );
+
 }
