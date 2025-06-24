@@ -58,3 +58,13 @@ src/main/resources/*.csv
 src/main/generated
 
 Docker-Compose.yml
+
+**/.DS_Store
+**/**/.DS_Store
+**/**/**/.DS_Store
+**/**/**/**/.DS_Store
+**/**/**/**/**/.DS_Store
+**/**/**/**/**/**/.DS_Store
+**/**/**/**/**/**/**/.DS_Store
+**/**/**/**/**/**/**/**/.DS_Store
+**/**/**/**/**/**/**/**/**/.DS_Store
