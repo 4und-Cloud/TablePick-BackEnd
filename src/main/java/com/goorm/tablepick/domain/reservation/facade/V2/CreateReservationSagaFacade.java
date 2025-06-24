@@ -28,26 +28,16 @@ public class CreateReservationSagaFacade {
     private final KafkaPaymentProducer kafkaPaymentProducer;
 
     public void createReservationOptimistic(Long memberId, ReservationRequestDto request) {
-        // 0. 멤버 검증
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
-
-        // 1. 예약 슬롯 조회 (읽기 전용)
-        ReservationSlot reservationSlot = reservationSlotRepository.findByRestaurantIdAndDateAndTime(
-                request.getRestaurantId(), request.getReservationDate(), request.getReservationTime()
-        ).orElseThrow(() -> new ReservationException(ReservationErrorCode.NO_RESERVATION_SLOT));
-
-        // 2. 내부 트랜잭션으로 임시 예약 생성
+        // 1. 내부 트랜잭션으로 예약 생성
         Reservation reservation = reservationExternalUpdateService.createReservationWithOptimisticTransaction(
-                member.getId(),
-                reservationSlot.getId(),
-                request.getPartySize()
+                memberId,
+                request
         );
 
         // 2. Kafka를 통해 결제 요청 이벤트 발행
         PaymentRequestEvent paymentRequestEvent = PaymentRequestEvent.builder()
                 .reservationId(reservation.getId())
-                .memberId(member.getId())
+                .memberId(memberId)
                 .amount(request.getPartySize() * 5000L) // 예: 1명당 5,000원
                 .build();
 
