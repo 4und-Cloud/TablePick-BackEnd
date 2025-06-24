@@ -4,6 +4,7 @@ import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
 import com.goorm.tablepick.domain.reservation.exception.ReservationErrorCode;
 import com.goorm.tablepick.domain.reservation.exception.ReservationException;
 import com.goorm.tablepick.domain.reservation.service.ImprovedReservationService.ReservationServiceV2;
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,8 +25,9 @@ public class OptimisticLockFacadeV0 {
         while (retryCount < MAX_RETRY_COUNT) {
             try {
                 createReservationTestFacadeV0.createReservationOptimistic(memberId, request);
-                log.info("예약 생성 성공 - username: {}, paymentId: {}, 총 시도횟수: {}",
+                log.info("예약 생성 성공 - username: {}, 총 시도횟수: {}",
                         memberId, retryCount + 1);
+                return; // 성공 시 메서드 종료
 
             } catch (ReservationException e) {
                 retryCount++;

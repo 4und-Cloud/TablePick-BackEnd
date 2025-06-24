@@ -50,6 +50,7 @@ public class ReservationExternalUpdateService {
         }
 
         reservationSlot.setCount(reservationSlot.getCount() + 1);
+        reservationSlotRepository.saveAndFlush(reservationSlot);
 
 
         // 3. 예약 생성
