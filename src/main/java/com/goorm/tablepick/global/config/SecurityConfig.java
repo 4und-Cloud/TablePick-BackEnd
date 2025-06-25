@@ -37,7 +37,7 @@ public class SecurityConfig {
                                 "/api/restaurants/list", "/api/reservation/available-times", "/api/board-tags/",
                                 "/api/boards/list", "/api/boards", "/api/boards/{boardId}",
                                 "/api/boards/restaurant/{restaurantId}", "/images/**", "/api/restaurants/v1/search",
-                                "/actuator/prometheus", "/api/notifications/test/**","/api/restaurants/search/v2"
+                                "/actuator/prometheus", "/api/notifications/test/**","/api/restaurants/search/v2",
                                 "/api/notifications/send-with-fcmToken", "/api/notifications/send-async-with-fcmToken"
                         ).permitAll()
                         
