@@ -37,8 +37,9 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      acks: all # 모든 ISR이 응답할 때까지 대기
       retries: 3 # 재시도 횟수
+      properties:
+        spring.json.add.type.headers: false
     consumer:
       group-id: reservation-group # 예약 서버의 컨슈머 그룹 ID
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -47,7 +48,7 @@ spring:
       auto-commit-interval: 500
       auto-offset-reset: latest # 컨슈머 그룹의 오프셋이 없을 때 가장 최근 메시지부터 시작
       properties:
-        spring.json.trusted.packages: "com.goorm.tablepick.*" # 모든 goorm.tablepick 패키지 내 클래스를 신뢰 (와일드카드 사용)
+        spring.json.trusted.packages: "*" # 모든 goorm.tablepick 패키지 내 클래스를 신뢰 (와일드카드 사용)
     streams:
       application-id: tablepick-stream
 
