@@ -56,8 +56,8 @@ public class ReservationResponseDto {
                 .restaurantAddress(reservation.getRestaurant().getAddress())
                 .restaurantName(reservation.getRestaurant().getName())
                 .restaurantImage(
-                        reservation.getRestaurant().getRestaurantImages().get(0) != null ? reservation.getRestaurant()
-                                .getRestaurantImages().get(0).getImageUrl() : null)
+                        reservation.getRestaurant().getRestaurantImages().isEmpty() ? null : reservation.getRestaurant()
+                                .getRestaurantImages().get(0).getImageUrl())
                 .build();
     }
 }
