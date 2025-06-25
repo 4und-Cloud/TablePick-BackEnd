@@ -4,7 +4,9 @@ import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.member.exception.MemberErrorCode;
 import com.goorm.tablepick.domain.member.exception.MemberException;
 import com.goorm.tablepick.domain.member.repository.MemberRepository;
+import com.goorm.tablepick.domain.payment.PgClient;
 import com.goorm.tablepick.domain.payment.RestPaymentApi;
+import com.goorm.tablepick.domain.payment.dto.PaymentRequestDto;
 import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
 import com.goorm.tablepick.domain.reservation.entity.Reservation;
 import com.goorm.tablepick.domain.reservation.entity.ReservationSlot;
@@ -24,7 +26,7 @@ public class CreateReservationTestFacadeV0 {
     private final ReservationExternalUpdateService reservationExternalUpdateService;
     private final ReservationSlotRepository reservationSlotRepository;
     private final MemberRepository memberRepository;
-    private final RestPaymentApi paymentApi;
+    private final PgClient pgClient; // Fake PG 서버로 직접 호출하는 클라이언트
 
     public void createReservationOptimistic(Long memberId, ReservationRequestDto request) {
 
@@ -35,10 +37,12 @@ public class CreateReservationTestFacadeV0 {
         );
 
         // 2. 외부 결제 API 호출
-        PaymentResponseDto paymentResponse = paymentApi.registerPaymentV0(
-                reservation.getId(),
-                memberId,
-                request.getPartySize() * 5000L // 예: 1명당 5,000원
+        PaymentResponseDto paymentResponse = pgClient.callPgApi( // PgClient를 통해 Fake PG 서버 호출
+                PaymentRequestDto.builder()
+                        .reservationId(reservation.getId())
+                        .memberId(memberId)
+                        .amount(request.getPartySize() * 5000L)
+                        .build()
         );
 
         if (!paymentResponse.isSuccess()) {
@@ -57,10 +61,12 @@ public class CreateReservationTestFacadeV0 {
         );
 
         // 2. 외부 결제 API 호출
-        PaymentResponseDto paymentResponse = paymentApi.registerPaymentV0(
-                reservation.getId(),
-                memberId,
-                request.getPartySize() * 5000L // 예: 1명당 5,000원
+        PaymentResponseDto paymentResponse = pgClient.callPgApi( // PgClient를 통해 Fake PG 서버 호출
+                PaymentRequestDto.builder()
+                        .reservationId(reservation.getId())
+                        .memberId(memberId)
+                        .amount(request.getPartySize() * 5000L)
+                        .build()
         );
 
         if (!paymentResponse.isSuccess()) {
