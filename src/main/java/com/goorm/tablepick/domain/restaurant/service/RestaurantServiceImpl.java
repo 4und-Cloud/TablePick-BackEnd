@@ -1,5 +1,8 @@
 package com.goorm.tablepick.domain.restaurant.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.goorm.tablepick.domain.board.repository.BoardTagRepository;
 import com.goorm.tablepick.domain.member.entity.Member;
 import com.goorm.tablepick.domain.restaurant.dto.request.RestaurantSearchRequestDto;
@@ -7,6 +10,7 @@ import com.goorm.tablepick.domain.restaurant.dto.response.CategoryResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.PagedRestaurantResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantDetailResponseDto;
 import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantResponseDto;
+import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantSearchResponse;
 import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantSearchResponseDto;
 import com.goorm.tablepick.domain.restaurant.entity.Restaurant;
 import com.goorm.tablepick.domain.restaurant.entity.RestaurantCategory;
@@ -16,11 +20,14 @@ import com.goorm.tablepick.domain.restaurant.repository.RestaurantCategoryReposi
 import com.goorm.tablepick.domain.restaurant.repository.RestaurantRepository;
 import com.goorm.tablepick.domain.userevent.dto.UserActionEventDto;
 import com.goorm.tablepick.domain.userevent.service.UserEventService;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.ParameterizedTypeReference;
@@ -48,6 +55,9 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Value("${ai.host}")
     private String aiHostUrl;
+
+    @Autowired
+    ObjectMapper mapper;
 
     @Override
     public Page<RestaurantResponseDto> getAllRestaurants(Pageable pageable, Member member) {
@@ -140,9 +150,9 @@ public class RestaurantServiceImpl implements RestaurantService {
     public RestaurantDetailResponseDto getRestaurantDetail(Long id, Member member) {
         Restaurant restaurant = restaurantRepository.findById(id)
                 .orElseThrow(() -> new RestaurantException(RestaurantErrorCode.NOT_FOUND));
-        
+
         List<String> topTags = boardTagRepository.findTopTagsByRestaurantIdNative(restaurant.getId());
-        
+
         if (member != null) {
             UserActionEventDto event = new UserActionEventDto(
                     "RESTAURANT_CLICK",
@@ -152,32 +162,16 @@ public class RestaurantServiceImpl implements RestaurantService {
             );
             userEventService.sendClickEvent(event);
         }
-        
+
         return RestaurantDetailResponseDto.fromEntity(restaurant, topTags);
     }
-    
+
     @Override
     public List<CategoryResponseDto> getCategoryList() {
         List<RestaurantCategory> categoryList = restaurantCategoryRepository.findAll();
         return categoryList.stream()
                 .map(CategoryResponseDto::toDto)
                 .collect(Collectors.toList());
-    }
-    
-    @Override
-    public Page<RestaurantSearchResponseDto> searchRestaurantsV1(RestaurantSearchRequestDto requestDto) {
-        String keyword = requestDto.getKeyword();
-        List<Long> tagIds = requestDto.getTagIds();
-        Pageable pageable = PageRequest.of(requestDto.getPage(), 6);
-        if (keyword != null && keyword.length() > 20) {
-            throw new RestaurantException(RestaurantErrorCode.TOO_LONG_KEYWORD);
-        }
-        
-        if (tagIds != null && !tagIds.isEmpty() && tagIds.size() > 3) {
-            throw new RestaurantException(RestaurantErrorCode.TOO_MANY_TAGS);
-        }
-        return restaurantRepository.searchRestaurantResult(keyword, tagIds, requestDto.getSort(),
-                requestDto.getOnlyOperating(), pageable);
     }
 
     public List<Long> getRecommendedRestaurantIds(Long userId) {
@@ -199,4 +193,78 @@ public class RestaurantServiceImpl implements RestaurantService {
             return Collections.emptyList();
         }
     }
+    @Override
+    public Page<RestaurantSearchResponseDto> searchRestaurantsV1(RestaurantSearchRequestDto requestDto) {
+        String keyword = requestDto.getKeyword();
+        List<Long> tagIds = requestDto.getTagIds();
+        Pageable pageable = PageRequest.of(requestDto.getPage(), 6);
+        if (keyword != null && keyword.length() > 20) {
+            throw new RestaurantException(RestaurantErrorCode.TOO_LONG_KEYWORD);
+        }
+
+        if (tagIds != null && !tagIds.isEmpty() && tagIds.size() > 3) {
+            throw new RestaurantException(RestaurantErrorCode.TOO_MANY_TAGS);
+        }
+        return restaurantRepository.searchRestaurantResult(keyword,
+                tagIds,
+                requestDto.getSort(),
+                requestDto.getOnlyOperating(),
+                requestDto.getRadiusKm(),
+                requestDto.getLat(),
+                requestDto.getLng(),
+                requestDto.getMinPrice(),
+                requestDto.getMaxPrice(),
+                pageable);
+    }
+
+
+    @Override
+    public Page<RestaurantSearchResponseDto> searchRestaurantsV2(RestaurantSearchRequestDto requestDto) {
+        Pageable pageable = PageRequest.of(requestDto.getPage(), 6);
+        String today = LocalDate.now().getDayOfWeek().name();
+        System.out.println(requestDto.getKeyword()+"!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        Page<RestaurantSearchResponse> projPage = restaurantRepository.searchV2(
+                requestDto.getKeyword(),
+                requestDto.getTagIds(),
+                requestDto.getTagIds() != null ? requestDto.getTagIds().size() : 0,
+                requestDto.getSort(),
+                requestDto.getOnlyOperating(),
+                today,
+                requestDto.getRadiusKm(),
+                requestDto.getLat(),
+                requestDto.getLng(),
+                requestDto.getMinPrice(),
+                requestDto.getMaxPrice(),
+                pageable
+        );
+
+        return projPage.map(this::toResponseDto);
+    }
+
+    private RestaurantSearchResponseDto toResponseDto(RestaurantSearchResponse proj) {
+        List<String> tags = Optional.ofNullable(proj.getBoardTagsJson())
+                .map(this::deserializeTags)
+                .orElseGet(List::of);
+
+        return RestaurantSearchResponseDto.builder()
+                .id(proj.getId())
+                .name(proj.getName())
+                .address(proj.getAddress())
+                .restaurantCategory(proj.getRestaurantCategory())
+                .restaurantImage(proj.getRestaurantImage())
+                .boardTags(tags)
+                .build();
+    }
+
+    private List<String> deserializeTags(String json) {
+        try {
+            return mapper.readValue(json, new TypeReference<List<String>>() {
+            });
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to parse board tags JSON: {}", json, e);
+            return List.of();
+        }
+    }
+
+
 }
