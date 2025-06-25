@@ -33,7 +33,7 @@ public class BoardController {
     @GetMapping("/list")
     public PagedBoardListResponseDto getPagedBoards(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size,
+            @RequestParam(defaultValue = "30") int size,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Member member = (userDetails != null) ? userDetails.getMember() : null;
