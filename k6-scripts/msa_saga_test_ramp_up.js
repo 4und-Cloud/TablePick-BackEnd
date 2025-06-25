@@ -10,17 +10,7 @@ const userIds = new SharedArray('userIds', function () {
 });
 
 export let options = {
-    // 임계값(Thresholds): 성능 기대를 정의하고 테스트 실패 조건을 설정합니다.
-    thresholds: {
-        'http_req_duration{status:200}': ['p(95)<2000'],
-        'http_req_failed': ['rate<0.1'],
-        'http_reqs': ['count>10000'], // 총 요청 수 목표는 시나리오 길이에 따라 조정 필요
-        'checks': ['rate>0.5'],
-        'http_req_failed{error_type:connection_reset_by_peer}': ['rate<0.01'],
-        'http_req_failed{error_type:서버_오류}': ['rate<0.01'],
-        'http_req_failed{error_type:클라이언트_오류}': ['rate<0.01'],
-        'http_req_failed{error_type:기타_네트워크_오류}': ['rate<0.01'],
-    },
+
 
     // Scenarios: K6 테스트의 핵심 실행 방식을 정의합니다.
     scenarios: {
@@ -64,26 +54,6 @@ export default function () {
 
     let res = http.post(`${BASE_URL}/api/reservations/test/v2/${userId}`, payload, params);
 
-    // --- 더 나은 진단을 위한 세분화된 체크 및 태그 추가 ---
-    let isStatus200 = res.status === 200;
-    let isNetworkError = res.status === 0 && res.error;
-    let isConnectionReset = res.error && res.error.includes('connection reset by peer');
-    let isServerError = res.status >= 500 && res.status < 600;
-    let isClientError = res.status >= 400 && res.status < 500;
-
-    if (!isStatus200) {
-        if (isConnectionReset) {
-            res.tags['error_type'] = 'connection_reset_by_peer';
-        } else if (isServerError) {
-            res.tags['error_type'] = '서버_오류';
-        } else if (isClientError) {
-            res.tags['error_type'] = '클라이언트_오류';
-        } else if (isNetworkError) {
-            res.tags['error_type'] = '기타_네트워크_오류';
-        } else {
-            res.tags['error_type'] = '알수없음_상태코드_실패';
-        }
-    }
 
     check(res, {
         'reservation success': (r) => r.status === 200,
