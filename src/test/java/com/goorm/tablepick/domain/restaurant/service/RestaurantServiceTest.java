@@ -1431,7 +1431,7 @@ public class RestaurantServiceTest {
                 .reservationSlot(reservationSlot)
                 .member(member)
                 .restaurant(restaurant)
-                .partySize(3L)
+                .partySize(3)
                 .reservationStatus(ReservationStatus.CONFIRMED)
                 .build();
     }

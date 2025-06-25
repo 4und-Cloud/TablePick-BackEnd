@@ -15,8 +15,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     List<Reservation> findByReservationSlot(ReservationSlot reservationSlot);
 
-    @Query("SELECT r FROM Reservation r WHERE r.reservationStatus != 'CANCELLED'")
-    List<Reservation> findAllByMemberEmail(String username);
+    @Query("SELECT r FROM Reservation r WHERE r.member.email = :username AND r.reservationStatus != 'CANCELLED'")
+    List<Reservation> findAllByMemberEmail(@Param(value = "username") String username);
 
     // 특정 시간 범위 내의 예약을 조회하는 메서드 (알림 스케줄링용)
     // ReservationSlot의 date와 time을 조합하여 시간 범위를 확인
