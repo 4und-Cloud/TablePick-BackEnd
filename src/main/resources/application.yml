@@ -39,6 +39,8 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       acks: all # 모든 ISR이 응답할 때까지 대기
       retries: 3 # 재시도 횟수
+      properties:
+        spring.json.add.type.headers: false
     consumer:
       group-id: reservation-group # 예약 서버의 컨슈머 그룹 ID
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
