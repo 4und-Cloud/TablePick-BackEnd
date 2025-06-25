@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
                  .orElseThrow(() -> new ReservationException(ReservationErrorCode.NOT_FOUND));
 
          // 예약 상태를 '확정'으로 변경하고 결제 정보 업데이트
-         reservation.completePayment(event.getPaymentId(), event.getAmount()); // 예시 메서드
+         reservation.completePayment(event.getPaymentId(), event.getAmount());
          reservationRepository.save(reservation);
          log.info("예약 ID {} 의 결제 상태를 완료로 업데이트", reservation.getId());
      }

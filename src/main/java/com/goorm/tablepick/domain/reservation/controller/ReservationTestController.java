@@ -4,7 +4,9 @@ import com.goorm.tablepick.domain.reservation.dto.request.ReservationRequestDto;
 import com.goorm.tablepick.domain.reservation.facade.V0.CreateReservationTestFacadeV0;
 import com.goorm.tablepick.domain.reservation.facade.V0.OptimisticLockFacadeV0;
 import com.goorm.tablepick.domain.reservation.facade.V1.CreateReservationTestFacadeV1;
+import com.goorm.tablepick.domain.reservation.facade.V1.OptimisticLockFacadeV1;
 import com.goorm.tablepick.domain.reservation.facade.V2.CreateReservationSagaFacade;
+import com.goorm.tablepick.domain.reservation.facade.V2.OptimisticLockFacadeV2;
 import com.goorm.tablepick.domain.reservation.service.ImprovedReservationService.ReservationServiceV2;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -25,8 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReservationTestController {
     private final CreateReservationTestFacadeV0 createReservationTestFacadeV0;
     private final OptimisticLockFacadeV0 optimisticLockFacadeV0;
-    private final OptimisticLockFacadeV0 optimisticLockFacadeV1;
-    private final OptimisticLockFacadeV0 optimisticLockFacadeV2;
+    private final OptimisticLockFacadeV1 optimisticLockFacadeV1;
+    private final OptimisticLockFacadeV2 optimisticLockFacadeV2;
 
     @PostMapping("/test/v0/optimistic/{memberId}")
     @Operation(summary = "예약 생성", description = "식당, 유저, 예약 시간 정보를 기반으로 예약을 생성합니다.")

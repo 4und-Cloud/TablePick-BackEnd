@@ -117,6 +117,7 @@ public class ReservationExternalUpdateService {
         // 2. 결제 ID 및 상태 갱신
         reservation.setPaymentId(paymentId);
         reservation.setPaymentStatus("CONFIRMED");
+        reservation.setReservationStatus(ReservationStatus.CONFIRMED);
         reservationRepository.save(reservation);
     }
 }
