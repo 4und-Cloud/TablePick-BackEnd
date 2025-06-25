@@ -21,6 +21,7 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.support.mapping.DefaultJackson2JavaTypeMapper;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
@@ -87,18 +88,21 @@ public class KafkaConfig {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest"); // 또는 "earliest"
 
         JsonDeserializer<Object> jsonDeserializer = new JsonDeserializer<>(objectMapper());
-        // 역직렬화할 신뢰할 수 있는 패키지 설정.
-        // "com.goorm.tablepick.payment.event.model.*"만 지정해도 되지만, 와일드카드로 넓게 잡는 것도 가능
-        jsonDeserializer.addTrustedPackages("com.goorm.tablepick.*"); // application.yml과 일치
+
+        jsonDeserializer.addTrustedPackages("*"); // application.yml과 일치
+
+        jsonDeserializer.setUseTypeMapperForKey(false); // 기본값이지만 명시해주는 게 좋음
+        jsonDeserializer.setRemoveTypeHeaders(false); // 헤더 제거 방지
+        jsonDeserializer.setTypeMapper(new DefaultJackson2JavaTypeMapper()); // 명시적 설정
 
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), jsonDeserializer);
     }
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
-        // factory.setConcurrency(3); // 필요에 따라 컨슈머 스레드 수 설정
         return factory;
     }
 }
