@@ -11,7 +11,7 @@ const BASE_URL = 'http://172.16.24.77:8080';
 // 고유한 사용자 ID를 미리 생성하여 테스트에 사용합니다.
 // VU 수와 동일하게 1000개로 설정하는 것이 좋습니다.
 const userIds = new SharedArray('userIds', function () {
-    return Array.from({ length: 1000 }, (_, i) => i + 1);
+    return Array.from({ length: 10000 }, (_, i) => i + 1);
 });
 
 // export const options = {
@@ -23,9 +23,9 @@ export const options = {
     scenarios: {
         single_shot: {
             executor: "per-vu-iterations", // VU당 반복 횟수 지정
-            vus: 1000,                     // 가상 사용자 수
+            vus: 10000,                     // 가상 사용자 수
             iterations: 1,                 // 각 VU는 한 번만 요청
-            maxDuration: '20s',            // 전체 테스트 제한 시간
+            maxDuration: '30s',            // 전체 테스트 제한 시간
         },
     },
 };
@@ -47,7 +47,7 @@ export default function () {
         headers: {
             'Content-Type': 'application/json',
         },
-        timeout: '10s',
+        //timeout: '10s',
     };
 
     const res = http.post(`${BASE_URL}/api/reservations/test/v0/pessimistic/${userId}`, payload, params);

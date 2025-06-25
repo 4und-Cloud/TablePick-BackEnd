@@ -12,7 +12,7 @@ const BASE_URL = 'http://172.16.24.77:8080';
 // SharedArray는 모든 VU(Virtual User)가 공유하는 데이터를 효율적으로 관리할 때 사용됩니다.
 // 이렇게 하면 각 VU가 서로 다른 사용자 ID를 사용하여 실제 사용자의 행동을 더 잘 모방할 수 있습니다.
 const userIds = new SharedArray('userIds', function () {
-    return Array.from({ length: 1000 }, (_, i) => i + 1);
+    return Array.from({ length: 10000 }, (_, i) => i + 1);
 });
 
 // 테스트 옵션 설정: k6 테스트의 전반적인 동작 방식을 정의합니다.
@@ -20,9 +20,9 @@ export const options = {
     scenarios: {
         single_shot: {
             executor: "per-vu-iterations", // VU당 반복 횟수 지정
-            vus: 1000,                     // 가상 사용자 수
+            vus: 10000,                     // 가상 사용자 수
             iterations: 1,                 // 각 VU는 한 번만 요청
-            maxDuration: '20s',            // 전체 테스트 제한 시간
+            maxDuration: '30s',            // 전체 테스트 제한 시간
         },
     },
 };
