@@ -1,0 +1,175 @@
+name: Deploy Spring Applications (Backend & Fake PG) to EC2 with ECR
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # --- 1. 백엔드/결제 서버 코드 체크아웃 ---
+      - name: Checkout Backend/Payment Code
+        uses: actions/checkout@v4
+        with:
+          path: backend-service
+
+      # --- 2. Fake PG 서버 코드 체크아웃 ---
+      - name: Checkout Fake PG Code
+        uses: actions/checkout@v4
+        with:
+          repository: 4und-Cloud/TablePick-Fake-Pg
+          # Private Repository인 경우, 토큰이 필요합니다.
+          # token: ${{ secrets.GH_PAT_FOR_FAKE_PG }}
+          path: fake-pg-service
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      # --- 백엔드/결제 서버 application-secret.yml 생성 ---
+      - name: Make application-secret.yml (Backend)
+        # working-directory를 backend-service로 설정
+        run: |
+          mkdir -p src/main/resources # 이미 cd된 상태에서 상대경로
+          echo "${{ secrets.YML }}" > src/main/resources/application-secret.yml
+        shell: bash
+        working-directory: ./backend-service # <--- 여기 추가!
+
+          # --- Firebase 서비스 계정 파일 생성 (Base64 디코딩) ---
+      - name: Decode Firebase Service Account File
+        run: |
+          mkdir -p src/main/resources
+          printf "%s" "${{ secrets.FIREBASE_SERVICE_ACCOUNT_FILE_BASE64 }}" | base64 --decode > src/main/resources/firebase-service-account.json
+
+          # 파일이 제대로 생성되었는지 확인 (디버깅용 - 민감 정보 포함 주의!)
+          ls -l src/main/resources/firebase-service-account.json
+          echo "--- Content of firebase-service-account.json (first 10 lines) ---"
+          head -n 10 src/main/resources/firebase-service-account.json
+          echo "---------------------------------------------------"
+        shell: bash
+        working-directory: ./backend-service # backend-service 경로에서 실행되도록
+
+      - name: Build with Gradle
+        working-directory: ./backend-service
+        run: ./gradlew build -x test
+        env:
+          FRONTEND_HOST: ${{ secrets.FRONTEND_HOST }}
+
+      # --- 백엔드/결제 서버 Gradle 권한 및 빌드 ---
+      - name: Grant execute permission for gradlew (Backend)
+        run: chmod +x ./gradlew # working-directory가 설정되었으므로 ./gradlew로 변경
+        working-directory: ./backend-service # <--- 여기 추가!
+
+      - name: Build with Gradle (Backend)
+        run: ./gradlew clean build -x test # working-directory가 설정되었으므로 ./gradlew로 변경
+        working-directory: ./backend-service # <--- 여기 추가!
+
+      # --- Fake PG 서버 Gradle 권한 및 빌드 ---
+      - name: Grant execute permission for gradlew (Fake PG)
+        run: chmod +x ./gradlew # working-directory가 설정되었으므로 ./gradlew로 변경
+        working-directory: ./fake-pg-service # <--- 여기 추가!
+
+      - name: Build with Gradle (Fake PG)
+        run: ./gradlew clean build -x test # working-directory가 설정되었으므로 ./gradlew로 변경
+        working-directory: ./fake-pg-service # <--- 여기 추가!
+
+      # --- AWS 및 ECR 설정 ---
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # --- 백엔드/결제 서버 Docker 빌드 & ECR 푸시 ---
+      - name: Build, tag, and push Backend/Payment image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+          IMAGE_TAG: latest
+        run: |
+          docker build \
+            --build-arg DEPENDENCY=backend-service/build/dependency \
+            -f ./backend-service/Dockerfile \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            --platform linux/amd64 ./backend-service
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          # working-directory: ./backend-service # 이 스텝에서는 제거하는게 좋습니다.
+      # 경로를 명시했기 때문에.
+
+      # --- Fake PG 서버 Docker 빌드 & ECR 푸시 ---
+      - name: Build, tag, and push Fake PG image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY_FAKE_PG: ${{ secrets.ECR_REPOSITORY_FAKE_PG_NAME }}
+          IMAGE_TAG: latest
+        run: |
+          docker build \
+            -f ./fake-pg-service/Dockerfile \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY_FAKE_PG:$IMAGE_TAG \
+            --platform linux/amd64 ./fake-pg-service
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_FAKE_PG:$IMAGE_TAG
+        # working-directory: ./fake-pg-service # 이 스텝에서는 제거하는게 좋습니다.
+
+      # --- EC2 배포 스텝 ---
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          port: 22
+          script: |
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+
+            # --- 백엔드/결제 서버 컨테이너 배포 ---
+            echo "Deploying Backend/Payment Server..."
+            sudo docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+            if [ "$(sudo docker ps -a -q -f name=tablepick-app-new)" ]; then
+              sudo docker stop tablepick-app-new
+              sudo docker rm -f tablepick-app-new
+            fi
+            sudo docker run -d \
+              --name tablepick-app-new \
+              -p 8080:8080 \
+              -e DB_HOST="${{ secrets.DB_HOST }}" \
+              -e DB_USER="${{ secrets.DB_USER }}" \
+              -e DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+              -e KAFKA_HOST="${{ secrets.KAFKA_HOST }}" \
+              -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+              -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+              -e KAKAO_CLIENT_ID="${{ secrets.KAKAO_CLIENT_ID }}" \
+              -e KAKAO_CLIENT_SECRET="${{ secrets.KAKAO_CLIENT_SECRET }}" \
+              -e REDIS_HOST="${{ secrets.REDIS_HOST }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e BACKEND_HOST="${{ secrets.BACKEND_HOST }}" \
+              -e AI_HOST="${{ secrets.AI_HOST }}" \
+              -e BOARD_IMAGE_PATH="${{ secrets.BOARD_IMAGE_PATH }}" \
+              -e KAKAO_ADMIN_KEY="${{ secrets.KAKAO_ADMIN_KEY }}" \
+              -e FRONTEND_HOST="${{ secrets.FRONTEND_HOST }}" \
+              ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+            
+            # --- Fake PG 서버 컨테이너 배포 ---
+            echo "Deploying Fake PG Server..."
+            sudo docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_FAKE_PG_NAME }}:latest
+            if [ "$(sudo docker ps -a -q -f name=fake-pg-app-new)" ]; then
+              sudo docker stop fake-pg-app-new
+              sudo docker rm -f fake-pg-app-new
+            fi
+            sudo docker run -d \
+              --name fake-pg-app-new \
+              -p 8083:8083 \
+              ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_FAKE_PG_NAME }}:latest
+
+            echo "Deployment complete."

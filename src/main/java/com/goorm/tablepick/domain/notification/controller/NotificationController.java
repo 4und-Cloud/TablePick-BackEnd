@@ -268,9 +268,9 @@ public class NotificationController {
         // 전송 시작 시간 기록
         LocalDateTime startTime = LocalDateTime.now();
         long startMillis = System.currentTimeMillis();
-        
-        log.info("로고 알림 전송 요청 시작 - 시간: {}, 토큰: {}, 제목: {}, 내용: {}",
-                startTime, token, title, body);
+
+//        log.info("로고 알림 전송 요청 시작 - 시간: {}, 토큰: {}, 제목: {}, 내용: {}",
+//                startTime, token, title, body);
         
         try {
             // data 파라미터를 Map으로 변환
@@ -291,16 +291,16 @@ public class NotificationController {
             // FCM 알림 전송
             String response = fcmService.sendMessageWithLogo(token, title, body, dataMap);
             long fcmDurationMillis = System.currentTimeMillis() - fcmStartMillis;
-            log.info("순수 FCM 전송 소요시간: {}ms", fcmDurationMillis);
+//            log.info("순수 FCM 전송 소요시간: {}ms", fcmDurationMillis);
             
             long endMillis = System.currentTimeMillis();
             long durationMs = endMillis - startMillis;
             
             if (response != null) {
-                log.info("로고 알림 전송 성공 - 응답: {}, 소요시간: {}ms", response, durationMs);
+                log.info("동기 알림 전송 성공 - 응답: {}, 소요시간: {}ms", response, durationMs);
                 return ResponseEntity.ok(FCMNotificationResponse.success(response, startTime, durationMs));
             } else {
-                log.warn("로고 알림 전송 실패 - 토큰이 유효하지 않음, 소요시간: {}ms", durationMs);
+                log.warn("동기 알림 전송 실패 - 토큰이 유효하지 않음, 소요시간: {}ms", durationMs);
                 return ResponseEntity.badRequest()
                         .body(FCMNotificationResponse.failure("FCM 토큰이 유효하지 않습니다.", "INVALID_TOKEN", startTime,
                                 durationMs));
@@ -381,9 +381,9 @@ public class NotificationController {
         // 전송 시작 시간 기록
         LocalDateTime startTime = LocalDateTime.now();
         long startMillis = System.currentTimeMillis();
-        
-        log.info("로고 알림 전송 요청 시작 - 시간: {}, 토큰: {}, 제목: {}, 내용: {}",
-                startTime, token, title, body);
+
+//        log.info("비동기 이미지 알림 전송 요청 시작 - 시간: {}, 토큰: {}, 제목: {}, 내용: {}",
+//                startTime, token, title, body);
         
         try {
             // data 파라미터를 Map으로 변환
@@ -403,7 +403,7 @@ public class NotificationController {
             
             // FCM 알림 비동기 전송
             ApiFuture<String> responseFuture = fcmService.sendMessageAsync(token, title, body,
-                    dataMap, false);
+                    dataMap, true);
             String response;
             try {
                 response = responseFuture.get(); // 비동기 결과 대기
@@ -415,13 +415,13 @@ public class NotificationController {
             }
             
             long fcmDurationMillis = System.currentTimeMillis() - fcmStartMillis;
-            log.info("순수 FCM 전송 소요시간: {}ms", fcmDurationMillis);
+//            log.info("순수 FCM 전송 소요시간: {}ms", fcmDurationMillis);
             
             long endMillis = System.currentTimeMillis();
             long durationMs = endMillis - startMillis;
             
             if (response != null) {
-                log.info("로고 알림 전송 성공 - 응답: {}, 소요시간: {}ms", response, durationMs);
+                log.info("비동기 알림 전송 성공 - 응답: {}, 소요시간: {}ms", response, durationMs);
                 return ResponseEntity.ok(FCMNotificationResponse.success(response, startTime, durationMs));
             } else {
                 log.warn("로고 알림 전송 실패 - 토큰이 유효하지 않음, 소요시간: {}ms", durationMs);
@@ -433,13 +433,13 @@ public class NotificationController {
         } catch (NotificationException e) {
             long endMillis = System.currentTimeMillis();
             long durationMs = endMillis - startMillis;
-            log.error("로고 알림 전송 중 오류 발생: {}, 소요시간: {}ms", e.getMessage(), durationMs);
+            log.error("비동기 알림 전송 중 오류 발생: {}, 소요시간: {}ms", e.getMessage(), durationMs);
             return ResponseEntity.internalServerError()
                     .body(FCMNotificationResponse.failure(e.getMessage(), e.getErrorCode(), startTime, durationMs));
         } catch (Exception e) {
             long endMillis = System.currentTimeMillis();
             long durationMs = endMillis - startMillis;
-            log.error("로고 알림 전송 중 예상치 못한 오류 발생: {}, 소요시간: {}ms", e.getMessage(), durationMs);
+            log.error("비동기 알림 전송 중 예상치 못한 오류 발생: {}, 소요시간: {}ms", e.getMessage(), durationMs);
             return ResponseEntity.internalServerError()
                     .body(FCMNotificationResponse.failure("알림 전송 중 오류가 발생했습니다.", "UNEXPECTED_ERROR", startTime,
                             durationMs));
