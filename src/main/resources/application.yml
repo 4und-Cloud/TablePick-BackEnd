@@ -47,7 +47,7 @@ spring:
       auto-commit-interval: 500
       auto-offset-reset: latest # 컨슈머 그룹의 오프셋이 없을 때 가장 최근 메시지부터 시작
       properties:
-        spring.json.trusted.packages: "com.goorm.tablepick.*" # 모든 goorm.tablepick 패키지 내 클래스를 신뢰 (와일드카드 사용)
+        spring.json.trusted.packages: "com.groom.*" # 모든 goorm.tablepick 패키지 내 클래스를 신뢰 (와일드카드 사용)
     streams:
       application-id: tablepick-stream
 
