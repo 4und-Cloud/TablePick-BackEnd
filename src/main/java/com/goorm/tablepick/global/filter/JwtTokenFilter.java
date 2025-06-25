@@ -52,12 +52,12 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             if (accessToken != null && jwtProvider.validateToken(accessToken)) {
                 setAuthentication(accessToken, request);
             } else {
-                log.warn("❌ 유효하지 않거나 만료된 access token");
+                log.warn("유효하지 않거나 만료된 access token");
                 handleUnauthorized(response);
                 return;
             }
         } catch (Exception e) {
-            log.error("🔥 JWT 필터 처리 중 예외 발생: {}", e.getMessage(), e);
+            log.error("JWT 필터 처리 중 예외 발생: {}", e.getMessage(), e);
             handleUnauthorized(response);
             return;
         }
@@ -77,8 +77,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         );
         auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(auth);
-        
-        log.info("✅ 사용자 인증 성공 - userId: {}", userId);
+
+        log.info("사용자 인증 성공 - userId: {}", userId);
     }
     
     private boolean isTestProfile() {
@@ -106,6 +106,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 path.equals("/api/members/logout") ||
                 path.startsWith("/api/restaurants") ||
                 path.startsWith("/api/restaurants/v1/search/") ||
+                path.startsWith("/api/restaurants/search/v2") ||
                 path.startsWith("/api/restaurants/v1/detail/") ||
                 path.startsWith("/api/restaurants/v1/reviews/") ||
                 path.startsWith("/api/boards/") ||

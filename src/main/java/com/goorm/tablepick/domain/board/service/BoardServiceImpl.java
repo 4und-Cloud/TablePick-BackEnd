@@ -78,7 +78,7 @@ public class BoardServiceImpl implements BoardService {
             long userId = member.getId();
 
             // AI 서버에서 추천 게시글 아이디 받아오기
-            List<Long> recommendedBoardIds = getRecommendedBoardIds(userId, page, 30);
+            List<Long> recommendedBoardIds = getRecommendedBoardIds(userId);
 
             // 추천 게시글 정보 조회
             boardPage = boardRepository.findBoardsByIdsInOrder(recommendedBoardIds, pageable);
@@ -292,8 +292,8 @@ public class BoardServiceImpl implements BoardService {
         }
     }
     // 추천 AI API 연결
-    public List<Long> getRecommendedBoardIds(Long userId, int page, int size) {
-        String url = String.format(aiHostUrl+"/post/recommend-for-user/%d?page=%d&size=%d", userId, page, size);
+    public List<Long> getRecommendedBoardIds(Long userId) {
+        String url = String.format(aiHostUrl+"/recommend/posts/%d", userId);
         try {
             ResponseEntity<List<Long>> response = restTemplate.exchange(
                     url,

@@ -6,21 +6,21 @@ import com.goorm.tablepick.domain.reservation.entity.QReservation;
 import com.goorm.tablepick.domain.restaurant.dto.response.RestaurantSearchResponseDto;
 import com.goorm.tablepick.domain.restaurant.entity.QMenu;
 import com.goorm.tablepick.domain.restaurant.entity.QRestaurant;
+import com.goorm.tablepick.domain.restaurant.entity.QRestaurantCategory;
 import com.goorm.tablepick.domain.restaurant.entity.QRestaurantImage;
 import com.goorm.tablepick.domain.restaurant.entity.QRestaurantOperatingHour;
+import com.goorm.tablepick.domain.tag.entity.QTag;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.TimeTemplate;
 import com.querydsl.jpa.JPAExpressions;
-import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
+import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,8 +30,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
-;
-
 @Repository
 public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
     private final JPAQueryFactory queryFactory;
@@ -40,124 +38,135 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
         this.queryFactory = new JPAQueryFactory(em);
     }
 
-    /**
-     * 페이징 없이 조건에 맞는 모든 식당을 조회합니다.
-     *
-     * @param keyword       검색어 (name, address, menu.name)
-     * @param tagIds        필터할 태그 ID 리스트 (빈 리스트 또는 null 이면 태그 필터 미적용)
-     * @param sort          "boardCount" 또는 "reservationCount" 정렬 키 (null 이면 정렬 미적용)
-     * @param onlyOperating true 면 영업 중인 식당만 조회
-     */
     @Override
     public Page<RestaurantSearchResponseDto> searchRestaurantResult(
             String keyword,
             List<Long> tagIds,
             String sort,
             Boolean onlyOperating,
+            Integer radiusKm,
+            Double lat,
+            Double lng,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
             Pageable pageable
     ) {
-        QRestaurant restaurant = QRestaurant.restaurant;
-        QBoardTag boardTag = QBoardTag.boardTag;
-        QBoard board = QBoard.board;
-        QReservation reservation = QReservation.reservation;
-        QRestaurantOperatingHour oh = QRestaurantOperatingHour.restaurantOperatingHour;
-        QMenu menu = QMenu.menu;
+        QRestaurant r = QRestaurant.restaurant;
+        QRestaurantCategory rc = QRestaurantCategory.restaurantCategory;
+        QBoardTag bt = QBoardTag.boardTag;
+        QBoard b = QBoard.board;
+        QReservation rs = QReservation.reservation;
+        QRestaurantOperatingHour roh = QRestaurantOperatingHour.restaurantOperatingHour;
+        QMenu m = QMenu.menu;
         QRestaurantImage image = QRestaurantImage.restaurantImage;
-
-        boolean hasKeyword = StringUtils.hasText(keyword);
-        boolean hasTags = tagIds != null && !tagIds.isEmpty();
-        int tagCount = hasTags ? tagIds.size() : 0;
+        QTag tag = QTag.tag;
 
         BooleanBuilder where = new BooleanBuilder();
 
-        if (hasKeyword) {
+        // 키워드 필터
+        if (StringUtils.hasText(keyword)) {
             String kw = "%" + keyword.trim().toLowerCase() + "%";
             where.and(
-                    restaurant.name.likeIgnoreCase(kw)
-                            .or(restaurant.address.likeIgnoreCase(kw))
-                            .or(JPAExpressions.selectOne()
-                                    .from(menu)
-                                    .where(menu.restaurant.eq(restaurant)
-                                            .and(menu.name.likeIgnoreCase(kw)))
-                                    .exists())
+                    r.name.lower().like(kw)
+                            .or(r.address.lower().like(kw))
+                            .or(
+                                    JPAExpressions.selectOne()
+                                            .from(m)
+                                            .where(m.restaurant.eq(r)
+                                                    .and(m.name.lower().like(kw)))
+                                            .exists()
+                            )
             );
         }
 
+        // 영업중 필터
         if (Boolean.TRUE.equals(onlyOperating)) {
-            TimeTemplate<LocalTime> now = Expressions.timeTemplate(LocalTime.class, "CURRENT_TIME");
-            DayOfWeek dow = LocalDate.now().getDayOfWeek();
+            DayOfWeek today = LocalDate.now().getDayOfWeek();
+            TimeTemplate<LocalTime> now = Expressions.timeTemplate(LocalTime.class, "CURTIME()");
             where.and(
                     JPAExpressions.selectOne()
-                            .from(oh)
+                            .from(roh)
                             .where(
-                                    oh.restaurant.eq(restaurant),
-                                    oh.dayOfWeek.stringValue().eq(dow.name()),
-                                    now.between(oh.openTime, oh.closeTime)
+                                    roh.restaurant.eq(r),
+                                    roh.dayOfWeek.stringValue().eq(today.name()),
+                                    roh.isHoliday.isFalse(),
+                                    now.between(roh.openTime, roh.closeTime)
                             )
                             .exists()
             );
         }
 
-        JPAQuery<RestaurantSearchResponseDto> contentQuery = queryFactory
+        // 반경 필터
+        if (radiusKm != null && lat != null && lng != null) {
+            double radius = radiusKm * 1000;
+            where.and(
+                    Expressions.numberTemplate(Double.class,
+                            "ST_Distance_Sphere(point({0},{1}), point({2},{3}))",
+                            r.xcoordinate, r.ycoordinate, lng, lat
+                    ).loe(radius)
+            );
+        }
+
+        // 가격 필터
+        if (minPrice != null) {
+            where.and(
+                    JPAExpressions.select(m.price.min())
+                            .from(m)
+                            .where(m.restaurant.eq(r))
+                            .gt(minPrice)
+            );
+        }
+        if (maxPrice != null) {
+            where.and(
+                    JPAExpressions.select(m.price.max())
+                            .from(m)
+                            .where(m.restaurant.eq(r))
+                            .lt(maxPrice)
+            );
+        }
+
+        // 메인 쿼리: 기본 정보
+        var query = queryFactory
                 .select(Projections.fields(
                         RestaurantSearchResponseDto.class,
-                        restaurant.id,
-                        restaurant.name,
-                        restaurant.address,
-                        restaurant.restaurantCategory.name.as("restaurantCategory")
+                        r.id,
+                        r.name,
+                        r.address,
+                        rc.name.as("restaurantCategory")
                 ))
-                .from(restaurant)
+                .from(r)
+                .join(r.restaurantCategory, rc)
                 .where(where);
 
-        if (hasTags) {
-            contentQuery.leftJoin(boardTag)
-                    .on(boardTag.restaurant.eq(restaurant),
-                            boardTag.tag.id.in(tagIds));
+        // 태그 필터링 & 그룹핑
+        if (tagIds != null && !tagIds.isEmpty()) {
+            query.leftJoin(bt)
+                    .on(bt.restaurant.eq(r), bt.tag.id.in(tagIds));
+        }
+        query.groupBy(r.id, r.name, r.address, rc.name);
+        if (tagIds != null && !tagIds.isEmpty()) {
+            query.having(bt.tag.id.countDistinct().eq((long) tagIds.size()));
         }
 
-        boolean sortByBoard = "boardCount".equals(sort);
-        boolean sortByResv = "reservationCount".equals(sort);
-        if (sortByBoard) {
-            contentQuery.leftJoin(board).on(board.restaurantId.eq(restaurant.id));
+        // 정렬
+        if ("boardCount".equals(sort)) {
+            query.leftJoin(b).on(b.restaurantId.eq(r.id))
+                    .orderBy(b.id.countDistinct().desc());
+        } else if ("reservationCount".equals(sort)) {
+            query.leftJoin(rs).on(rs.restaurant.eq(r))
+                    .orderBy(rs.id.countDistinct().desc());
         }
-        if (sortByResv) {
-            contentQuery.leftJoin(reservation).on(reservation.restaurant.eq(restaurant));
-        }
-
-        if (hasTags) {
-            contentQuery.having(boardTag.tag.id.countDistinct().eq((long) tagCount));
-        }
-
-        contentQuery.groupBy(
-                restaurant.id,
-                restaurant.name,
-                restaurant.address,
-                restaurant.restaurantCategory.name
-        );
-
-        List<OrderSpecifier<?>> orders = new ArrayList<>();
-        if (sortByBoard) {
-            orders.add(board.id.countDistinct().desc());
-        } else if (sortByResv) {
-            orders.add(reservation.id.countDistinct().desc());
-        }
-        if (hasTags) {
-            orders.add(boardTag.tag.id.countDistinct().desc());
-        }
-        if (!orders.isEmpty()) {
-            contentQuery.orderBy(orders.toArray(new OrderSpecifier[0]));
+        if (tagIds != null && !tagIds.isEmpty()) {
+            query.orderBy(bt.tag.id.countDistinct().desc());
         }
 
-        contentQuery.limit(pageable.getPageSize());
+        query.offset(pageable.getOffset());
+        query.limit(pageable.getPageSize());
 
-        List<RestaurantSearchResponseDto> content = contentQuery.fetch();
+        List<RestaurantSearchResponseDto> content = query.fetch();
 
-        if (content.isEmpty()) {
-            return new PageImpl<>(content, pageable, 0);
-        }
-
+        // 이미지 매핑
         List<Long> ids = content.stream().map(RestaurantSearchResponseDto::getId).toList();
-
         Map<Long, String> imageMap = queryFactory
                 .select(image.restaurant.id, image.imageUrl)
                 .from(image)
@@ -168,35 +177,38 @@ public class RestaurantRepositoryImpl implements RestaurantRepositoryCustom {
                 .collect(Collectors.toMap(
                         tuple -> tuple.get(image.restaurant.id),
                         tuple -> tuple.get(image.imageUrl),
-                        (a, b) -> a
+                        (existing, fallback) -> existing
                 ));
 
+        // 보드 태그 매핑
         Map<Long, List<String>> tagMap = queryFactory
-                .selectDistinct(boardTag.restaurant.id, boardTag.tag.name)
-                .from(boardTag)
-                .where(boardTag.restaurant.id.in(ids))
+                .selectDistinct(bt.restaurant.id, tag.name)
+                .from(bt)
+                .join(tag).on(tag.id.eq(bt.tag.id))
+                .where(bt.restaurant.id.in(ids))
                 .fetch()
                 .stream()
                 .collect(Collectors.groupingBy(
-                        tuple -> tuple.get(boardTag.restaurant.id),
+                        tuple -> tuple.get(bt.restaurant.id),
                         Collectors.mapping(
-                                tuple -> tuple.get(boardTag.tag.name),
+                                tuple -> tuple.get(tag.name),
                                 Collectors.toList()
                         )
                 ));
 
+        // DTO에 이미지와 태그 설정
         content.forEach(dto -> {
             dto.setRestaurantImage(imageMap.get(dto.getId()));
             dto.setBoardTags(tagMap.getOrDefault(dto.getId(), List.of()));
         });
 
-        // count query
-        Long count = queryFactory
-                .select(restaurant.countDistinct())
-                .from(restaurant)
+        // 카운트 쿼리
+        Long total = queryFactory
+                .select(r.countDistinct())
+                .from(r)
                 .where(where)
                 .fetchOne();
 
-        return new PageImpl<>(content, pageable, count != null ? count : 0);
+        return new PageImpl<>(content, pageable, total != null ? total : 0);
     }
 }
