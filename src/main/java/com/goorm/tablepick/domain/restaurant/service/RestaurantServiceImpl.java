@@ -99,7 +99,7 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     public PagedRestaurantResponseDto getAllRestaurantsOrderedByBoardNum(int page, Member member) {
-        Pageable pageable = PageRequest.of(page, 6);
+        Pageable pageable = PageRequest.of(page, 30);
         Page<Restaurant> restaurantList;
 
         if (member != null) {

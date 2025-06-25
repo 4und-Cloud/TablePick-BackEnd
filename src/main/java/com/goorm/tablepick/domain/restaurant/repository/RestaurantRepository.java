@@ -32,7 +32,8 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> , 
     Page<Restaurant> findAllOrderByBoardNum(Pageable pageable);  // 가나다순 정렬
 
     // RestaurantRepository.java
-    @Query("SELECT r FROM Restaurant r WHERE r.id IN :ids ORDER BY FIELD(r.id, :ids)")
+    @Query(value = "SELECT r FROM Restaurant r WHERE r.id IN :ids")
     Page<Restaurant> findRestaurantsByIdsInOrder(@Param("ids") List<Long> ids, Pageable pageable);
+
 
 }
