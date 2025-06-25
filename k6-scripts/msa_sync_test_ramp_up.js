@@ -10,8 +10,10 @@ const BASE_URL = 'http://172.16.24.77:8080';
 
 // 고유한 사용자 ID를 미리 생성하여 테스트에 사용합니다. (1부터 10000까지, 더 많은 VU를 위해 늘림)
 const userIds = new SharedArray('userIds', function () {
-    return Array.from({ length: 10000 }, (_, i) => i + 1); // VU가 늘어날 것을 대비하여 userId 풀도 늘림
+    return Array.from({ length: 10000 }, (_, i) => i + 1); // 1부터 10000까지
 });
+
+let requestCounter = 0;
 
 // 테스트 옵션 설정: 점진적 부하 시나리오 정의
 export let options = {
@@ -25,11 +27,11 @@ export let options = {
             startVUs: 0,             // 시작 시 가상 사용자 수
             stages: [
                 { duration: '10s', target: 500 },  // 1분 동안 0 -> 500 VUs로 증가
-                { duration: '30s', target: 1000 }, // 다음 3분 동안 500 -> 1000 VUs로 증가
-                { duration: '20s', target: 1000 }, // 2분 동안 1000 VUs 유지 (고정 부하 구간)
+                { duration: '20s', target: 1000 }, // 다음 3분 동안 500 -> 1000 VUs로 증가
+                //{ duration: '10s', target: 1000 }, // 2분 동안 1000 VUs 유지 (고정 부하 구간)
                 { duration: '10s', target: 0 },    // 마지막 1분 동안 1000 -> 0 VUs로 감소 (정리)
             ],
-            // 총 테스트 시간: 30s + 1m + 30s + 30s = 2분 30초
+            // 총 테스트 시간: 70초
             gracefulStop: '10s', // 테스트 종료 후 추가 대기 시간
             tags: { test_type: '점진적_HTTP_부하' }, // 이 시나리오의 모든 지표에 추가될 태그 (Grafana 필터링에 유용)
             exec: 'default', // 실행할 함수. 이 스크립트에서는 'default' 함수를 사용합니다.
@@ -43,7 +45,8 @@ export let options = {
 // `default` 함수는 각 가상 사용자(VU)가 반복적으로 실행하는 코드 블록입니다.
 // 이 함수는 'ramping_http_load' 시나리오에서 호출됩니다.
 export default function () {
-    const userId = userIds[(__VU - 1) % userIds.length];
+    // 매 요청마다 고유한 userId를 선택
+    const userId = userIds[(__VU * 1000 + requestCounter++) % userIds.length];
 
     const payload = JSON.stringify({
         restaurantId: 1,

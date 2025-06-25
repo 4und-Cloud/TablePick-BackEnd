@@ -6,16 +6,16 @@ import {SharedArray} from 'k6/data'; // 여러 가상 사용자(VU)가 데이터
 const BASE_URL = 'http://172.16.24.77:8080';
 
 const userIds = new SharedArray('userIds', function () {
-    return Array.from({length: 1000}, (_, i) => i + 1);
+    return Array.from({length: 10000}, (_, i) => i + 1);
 });
 
 export const options = {
     scenarios: {
         single_shot: {
             executor: "per-vu-iterations", // VU당 반복 횟수 지정
-            vus: 1000,                     // 가상 사용자 수
+            vus: 10000,                     // 가상 사용자 수
             iterations: 1,                 // 각 VU는 한 번만 요청
-            maxDuration: '20s',            // 전체 테스트 제한 시간
+            maxDuration: '30s',            // 전체 테스트 제한 시간
         },
     },
 };
