@@ -17,7 +17,8 @@ public class RestPaymentApi{
     public PaymentResponseDto registerPaymentV1(Long reservationId, Long userId, Long amount) {
         WebClient webClient = webClientBuilder.build();
         return webClient.post()
-                .uri("http://localhost:8082/api/payments")
+                //.uri("http://localhost:8082/api/payments")
+                .uri("http://43.202.50.13:8082/api/payments")
                 .bodyValue(new PaymentRequestDto(reservationId, userId, amount))
                 .retrieve()
                 .bodyToMono(PaymentResponseDto.class)

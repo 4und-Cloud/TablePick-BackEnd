@@ -48,7 +48,7 @@ export default function () {
             'Content-Type': 'application/json',
             // 필요 시: 'Authorization': 'Bearer your-token-here',
         },
-        timeout: '10s',
+        //timeout: '10s',
     };
 
     const res = http.post(`${BASE_URL}/api/reservations/test/v0/optimistic/${userId}`, payload, params);

@@ -18,9 +18,9 @@ export let options = {
             executor: 'ramping-vus', // 점진적으로 VU를 증가시키는 실행기 사용
             startVUs: 0,             // 시작 시 가상 사용자 수
             stages: [
-                { duration: '10s', target: 500 },  // 1분 동안 0 -> 500 VUs로 증가
-                { duration: '30s', target: 1000 }, // 다음 3분 동안 500 -> 1000 VUs로 증가
-                { duration: '20s', target: 1000 }, // 2분 동안 1000 VUs 유지 (고정 부하 구간)
+                { duration: '10s', target: 50 },  // 1분 동안 0 -> 500 VUs로 증가
+                { duration: '30s', target: 100 }, // 다음 3분 동안 500 -> 1000 VUs로 증가
+                { duration: '20s', target: 100 }, // 2분 동안 1000 VUs 유지 (고정 부하 구간)
                 { duration: '10s', target: 0 },    // 마지막 1분 동안 1000 -> 0 VUs로 감소 (정리)
             ],
             // 총 테스트 시간: 30s + 1m + 30s + 30s = 2분 30초
